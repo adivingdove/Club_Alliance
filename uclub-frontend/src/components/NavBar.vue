@@ -41,67 +41,34 @@
 
       <!-- 登录按钮 -->
       <button @click="openLoginModal" class="login-btn">登录</button>
-
-      <button @click="showLogin = true" class="admin-btn">后台管理</button>
+      <!-- 后台管理按钮 -->
+      <button @click="openManageLogin" class="admin-btn">后台管理</button>
     </div>
 
-    <!-- 后台管理登录弹窗 -->
-    <teleport to="body">
-      <div v-if="showLogin" class="modal-overlay" @click.self="closeLogin">
-        <div class="modal">
-          <h2>后台管理登录</h2>
-          <form @submit.prevent="handleLogin">
-            <label for="username">用户名</label>
-            <input
-              id="username"
-              type="text"
-              v-model="loginForm.username"
-              autocomplete="username"
-              required
-              autofocus
-            />
-            <label for="password">密码</label>
-            <input
-              id="password"
-              type="password"
-              v-model="loginForm.password"
-              autocomplete="current-password"
-              required
-            />
-            <div class="error-msg" v-if="errorMsg">{{ errorMsg }}</div>
-            <div class="modal-buttons">
-              <button type="submit" class="btn-submit">登录</button>
-              <button type="button" class="btn-cancel" @click="closeLogin">取消</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </teleport>
-
-    <LoginRegisterModal v-model:visible = "showLoginModal"/>
+    <LoginFloatingWindow v-model:visible = "showLoginModal"/>
+    <ManageFloatingWindow v-model:visible = "showManageLogin"/>
   </nav>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import LoginRegisterModal from '../views/LoginRegisterModal.vue'; 
-
+import LoginFloatingWindow from '../views/LoginFloatingWindow.vue'; 
+import ManageFloatingWindow from '../views/ManageFloatingWindow.vue';
 
 const query = ref('');
 const router = useRouter();
 
-const showLogin = ref(false); // 后台管理登录弹窗
-const loginForm = ref({
-  username: '',
-  password: '',
-});
-const errorMsg = ref('');
 
 const showLoginModal = ref(false); // 用户登录弹窗
+const showManageLogin = ref(false);      // 后台管理登录弹窗
 
 function openLoginModal() {
   showLoginModal.value = true;
+}
+
+function openManageLogin(){
+  showManageLogin.value = true;
 }
 
 function goSearch() {
@@ -110,32 +77,6 @@ function goSearch() {
   }
 }
 
-function closeLogin() {
-  showLogin.value = false;
-  errorMsg.value = '';
-  loginForm.value.username = '';
-  loginForm.value.password = '';
-}
-
-function handleLogin() {
-  const validUser = 'admin';
-  const validPass = '123456';
-
-  if (
-    loginForm.value.username === validUser &&
-    loginForm.value.password === validPass
-  ) {
-    closeLogin();
-    router.push('/admin');
-  } else {
-    errorMsg.value = '用户名或密码错误';
-  }
-}
-
-// 关闭用户登录/注册弹窗
-function closeUserLogin() {
-  showUserLogin.value = false;
-}
 </script>
 
 <style scoped>

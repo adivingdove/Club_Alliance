@@ -1,8 +1,8 @@
 <template>
-  <div v-if="visible" class="modal-overlay" @click.self="close">
-    <div class="modal-window">
+  <div v-if="visible" class="manage-login" @click.self="close">
+    <div class="manage-login-window">
       <button class="close-btn" @click="close">&times;</button>
-      <div class="modal-title">登录/注册页面</div>
+      <div class="manage-login-title">后台管理登录页面</div>
     </div>
   </div>
 </template>
@@ -21,7 +21,7 @@ function close() {
 </script>
 
 <style scoped>
-.modal-overlay {
+.manage-login {
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.3);
@@ -31,7 +31,7 @@ function close() {
   z-index: 999;
 }
 
-.modal-window {
+.manage-login-window {
   background: #fff;
   width: 300px;
   padding: 24px 20px;
@@ -57,7 +57,7 @@ function close() {
   color: #333;
 }
 
-.modal-title {
+.manage-login-title {
   font-size: 20px;
   font-weight: bold;
   color: #333;
