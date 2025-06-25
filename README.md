@@ -6,15 +6,15 @@
 安装依赖
 cd uclub-frontend
 npm install
-![capture_20250625164223876](https://github.com/user-attachments/assets/b0707f7c-f6fc-4622-96c1-b42fa6e9d6c4)
+![capture_20250625164223876](https://github.com/user-attachments/assets/a076c1e4-3e3d-4f2a-b6c0-fc3b8beeffec)
 
 启动开发服务器
 npm run dev
-![capture_20250625164241914](https://github.com/user-attachments/assets/9b8ec064-e771-4a21-bd95-2a8177b1bce5)
+![capture_20250625164241914](https://github.com/user-attachments/assets/44fffdba-7d3f-4985-9271-e0559540dc32)
 
 ### 3. 访问应用
 开发服务器启动后，在浏览器中访问： http://localhost:5173/
-![capture_20250625164249212](https://github.com/user-attachments/assets/46107b20-609c-4128-a5ff-8f8595b4b0b4)
+![capture_20250625164249212](https://github.com/user-attachments/assets/4a0df1f7-3750-42a7-89a4-eaa5f8f4b1e8)
 
 ### 4. 后端项目设置
 
