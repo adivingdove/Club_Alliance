@@ -59,7 +59,6 @@ import ManageFloatingWindow from '../views/ManageFloatingWindow.vue';
 const query = ref('');
 const router = useRouter();
 
-
 const showLoginModal = ref(false); // 用户登录弹窗
 const showManageLogin = ref(false);      // 后台管理登录弹窗
 
