@@ -42,7 +42,9 @@
       <!-- 登录按钮 -->
       <button @click="openLoginModal" class="login-btn">登录</button>
       <!-- 后台管理按钮 -->
-      <button @click="openManageLogin" class="admin-btn">后台管理</button>
+      <!-- <button @click="openManageLogin" class="admin-btn">后台管理</button> -->
+      <button @click="$router.push('/admin/club-list')" class="admin-btn">后台管理</button>
+
     </div>
 
     <LoginFloatingWindow v-model:visible = "showLoginModal"/>

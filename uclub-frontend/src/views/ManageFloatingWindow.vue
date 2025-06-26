@@ -1,3 +1,4 @@
+// 组件模板部分
 <template>
   <div v-if="visible" class="manage-login" @click.self="close">
     <div class="manage-login-window">
@@ -7,6 +8,7 @@
   </div>
 </template>
 
+// 组件脚本部分
 <script setup>
 import { defineProps, defineEmits } from 'vue';
 
@@ -20,6 +22,8 @@ function close() {
 }
 </script>
 
+
+// 样式部分
 <style scoped>
 .manage-login {
   position: fixed;
