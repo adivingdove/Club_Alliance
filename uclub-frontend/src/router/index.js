@@ -19,13 +19,14 @@ const routes = [
   // 论坛模块
   { path: '/forum', name: 'Forum', component: ForumPage },
   { path: '/post/create', name: 'PostCreate', component: PostCreate },
-
+  {path: '/post/:id',name: 'PostDetail', component: () => import('@/views/PostDetail.vue')},
 
   { path: '/clubs', name: 'Clubs', component: Clubs },
   { path: '/activities', name: 'Activities', component: Activities },
   { path: '/profile', name: 'Profile', component: Profile },
   { path: '/search', name: 'Search', component: Search },
   { path: '/admin', name: 'Admin', component: Admin },
+
 ]
 
 const router = createRouter({

@@ -23,7 +23,8 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="loadPosts">查询</el-button>
+          <el-button type="primary" @click="handleFilterSearch">查询</el-button>
+
           <el-button @click="resetFilter">重置</el-button>
         </el-form-item>
       </el-form>
@@ -51,7 +52,7 @@
           :total="total"
           :page-size="pageSize"
          :current-page="page"
-          @current-change="loadPosts"
+         @current-change="handlePageChange"
           class="pagination"
         />
       </el-col>
@@ -89,13 +90,33 @@ const handlePageChange = (val) => {
   loadPosts()
 }
 const loadPosts = async () => {
-  const res = await fetchPostList({
+  // 动态生成时间筛选条件
+  const filterParams = {
     ...filter.value,
     page: page.value,
-    pageSize,
-  })
-  posts.value = res.data.posts
-  total.value = res.data.total
+    pageSize
+  }
+
+  // 时间范围处理
+  if (filter.value.timeRange) {
+    const now = new Date()
+    let startTime = null
+
+    if (filter.value.timeRange === 'today') {
+      startTime = new Date(now.setHours(0, 0, 0, 0)).toISOString()
+    } else if (filter.value.timeRange === '7days') {
+      startTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    } else if (filter.value.timeRange === '30days') {
+      startTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    }
+
+    filterParams.startTime = startTime
+  }
+
+  const res = await fetchPostList(filterParams)
+
+  posts.value = res.posts
+  total.value = res.total
 }
 
 const resetFilter = () => {
@@ -114,6 +135,10 @@ const handleLike = (postId) => {
 
 const goToPostCreate = () => {
   router.push('/post/create')
+}
+const handleFilterSearch = () => {
+  page.value = 1 // 每次筛选回到第一页
+  loadPosts()
 }
 
 onMounted(loadPosts)
