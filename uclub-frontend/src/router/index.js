@@ -7,12 +7,12 @@ import Activities from '../views/Activities.vue'
 import Profile from '../views/Profile.vue'
 import Search from '../views/Search.vue'
 
-import Admin from '../views/Admin.vue'
-
 // 新增论坛模块页面
 import ForumPage from '../views/ForumPage.vue'
 import PostCreate from '../views/PostCreate.vue'
 
+// 帖子详情页（按需加载）
+const PostDetail = () => import('@/views/PostDetail.vue')
 
 // 后台入口 Layout
 import AdminLayout from '../views/admin/AdminLayout.vue'
@@ -27,22 +27,20 @@ import ClubCreationReviewView from '../views/admin/ClubCreationReviewView.vue'
 import ActivityReviewView from '../views/admin/ActivityReviewView.vue'
 import ReportHandlingView from '../views/admin/ReportHandlingView.vue'
 
-
-
-
 const routes = [
   { path: '/', name: 'Home', component: Home },
 
   // 论坛模块
   { path: '/forum', name: 'Forum', component: ForumPage },
   { path: '/post/create', name: 'PostCreate', component: PostCreate },
+  { path: '/post/:id', name: 'PostDetail', component: PostDetail },
 
   { path: '/clubs', name: 'Clubs', component: Clubs },
   { path: '/activities', name: 'Activities', component: Activities },
   { path: '/profile', name: 'Profile', component: Profile },
   { path: '/search', name: 'Search', component: Search },
 
-  // 后台管理入口
+  // 后台管理入口（保留多子路由结构）
   {
     path: '/admin',
     component: AdminLayout,
@@ -59,7 +57,6 @@ const routes = [
     ]
   }
 ]
-
 
 const router = createRouter({
   history: createWebHistory(),

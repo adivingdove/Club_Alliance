@@ -1,13 +1,22 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
+import path from 'path'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
-    resolve: {
+  resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': path.resolve(__dirname, './src')
+    }
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080', //  Spring Boot 后端地址
+        changeOrigin: true,
+      
+      }
     }
   }
 })

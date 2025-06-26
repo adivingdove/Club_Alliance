@@ -1,16 +1,34 @@
-import axios from 'axios'
+import request from '@/utils/request'
 
-const BASE_URL = 'http://localhost:8080/api'  // 后端 Spring Boot 地址
-
-export const fetchPostList = async () => {
-  return axios.get(`${BASE_URL}/posts`)
+// 获取帖子详情
+export function fetchPostDetail(id) {
+  return request({
+    url: `/posts/${id}`,
+    method: 'get'
+  })
 }
 
+// 点赞帖子
+export function likePost(id) {
+  return request({
+    url: `/posts/${id}/like`,
+    method: 'post'
+  })
+}
+// 分页获取帖子列表
+export function fetchPostList(params) {
+  return request({
+    url: '/posts',
+    method: 'get',
+    params
+  })
+}
+
+// 发布帖子
 export function createPost(data) {
-  return axios.post('http://localhost:8080/api/posts', data, {
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    withCredentials: false // 若服务端不需要 cookie
+  return request({
+    url: '/posts',
+    method: 'post',
+    data
   })
 }
