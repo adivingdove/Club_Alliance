@@ -43,12 +43,13 @@ public class PostService {
     Long clubId = null;
     if (!clubName.isBlank()) {
         clubId = clubRepository.findByName(clubName)
-                .map(Club::getId)
+                .map(club -> club.getId().longValue()) // 转换 Integer -> Long
                 .orElse(null);
     }
 
-    
-    Page<Post> postPage = postRepository.findByFilters(title, clubId, startTime, status, pageable);
+
+
+        Page<Post> postPage = postRepository.findByFilters(title, clubId, startTime, status, pageable);
 
     for (Post post : postPage.getContent()) {
         clubRepository.findById(post.getClub_id())

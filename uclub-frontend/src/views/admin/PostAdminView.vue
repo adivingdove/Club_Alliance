@@ -13,7 +13,10 @@
         
         </el-table-column>
         <el-table-column prop="user_id" label="作者ID" width="100" />
-        <el-table-column prop="createdAt" label="发布时间" width="160" />
+        <el-table-column label="发布时间" width="180">
+          <template #default="{ row }">{{ formatDate(row.created_at || row.createdAt) }}</template>
+        </el-table-column>
+
         <el-table-column prop="likeCount" label="点赞" width="80" />
         <el-table-column label="操作" width="100">
             <template #default="{ row }">
@@ -44,7 +47,7 @@
       <p><strong>标题：</strong>{{ selectedPost.title }}</p>
       <p><strong>社团：</strong>{{ selectedPost.clubName || '暂无' }}</p>
       <p><strong>作者 ID：</strong>{{ selectedPost.user_id }}</p>
-      <p><strong>发布时间：</strong>{{ selectedPost.createdAt }}</p>
+      <p><strong>发布时间：</strong>{{ formatDate(selectedPost.created_at) }}</p>
       <p><strong>点赞数：</strong>{{ selectedPost.likeCount }}</p>
       <p><strong>内容：</strong></p>
       <div style="white-space: pre-wrap; padding-left: 1em;">{{ selectedPost.content }}</div>
@@ -70,7 +73,22 @@ export default {
     selectedPost: null          // 当前选中的帖子内容
   };
 },
+  
+
   methods: {
+      formatDate(dateStr) {
+        if (!dateStr) return ''
+        const date = new Date(dateStr)
+        return date.toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        })
+      },
+
     async viewPost(id) {
       try {
         const res = await axios.get(`http://localhost:8080/api/admin/posts/${id}`);

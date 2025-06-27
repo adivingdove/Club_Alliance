@@ -1,32 +1,35 @@
 package com.example.uclub_backend.club.entity;
 
-
+import com.example.uclub_backend.model.User;
 import jakarta.persistence.*;
 import lombok.Data;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "club")
 @Data
 public class Club {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     private String name;
-
-    @Column(name = "logo_url")
     private String logoUrl;
-
     private String tags;
 
-    @Column(name = "creator_id")
-    private Long creatorId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creator_id")
+    private User creator;
 
+    @Column(columnDefinition = "text")
     private String description;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private Status status;
 
-    @Column(name = "created_at")
-    private String createdAt;
+    private LocalDateTime createdAt;
+
+    public enum Status {
+        正常, 待审核, 已封禁
+    }
 }

@@ -128,7 +128,8 @@ import {
   Plus,
   Calendar,
   Warning,
-  Ticket
+  Ticket,
+  Setting
 } from '@element-plus/icons-vue'
 
 const collapsed = ref(false)

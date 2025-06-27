@@ -1,15 +1,13 @@
 package com.example.uclub_backend.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.Data;
-import java.util.Date;
+import java.time.LocalDateTime;
 
-@Data
 @Entity
 @Table(name = "user")
+@Data
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -18,10 +16,20 @@ public class User {
     private String password;
     private String nickname;
     private String avatarUrl;
-    private String role;
-    private String status;
-    @Temporal(TemporalType.TIMESTAMP)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private Date createdAt;
 
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+    private LocalDateTime createdAt;
+
+    public enum Role {
+        普通用户, 社团管理员, 系统管理员
+    }
+
+    public enum Status {
+        正常, 禁言, 封禁
+    }
 }

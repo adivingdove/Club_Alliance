@@ -30,7 +30,10 @@ public class UserService {
         Optional<User> optionalUser = userRepository.findById(id);
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
-            user.setStatus(newStatus);
+            String statusStr = newStatus;
+            User.Status status = User.Status.valueOf(statusStr); //转为枚举
+            user.setStatus(status);
+
             userRepository.save(user);
             System.out.println("已经修改");
         } else {
