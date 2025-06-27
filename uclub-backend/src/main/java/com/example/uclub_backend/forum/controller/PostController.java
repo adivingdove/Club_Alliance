@@ -1,6 +1,5 @@
 package com.example.uclub_backend.forum.controller;
 
-import com.example.uclub_backend.forum.repository.PostRepository;
 import com.example.uclub_backend.forum.entity.Post;
 import com.example.uclub_backend.forum.service.PostService;
 

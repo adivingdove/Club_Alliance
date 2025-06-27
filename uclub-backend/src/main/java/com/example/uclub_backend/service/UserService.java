@@ -3,8 +3,6 @@ package com.example.uclub_backend.service;
 import com.example.uclub_backend.model.User;
 import com.example.uclub_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
