@@ -83,9 +83,20 @@
             <span v-if="!collapsed">举报受理</span>
           </el-menu-item>
         </el-sub-menu>
+
+        <el-sub-menu index="7">
+          <template #title>
+            <el-icon><Setting /></el-icon>
+            <span v-if="!collapsed">论坛管理</span>
+          </template>
+          <el-menu-item index="/admin/post-admin">
+            <el-icon><Edit /></el-icon>
+            <span v-if="!collapsed">帖子管理</span>
+          </el-menu-item>
+        </el-sub-menu>
       </el-menu>
 
-      <el-button
+    <el-button
         class="collapse-btn"
         circle
         icon="Menu"

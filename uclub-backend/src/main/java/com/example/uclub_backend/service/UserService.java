@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -24,4 +25,34 @@ public class UserService {
                 (status == null || status.isEmpty()) ? null : status
         );
     }
+
+    public void updateUserStatus(Integer id, String newStatus) {
+        Optional<User> optionalUser = userRepository.findById(id);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            user.setStatus(newStatus);
+            userRepository.save(user);
+            System.out.println("已经修改");
+        } else {
+            throw new RuntimeException("用户未找到");
+        }
+    }
+
+    public boolean verifyUserPasswordAndRoleAndStatus(String email, String password, String requiredRole, String requiredStatus) {
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+
+        if (optionalUser.isEmpty()) {
+            return false;
+        }
+
+        User user = optionalUser.get();
+
+        //三重校验
+        return user.getPassword().equals(password)
+                && requiredRole.equals(user.getRole())
+                && requiredStatus.equals(user.getStatus());
+    }
+
+
+
 }

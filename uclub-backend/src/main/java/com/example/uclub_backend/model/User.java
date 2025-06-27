@@ -1,5 +1,6 @@
 package com.example.uclub_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.Date;
@@ -19,5 +20,8 @@ public class User {
     private String avatarUrl;
     private String role;
     private String status;
+    @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date createdAt;
+
 }

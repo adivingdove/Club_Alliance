@@ -26,6 +26,7 @@ import ClubAnnouncementReviewView from '../views/admin/ClubAnnouncementReviewVie
 import ClubCreationReviewView from '../views/admin/ClubCreationReviewView.vue'
 import ActivityReviewView from '../views/admin/ActivityReviewView.vue'
 import ReportHandlingView from '../views/admin/ReportHandlingView.vue'
+import PostAdminView from '../views/admin/PostAdminView.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -53,7 +54,8 @@ const routes = [
       { path: 'club-announcement-review', component: ClubAnnouncementReviewView },
       { path: 'club-creation-review', component: ClubCreationReviewView },
       { path: 'activity-review', component: ActivityReviewView },
-      { path: 'report-handling', component: ReportHandlingView }
+      { path: 'report-handling', component: ReportHandlingView },
+      { path: 'post-admin', component: PostAdminView}
     ]
   }
 ]
