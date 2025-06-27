@@ -30,5 +30,13 @@ void incrementCommentCount(@Param("postId") Long postId);
 @Query("UPDATE Post p SET p.commentCount = CASE WHEN p.commentCount > 0 THEN p.commentCount - 1 ELSE 0 END WHERE p.id = :postId")
 void decrementCommentCount(@Param("postId") Long postId);
 
+@Modifying
+@Query("UPDATE Post p SET p.likeCount = p.likeCount + 1 WHERE p.id = :postId")
+void incrementLikeCount(@Param("postId") Long postId);
+
+@Modifying
+@Query("UPDATE Post p SET p.likeCount = p.likeCount - 1 WHERE p.id = :postId AND p.likeCount > 0")
+void decrementLikeCount(@Param("postId") Long postId);
+
 
 }

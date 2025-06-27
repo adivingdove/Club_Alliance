@@ -23,17 +23,27 @@
         </el-button>
       </div>
 
-      <!-- 正文 Markdown -->
-      <div class="post-content">
-        <vue3-markdown-it :source="post.content || ''" />
-      </div>
+    <!-- 正文 Markdown -->
+  <div class="post-content" v-if="post.content">
+  <vue3-markdown-it :source="post.content" />
+   </div>
+   <div class="post-content" v-else>
+     正文加载中...
+   </div>
+
 
       <!-- 点赞与评论数 -->
       <div class="post-stats">
-        <el-button size="small" type="primary" @click="likePost" class="like-button">
-          <img :src="thumbIcon" alt="点赞" class="icon-thumb" />
-          {{ post.like_count }}
-        </el-button>
+        <el-button
+       size="small"
+       type="primary"
+       @click="likePost"
+       class="like-button"
+       :plain="!liked"
+       >
+      <img :src="thumbIcon" alt="点赞" class="icon-thumb" />
+       {{ post.like_count }}
+       </el-button>
         <el-tag class="ml-10">评论数: {{ post.comment_count }}</el-tag>
       </div>
 
@@ -97,7 +107,15 @@ import { Delete } from '@element-plus/icons-vue'
 const route = useRoute()
 const router = useRouter()
 const postId = route.params.id
-const post = ref({})
+const post = ref({
+  title: '',
+  content: '',
+  club_id: null,
+  user_id: null,
+  created_at: '',
+  like_count: 0,
+  comment_count: 0
+})
 const newComment = ref('')
 const comments = ref([])
 
@@ -118,12 +136,19 @@ function formatTime(str) {
 // 加载帖子详情
 async function loadPost() {
   try {
-    const res = await axios.get(`http://localhost:8080/api/posts/${postId}`)
-    post.value = res.data
+    const res = await axios.get(`http://localhost:8080/api/posts/${postId}`, {
+      params: { userId: currentUserId }
+    });
+
+    post.value = res.data.post
+    liked.value = res.data.liked ?? false 
+    console.log('帖子详情返回:', res.data)
+
   } catch (err) {
     console.error('加载帖子失败', err)
   }
 }
+
 
 // 删除帖子
 async function deletePost() {
@@ -194,11 +219,6 @@ async function submitComment() {
 }
 
 
-// 点赞逻辑（略，可补充）
-function likePost() {
-  ElMessage.info('点赞功能待实现')
-}
-
 
 async function deleteComment(commentId) {
   try {
@@ -221,6 +241,31 @@ async function deleteComment(commentId) {
       console.error('删除评论失败', err)
       ElMessage.error('删除失败')
     }
+  }
+}
+
+
+
+
+const liked = ref(false)
+const likeLoading = ref(false)
+
+async function likePost() {
+  if (likeLoading.value) return
+  likeLoading.value = true
+
+  try {
+    const url = `http://localhost:8080/api/posts/${postId}/like?userId=${currentUserId}`
+    const res = await axios.post(url)
+
+    ElMessage.success(res.data.message)
+    liked.value = res.data.liked
+    await loadPost()
+  } catch (err) {
+    console.error('点赞失败', err)
+    ElMessage.error('点赞失败')
+  } finally {
+    likeLoading.value = false
   }
 }
 

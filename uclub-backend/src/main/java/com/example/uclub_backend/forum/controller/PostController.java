@@ -1,6 +1,8 @@
 package com.example.uclub_backend.forum.controller;
 
+import com.example.uclub_backend.forum.entity.Like;
 import com.example.uclub_backend.forum.entity.Post;
+import com.example.uclub_backend.forum.service.LikeService;
 import com.example.uclub_backend.forum.service.PostService;
 
 import org.springframework.http.HttpStatus;
@@ -16,9 +18,12 @@ import java.util.Map;
 public class PostController {
 
     private final PostService postService;
+    private final LikeService likeService;
 
-    public PostController(PostService postService) {
+    
+   public  PostController(PostService postService, LikeService likeService) {
         this.postService = postService;
+        this.likeService = likeService;
     }
 
     @PostMapping
@@ -63,22 +68,37 @@ if (!timeRange.isBlank()) {
     return res;
 }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getPost(@PathVariable Long id) {
-        try {
-            Post post = postService.getPostById(id);
-            return ResponseEntity.ok(post);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", 404, "message", e.getMessage()));
-        }
-    }
 
-    @PostMapping("/{id}/like")
-    public ResponseEntity<Void> likePost(@PathVariable Long id) {
-        postService.incrementLikeCount(id);
-        return ResponseEntity.ok().build();
+@GetMapping("/{id}")
+public ResponseEntity<?> getPost(@PathVariable Long id, @RequestParam(required = false) Long userId) {
+    try {
+        Post post = postService.getPostById(id);
+        Map<String, Object> res = new HashMap<>();
+        res.put("post", post);
+
+        if (userId != null) {
+            boolean liked = likeService.hasLiked(userId, Like.TargetType.post, id);
+            res.put("liked", liked);
+        }
+
+        return ResponseEntity.ok(res);
+    } catch (RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("code", 404, "message", e.getMessage()));
     }
+}
+
+@PostMapping("/{id}/like")
+public ResponseEntity<Map<String, Object>> toggleLike(@PathVariable Long id, @RequestParam Long userId) {
+    boolean liked = likeService.toggleLike(userId, Like.TargetType.post, id);
+    Map<String, Object> res = new HashMap<>();
+    res.put("liked", liked);
+    res.put("message", liked ? "点赞成功" : "取消点赞");
+    return ResponseEntity.ok(res);
+}
+
+
+    
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deletePost(@PathVariable Long id, @RequestParam Long userId) {
@@ -96,4 +116,7 @@ if (!timeRange.isBlank()) {
                     .body(Map.of("code", 500, "message", "服务器错误：" + e.getMessage()));
         }
     }
+
+   
+
 }

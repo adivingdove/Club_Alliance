@@ -2,7 +2,7 @@ package com.example.uclub_backend.admin.controller;
 
 import com.example.uclub_backend.forum.entity.Post;
 import com.example.uclub_backend.forum.service.PostService;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +14,7 @@ public class PostAdminController {
 
     private final PostService postService;
 
-    @Autowired
+    
     public PostAdminController(PostService postService) {
         this.postService = postService;
     }
