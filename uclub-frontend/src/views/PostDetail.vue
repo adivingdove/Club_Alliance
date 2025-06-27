@@ -10,7 +10,6 @@
         <span>作者ID: {{ post.user_id }}</span>
         <span>发表于: {{ formatTime(post.created_at) }}</span>
 
-        <!-- 删除按钮：仅当前用户是作者才显示 -->
         <el-button
           v-if="post.user_id === currentUserId"
           type="danger"
@@ -23,27 +22,26 @@
         </el-button>
       </div>
 
-    <!-- 正文 Markdown -->
-  <div class="post-content" v-if="post.content">
-  <vue3-markdown-it :source="post.content" />
-   </div>
-   <div class="post-content" v-else>
-     正文加载中...
-   </div>
-
+      <!-- 正文 Markdown -->
+      <div class="post-content" v-if="post.content">
+        <vue3-markdown-it :source="post.content" />
+      </div>
+      <div class="post-content" v-else>
+        正文加载中...
+      </div>
 
       <!-- 点赞与评论数 -->
       <div class="post-stats">
         <el-button
-       size="small"
-       type="primary"
-       @click="likePost"
-       class="like-button"
-       :plain="!liked"
-       >
-      <img :src="thumbIcon" alt="点赞" class="icon-thumb" />
-       {{ post.like_count }}
-       </el-button>
+          size="small"
+          type="primary"
+          @click="likePost"
+          class="like-button"
+          :plain="!liked"
+        >
+          <img :src="thumbIcon" alt="点赞" class="icon-thumb" />
+          {{ post.like_count }}
+        </el-button>
         <el-tag class="ml-10">评论数: {{ post.comment_count }}</el-tag>
       </div>
 
@@ -56,7 +54,7 @@
           v-model="newComment"
           type="textarea"
           placeholder="写下你的评论..."
-          :rows="3" 
+          :rows="3"
           resize="none"
         />
         <el-button
@@ -71,23 +69,38 @@
         <!-- 评论列表 -->
         <div v-if="comments.length" class="comment-list">
           <div v-for="(comment, index) in comments" :key="index" class="comment-item">
-           <p class="comment-meta">👤 用户ID: {{ comment.userId }}  发表时间： {{ formatTime(comment.createdAt) }}
-       <!-- 当前用户是作者时显示删除按钮 -->
-<el-tooltip content="删除评论" placement="top">
-  <el-button
-    v-if="comment.userId === currentUserId"
-    :icon="Delete"
-    circle
-    type="default"
-    size="small"
-    @click="deleteComment(comment.id)"
-    class="delete-icon-btn"
-    style="color: #888; border-color: #ccc;"
-  />
-</el-tooltip>
-</p>
+            <p class="comment-meta">
+              👤 用户ID: {{ comment.userId }} 发表时间：{{ formatTime(comment.createdAt) }}
+              <!-- 删除按钮 -->
+              <el-tooltip content="删除评论" placement="top">
+                <el-button
+                  v-if="comment.userId === currentUserId"
+                  :icon="Delete"
+                  circle
+                  type="default"
+                  size="small"
+                  @click="deleteComment(comment.id)"
+                  class="delete-icon-btn"
+                  style="color: #888; border-color: #ccc;"
+                />
+              </el-tooltip>
+            </p>
 
             <p class="comment-content">{{ comment.content }}</p>
+
+            <!-- 点赞按钮右下角 -->
+            <div class="comment-like-bar">
+              <el-button
+                size="small"
+                class="like-comment-button"
+                @click="toggleCommentLike(comment)"
+                :plain="!comment.liked"
+                text
+              >
+                <img :src="thumbIcon" alt="点赞" class="icon-thumb" />
+                {{ comment.likeCount }}
+              </el-button>
+            </div>
           </div>
         </div>
         <p v-else class="no-comment">暂无评论</p>
@@ -95,6 +108,7 @@
     </el-card>
   </div>
 </template>
+
 
 <script setup>
 import { ref, onMounted } from 'vue'
@@ -268,6 +282,31 @@ async function likePost() {
     likeLoading.value = false
   }
 }
+async function likeComment(comment) {
+  try {
+    const url = `http://localhost:8080/api/posts/comments/${comment.id}/like?userId=${currentUserId}`;
+    const res = await axios.post(url);
+
+    ElMessage.success(res.data.message);
+    comment.liked = res.data.liked;
+    comment.likeCount = (comment.likeCount || 0) + (res.data.liked ? 1 : -1);
+  } catch (err) {
+    console.error('评论点赞失败', err);
+    ElMessage.error('点赞失败');
+  }
+}
+async function toggleCommentLike(comment) {
+  try {
+    const url = `http://localhost:8080/api/posts/${postId}/comments/${comment.id}/like?userId=${currentUserId}`
+    const res = await axios.post(url)
+    comment.liked = res.data.liked
+    comment.likeCount += res.data.likeCount
+    ElMessage.success(res.data.message)
+  } catch (err) {
+    console.error('评论点赞失败', err)
+    ElMessage.error('点赞失败')
+  }
+}
 
 
 // 初始化加载
@@ -352,10 +391,6 @@ onMounted(() => {
   margin-top: 20px;
 }
 
-.comment-item {
-  border-top: 1px solid #eaeaea;
-  padding: 10px 0;
-}
 
 .comment-meta {
   font-size: 13px;
@@ -371,4 +406,31 @@ onMounted(() => {
   color: #ccc;
   margin-top: 10px;
 }
+
+.comment-item {
+  position: relative;
+  padding: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.comment-like-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.like-comment-button {
+  font-size: 13px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #409eff;
+}
+
+.icon-thumb {
+  width: 16px;
+  height: 16px;
+}
+
 </style>

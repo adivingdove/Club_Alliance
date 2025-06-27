@@ -3,6 +3,8 @@ package com.example.uclub_backend.forum.service;
 import com.example.uclub_backend.forum.entity.Comment;
 import com.example.uclub_backend.forum.entity.CommentStatus;
 import com.example.uclub_backend.forum.mapper.CommentMapper;
+import com.example.uclub_backend.forum.repository.CommentRepository;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,15 +12,18 @@ import java.util.List;
 @Service
 public class CommentService {
 
-    private final CommentMapper commentMapper;
+   private final CommentRepository commentRepository;
 
-   // 注入 PostService
-private final PostService postService;
+   private final CommentMapper commentMapper;
 
-public CommentService(CommentMapper commentMapper, PostService postService) {
-    this.commentMapper = commentMapper;
-    this.postService = postService;
-}
+   private final PostService postService;
+
+   public CommentService(CommentMapper commentMapper, PostService postService,CommentRepository commentRepository) {
+     this.commentMapper = commentMapper;
+     this.postService = postService;
+     this.commentRepository = commentRepository;
+    }
+
     public List<Comment> getCommentsByPostId(Long postId) {
         return commentMapper.findByPostId(postId);
     }
@@ -59,6 +64,11 @@ public CommentService(CommentMapper commentMapper, PostService postService) {
 
     public Comment findById(Long commentId) {
         return commentMapper.findById(commentId);
+    }
+
+    public Comment getCommentById(Long id) {
+    return commentRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("评论不存在: id = " + id));
     }
 
 }

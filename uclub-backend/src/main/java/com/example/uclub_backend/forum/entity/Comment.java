@@ -4,6 +4,8 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
+
 @Data
 public class Comment {
     private Long id;
@@ -11,6 +13,7 @@ public class Comment {
     private Long userId;
     private String content;
     private CommentStatus status;
+    @Column(name = "like_count")
     private Integer likeCount;
     private LocalDateTime createdAt;
 }
