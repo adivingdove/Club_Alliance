@@ -90,14 +90,12 @@ const handlePageChange = (val) => {
   loadPosts()
 }
 const loadPosts = async () => {
-  // 动态生成时间筛选条件
   const filterParams = {
     ...filter.value,
     page: page.value,
     pageSize
   }
 
-  // 时间范围处理
   if (filter.value.timeRange) {
     const now = new Date()
     let startTime = null
@@ -113,11 +111,23 @@ const loadPosts = async () => {
     filterParams.startTime = startTime
   }
 
-  const res = await fetchPostList(filterParams)
+  console.log('[加载帖子] 请求参数:', filterParams)
 
-  posts.value = res.posts
-  total.value = res.total
+  try {
+    const res = await fetchPostList(filterParams)
+    console.log('[加载帖子] 响应数据:', res)
+
+    posts.value = res.posts
+    total.value = res.total
+
+  } catch (err) {
+    console.error('[加载帖子] 请求失败:', err)
+    posts.value = []
+    total.value = 0
+  }
 }
+
+
 
 const resetFilter = () => {
   filter.value = {

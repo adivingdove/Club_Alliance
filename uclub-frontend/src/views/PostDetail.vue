@@ -5,22 +5,42 @@
       <h2 class="post-title">{{ post.title }}</h2>
 
       <!-- 元信息 + 删除按钮 -->
-      <div class="post-meta">
-        <el-tag type="success" size="small">社团ID: {{ post.club_id }}</el-tag>
-        <span>作者ID: {{ post.user_id }}</span>
-        <span>发表于: {{ formatTime(post.created_at) }}</span>
+     <div class="post-meta">
+  <el-tag type="success" size="small">社团ID: {{ post.clubId }}</el-tag>
+  <span>作者ID: {{ post.userId }}</span>
+  <span>发表于: {{ formatTime(post.createdAt) }}</span>
 
-        <el-button
-          v-if="post.user_id === currentUserId"
-          type="danger"
-          size="small"
-          plain
-          style="margin-left: auto"
-          @click="deletePost"
-        >
-          删除
-        </el-button>
-      </div>
+  <!-- 删除按钮 -->
+<el-tooltip
+  v-if="post.userId === currentUserId"
+  content="删除帖子"
+  placement="top"
+>
+  <el-button
+    :icon="Delete"
+    circle
+    type="default"
+    size="small"
+    @click="deletePost"
+    style="color: #888; border-color: #ccc; margin-left: auto;"
+  />
+</el-tooltip>
+
+
+  <!-- 举报按钮 -->
+  <el-tooltip content="举报帖子" placement="top">
+    <el-button
+      circle
+      type="default"
+      size="small"
+      @click="() => openReportDialog('帖子', post.id)"
+
+      style="color: #888; border-color: #ccc; margin-left: 8px;"
+    >
+      <el-icon><WarnTriangleFilled  /></el-icon>
+    </el-button>
+  </el-tooltip>
+</div>
 
       <!-- 正文 Markdown -->
       <div class="post-content" v-if="post.content">
@@ -40,9 +60,9 @@
           :plain="!liked"
         >
           <img :src="thumbIcon" alt="点赞" class="icon-thumb" />
-          {{ post.like_count }}
+          {{ post.likeCount }}
         </el-button>
-        <el-tag class="ml-10">评论数: {{ post.comment_count }}</el-tag>
+        <el-tag class="ml-10">评论数: {{ post.commentCount }}</el-tag>
       </div>
 
       <!-- 评论区域 -->
@@ -69,22 +89,41 @@
         <!-- 评论列表 -->
         <div v-if="comments.length" class="comment-list">
           <div v-for="(comment, index) in comments" :key="index" class="comment-item">
-            <p class="comment-meta">
-              👤 用户ID: {{ comment.userId }} 发表时间：{{ formatTime(comment.createdAt) }}
-              <!-- 删除按钮 -->
-              <el-tooltip content="删除评论" placement="top">
-                <el-button
-                  v-if="comment.userId === currentUserId"
-                  :icon="Delete"
-                  circle
-                  type="default"
-                  size="small"
-                  @click="deleteComment(comment.id)"
-                  class="delete-icon-btn"
-                  style="color: #888; border-color: #ccc;"
-                />
-              </el-tooltip>
-            </p>
+    <p class="comment-meta">
+  👤 用户ID: {{ comment.userId }} 发表时间：{{ formatTime(comment.createdAt) }}
+
+  <!-- 删除按钮 -->
+  <el-tooltip
+  v-if="comment.userId === currentUserId"
+  content="删除评论"
+  placement="top"
+>
+  <el-button
+    :icon="Delete"
+    circle
+    type="default"
+    size="small"
+    @click="deleteComment(comment.id)"
+    class="delete-icon-btn"
+    style="color: #888; border-color: #ccc;"
+  />
+</el-tooltip>
+
+  <!-- 举报按钮：伪按钮效果，保持一致大小 -->
+  <el-tooltip content="举报评论" placement="top">
+    <el-button
+      circle
+      type="default"
+      size="small"
+      @click="() => openReportDialog('评论', comment.id)"
+
+      style="color: #888; border-color: #ccc; margin-left: 8px;"
+    >
+      <el-icon><WarnTriangleFilled /></el-icon>
+    </el-button>
+  </el-tooltip>
+</p>
+
 
             <p class="comment-content">{{ comment.content }}</p>
 
@@ -118,6 +157,14 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import Vue3MarkdownIt from 'vue3-markdown-it'
 import thumbIcon from '@/assets/icons/thumb_up.svg'
 import { Delete } from '@element-plus/icons-vue'
+import{ WarnTriangleFilled }from '@element-plus/icons-vue'
+import { useStore } from 'vuex'
+import { computed } from 'vue'
+
+const store = useStore()
+const userId = computed(() => store.getters.currentUser?.id || null)
+
+const reportReason = ref('')
 const route = useRoute()
 const router = useRouter()
 const postId = route.params.id
@@ -134,7 +181,7 @@ const newComment = ref('')
 const comments = ref([])
 
 // 模拟当前登录用户ID（应从登录信息中获取）
-const currentUserId = 1001
+const currentUserId = userId.value || 1001 // 默认用户ID为1001
 
 // 时间格式化
 function formatTime(str) {
@@ -282,30 +329,60 @@ async function likePost() {
     likeLoading.value = false
   }
 }
-async function likeComment(comment) {
-  try {
-    const url = `http://localhost:8080/api/posts/comments/${comment.id}/like?userId=${currentUserId}`;
-    const res = await axios.post(url);
 
-    ElMessage.success(res.data.message);
-    comment.liked = res.data.liked;
-    comment.likeCount = (comment.likeCount || 0) + (res.data.liked ? 1 : -1);
-  } catch (err) {
-    console.error('评论点赞失败', err);
-    ElMessage.error('点赞失败');
-  }
-}
 async function toggleCommentLike(comment) {
   try {
     const url = `http://localhost:8080/api/posts/${postId}/comments/${comment.id}/like?userId=${currentUserId}`
     const res = await axios.post(url)
     comment.liked = res.data.liked
-    comment.likeCount += res.data.likeCount
+    comment.likeCount = Number(res.data.likeCount || 0)
     ElMessage.success(res.data.message)
   } catch (err) {
     console.error('评论点赞失败', err)
     ElMessage.error('点赞失败')
   }
+}
+
+
+async function openReportDialog(targetType, targetId) {
+  reportReason.value = ''
+  try {
+    await ElMessageBox.prompt('请输入举报理由（不少于5个字）', `举报${targetType}`, {
+      confirmButtonText: '提交举报',
+      cancelButtonText: '取消',
+      inputPattern: /^.{5,}$/,
+      inputErrorMessage: '理由不得少于5个字',
+      inputValue: '',
+    }).then(async ({ value }) => {
+      reportReason.value = value
+
+      await axios.post('http://localhost:8080/api/report', {
+        reporterId: currentUserId,
+        targetType,
+        targetId,
+        reason: reportReason.value,
+      })
+
+      ElMessage.success('举报成功，感谢你的反馈')
+    })
+  } catch (err) {
+  if (err !== 'cancel') {
+    console.error('举报失败', err)
+
+    // 打印更详细的错误信息
+    if (err.response) {
+      console.error('状态码：', err.response.status)
+      console.error('响应体：', err.response.data)
+      console.error('响应头：', err.response.headers)
+    } else if (err.request) {
+      console.error('请求已发出但无响应：', err.request)
+    } else {
+      console.error('请求设置出错：', err.message)
+    }
+
+    ElMessage.error('举报失败：服务器错误')
+  }
+}
 }
 
 

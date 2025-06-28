@@ -12,26 +12,46 @@
       </el-tag>
     </el-card>
 
-    <el-card class="card" style="margin-top: 20px;">
-      <div class="card-title">热门帖子</div>
-      <ol class="hot-posts">
-        <li v-for="(post, index) in hotPosts" :key="index">
-          <span class="index">{{ index + 1 }}.</span>
-          <a href="#" class="title">{{ post }}</a>
-        </li>
-      </ol>
-    </el-card>
+<el-card class="card" style="margin-top: 20px;">
+  <div class="card-title">热门帖子</div>
+  <ol class="hot-posts">
+    <li v-for="(post, index) in hotPosts" :key="post.id" @click="goToPost(post.id)" style="cursor: pointer">
+      <span class="index">{{ index + 1 }}.</span>
+      <span class="title">{{ post.title }}</span>
+    </li>
+  </ol>
+</el-card>
+
   </div>
 </template>
 
 <script setup>
+import { onMounted, ref } from 'vue'
+import axios from 'axios'
+import { useRouter } from 'vue-router'
+
 const hotClubs = ['康腾实践中心', '茶艺协会', '摄影兴趣组']
-const hotPosts = [
-  '一个社区面板调整',
-  '推理社招新',
-  '茶艺社招新',
-  '社团嘉年华'
-]
+const hotPosts = ref([])
+
+const router = useRouter()
+
+async function fetchHotPosts() {
+  try {
+    const res = await axios.get('http://localhost:8080/api/posts/hot')
+    hotPosts.value = res.data
+  } catch (err) {
+    console.error('获取热门帖子失败:', err)
+  }
+}
+
+function goToPost(id) {
+  router.push(`/post/${id}`)
+}
+
+onMounted(() => {
+  fetchHotPosts()
+})
+
 </script>
 
 <style scoped>
@@ -53,6 +73,10 @@ const hotPosts = [
   font-size: 14px;
   line-height: 24px;
 }
+.hot-posts li:hover {
+  background-color: #f5f7fa;
+}
+
 .title {
   color: #333;
   text-decoration: none;

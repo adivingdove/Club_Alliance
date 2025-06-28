@@ -12,7 +12,7 @@
 
     <!-- 社团选择 -->
     <el-select
-      v-model="form.club_id"
+      v-model="form.clubId"
       placeholder="请选择社团"
       style="width: 300px; margin-bottom: 20px"
     >
@@ -55,20 +55,24 @@
 
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
-import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import Vue3MarkdownIt from 'vue3-markdown-it'
 import { createPost } from '@/api/forum'
 import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
+import { computed } from 'vue'
+
+const store = useStore()
+const userId = computed(() => store.getters.currentUser?.id || null)
 
 const router = useRouter()
 
 const form = ref({
-  club_id: '',
+  clubId: '', 
   title: '',
   content: '',
   image_urls: [],
-  user_id: 1001, // 临时测试用户 ID
+  userId: userId.value || 1001 // 默认用户ID为1001
 })
 
 const clubs = ref([])
@@ -111,35 +115,42 @@ const submitPost = async () => {
     image_urls: form.value.image_urls,
   }
 
+  console.log('[提交帖子] 请求体:', payload)
+
   try {
     const res = await createPost(payload)
-    const result = res.data
+    const result = res
 
-if (result && (result.post_id || result.id)) {
+    console.log('[提交帖子] 成功响应:', result)
+
+    const postId = res?.data?.data?.post_id
+if (postId) {
   ElMessage.success('发布成功')
-  const newPostId = result.post_id || result.id
-  router.push(`/post/${newPostId}`)
+  router.push(`/post/${postId}`)
 
   // 重置表单
   form.value = {
-    club_id: '',
+    clubId: '',
     title: '',
     content: '',
     image_urls: [],
-    user_id: 1001
+    userId: userId.value || 1001 // 默认用户ID为1001
   }
 } else {
-  ElMessage.error(result.message || '发布失败')
+  console.error('[提交帖子] 失败响应结构异常:', res)
+  ElMessage.error(res?.data?.message || '发布失败')
 }
+
   } catch (err) {
-    console.error('请求失败：', err)
-    if (err.response) {
-      ElMessage.error(`服务器错误：${err.response.status}`)
-    } else {
-      ElMessage.error('请求失败：' + err.message)
-    }
+    console.error('[提交帖子] 请求失败:', err)
+    console.error('[提交帖子] err.message:', err.message)
+    console.error('[提交帖子] err.response:', err.response)
+    console.error('[提交帖子] err.response?.data:', err.response?.data)
+
+    ElMessage.error(err?.response?.data?.message || '发布失败，请检查后端 /api/post 接口')
   }
 }
+
 
 const handleBeforeUpload = (file) => {
   console.log('[上传准备]', file)
@@ -158,7 +169,7 @@ const handleUploadSuccess = (res, file) => {
 
 const handleUploadError = (err, file) => {
   console.error('[上传失败]', err, file)
-  ElMessage.error('图片上传失败，请检查后端是否启用 /api/upload 接口')
+  ElMessage.error('图片上传失败，请检查后端是否启用 /api/forum/upload 接口')
 }
 
 </script>
