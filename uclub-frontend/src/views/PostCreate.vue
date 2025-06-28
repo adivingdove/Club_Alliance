@@ -34,7 +34,7 @@
 
     <!-- 图片上传 -->
 <el-upload
-  action="/api/upload"
+  action="/api/forum/upload"
   list-type="picture-card"
   :limit="9"
   :on-success="handleUploadSuccess"

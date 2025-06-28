@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 
 @Configuration
-public class WebConfig implements WebMvcConfigurer {
+public class ForumWebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -16,7 +16,7 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
      @Bean
-    public WebMvcConfigurer corsConfigurer() {
+    public WebMvcConfigurer forumCorsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
