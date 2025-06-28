@@ -8,17 +8,27 @@ import java.time.LocalDateTime;
 @Entity
 @Data
 public class Comment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)  // 自增主键（MySQL/Auto）
     private Long id;
 
+    @Column(name = "post_id", nullable = false)
     private Long postId;
+
+    @Column(name = "user_id", nullable = false)
     private Long userId;
+
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
-    private CommentStatus status;
 
-    @Column(name = "like_count")
-    private Integer likeCount;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CommentStatus status = CommentStatus.active;
 
-    private LocalDateTime createdAt;
+    @Column(name = "like_count", nullable = false)
+    private Integer likeCount = 0;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 }

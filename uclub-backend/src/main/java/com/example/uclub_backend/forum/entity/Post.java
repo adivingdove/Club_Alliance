@@ -1,14 +1,11 @@
 package com.example.uclub_backend.forum.entity;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+
 import lombok.Data;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "post")
 @Data
 public class Post {
 
@@ -16,44 +13,57 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 社团ID
-    @Column(name = "club_id")
-    @JsonProperty("club_id")
     private Long clubId;
-
-    // 用户ID
-    @Column(name = "user_id")
-    @JsonProperty("user_id")
     private Long userId;
-
     private String title;
+
+    @Lob
     private String content;
 
-    // 图片URL列表
-    @Column(name = "image_urls", columnDefinition = "TEXT")
-    @Convert(converter = ListToJsonConverter.class)
-    @JsonProperty("image_urls")
-    private List<String> imageUrls;
+    @Column(columnDefinition = "json")
+    private String imageUrls; // JSON 字符串形式存储
 
-    private String status = "active";
+    @Enumerated(EnumType.STRING)
+    private PostStatus status = PostStatus.active;
 
-    //  点赞数
-    @Column(name = "like_count")
-    @JsonProperty("like_count")
     private Integer likeCount = 0;
-
-    //  评论数
-    @Column(name = "comment_count")
-    @JsonProperty("comment_count")
     private Integer commentCount = 0;
 
-    // 发布时间
-    @Column(name = "created_at")
-    @JsonProperty("created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private java.time.LocalDateTime createdAt = java.time.LocalDateTime.now();
 
-    // 非数据库字段：社团名称（前端展示用）
     @Transient
-    @JsonProperty("club_name")
-    private String clubName;
+    private List<String> imageUrlList; // 用于接收前端数组，但不持久化
+
+   @PostLoad
+private void onLoad() {
+    if (this.imageUrls != null) {
+        try {
+            this.imageUrlList = new com.fasterxml.jackson.databind.ObjectMapper()
+                .readValue(this.imageUrls, new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
+        } catch (Exception ignored) {}
+    }
+}
+
+
+    @PrePersist
+    @PreUpdate
+    private void onSave() {
+        // List -> JSON
+        if (this.imageUrlList != null) {
+            try {
+                this.imageUrls = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(this.imageUrlList);
+            } catch (Exception ignored) {}
+        }
+    }
+
+    @Transient // 表示这个字段不映射数据库，只作为临时数据用
+private String clubName;
+
+public String getClubName() {
+    return clubName;
+}
+
+public void setClubName(String clubName) {
+    this.clubName = clubName;
+}
 }

@@ -45,7 +45,9 @@ public class LikeService {
         like.setUserId(userId);
         like.setTargetType(targetType);
         like.setTargetId(targetId);
+    
         likeRepository.save(like);
+        System.out.println(">>> 保存成功！");
          if (targetType == Like.TargetType.post) {
             postRepository.incrementLikeCount(targetId);
         } else if (targetType == Like.TargetType.comment) {

@@ -5,19 +5,20 @@ const BASE_URL = 'http://localhost:8080/api'  // 后端 Spring Boot 地址
 // 获取帖子列表（支持分页和筛选）
 export const fetchPostList = async (params = {}) => {
   const queryParams = new URLSearchParams()
-
-
-  // 添加筛选参数
   if (params.title) queryParams.append('title', params.title)
   if (params.clubName) queryParams.append('clubName', params.clubName)
-  if (params.timeRange) queryParams.append('timeRange', params.timeRange)
   if (params.page) queryParams.append('page', params.page)
   if (params.pageSize) queryParams.append('pageSize', params.pageSize)
   if (params.startTime) queryParams.append('startTime', params.startTime)
-  
-  const url = `${BASE_URL}/posts${queryParams.toString() ? '?' + queryParams.toString() : ''}`
-  return axios.get(url)
+
+  const url = `${BASE_URL}/posts?${queryParams.toString()}`
+
+  const res = await axios.get(url)
+
+  //  直接返回原始 data
+  return res.data // { posts: [...], total: xxx }
 }
+
 
 // 创建新帖子
 export function createPost(data) {
@@ -50,3 +51,4 @@ export function deletePost(id, userId) {
 export function getUserClubs(userId) {
   return axios.get(`${BASE_URL}/clubs/joined`, { params: { userId } })
 }
+

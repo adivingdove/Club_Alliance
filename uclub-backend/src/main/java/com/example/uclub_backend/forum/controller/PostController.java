@@ -2,15 +2,16 @@ package com.example.uclub_backend.forum.controller;
 
 import com.example.uclub_backend.forum.entity.Like;
 import com.example.uclub_backend.forum.entity.Post;
+import com.example.uclub_backend.forum.mapper.PostMapper;
 import com.example.uclub_backend.forum.service.LikeService;
 import com.example.uclub_backend.forum.service.PostService;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -68,6 +69,21 @@ if (!timeRange.isBlank()) {
     return res;
 }
 
+     @Autowired
+    private PostMapper postMapper; 
+
+ @GetMapping("/hot")
+public ResponseEntity<?> getHotPosts() {
+    try {
+        List<Post> hotPosts = postMapper.selectHotPosts();
+        return ResponseEntity.ok(hotPosts);
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body(Map.of(
+            "error", "查询失败",
+            "message", e.getMessage()
+        ));
+    }
+}
 
 @GetMapping("/{id}")
 public ResponseEntity<?> getPost(@PathVariable Long id, @RequestParam(required = false) Long userId) {
@@ -116,6 +132,9 @@ public ResponseEntity<Map<String, Object>> toggleLike(@PathVariable Long id, @Re
                     .body(Map.of("code", 500, "message", "服务器错误：" + e.getMessage()));
         }
     }
+
+
+
 
    
 

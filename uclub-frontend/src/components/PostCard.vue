@@ -3,7 +3,7 @@
     <div class="post-card-body">
       <!-- 左侧：回复数 -->
       <div class="reply-count-box">
-        <div class="reply-number">{{ post.comment_count }}</div>
+        <div class="reply-number">{{ post.commentCount }}</div>
         <div class="reply-text">回复</div>
       </div>
 
@@ -15,22 +15,22 @@
         <div class="post-content-preview">{{ getTextSummary(post.content) }}</div>
 
         <div class="post-meta">
-          <el-tag type="success" size="small" class="club-tag">社团ID: {{ post.club_id }}</el-tag>
-          <span class="author">发布用户ID: {{ post.user_id }}</span>
-          <span class="time">{{ formatTime(post.created_at) }}</span>
+          <el-tag type="success" size="small" class="club-tag">社团ID: {{ post.clubId }}</el-tag>
+          <span class="author">发布用户ID: {{ post.userId }}</span>
+          <span class="time">{{ formatTime(post.createdAt) }}</span>
         </div>
       </div>
 
       <!-- 右侧：操作 -->
       <div class="post-actions">
-   <el-button
+   <el-button link
   size="small"
-  type="link"
+
   @click="$emit('like', post.id)"
   class="like-button"
 >
   <img src="@/assets/icons/thumb_up.svg" alt="点赞" class="icon-thumb" />
-  {{ post.like_count }}
+  {{ post.likeCount }}
 </el-button>
         <el-button size="small" type="info" @click="goToDetail">查看</el-button>
       </div>
