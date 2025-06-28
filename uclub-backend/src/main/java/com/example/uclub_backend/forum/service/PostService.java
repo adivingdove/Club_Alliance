@@ -1,7 +1,6 @@
 package com.example.uclub_backend.forum.service;
-import com.example.uclub_backend.club.entity.Club;
 import com.example.uclub_backend.forum.entity.Post;
-import com.example.uclub_backend.forum.repository.ClubRepository;
+import com.example.uclub_backend.forum.repository.ForumClubRepository;
 import com.example.uclub_backend.forum.repository.PostRepository;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -15,11 +14,11 @@ import java.util.Map;
 @Service
 public class PostService {
     private final PostRepository postRepository;
-    private final ClubRepository clubRepository;
+    private final ForumClubRepository forumClubRepository;
 
-    public PostService(PostRepository postRepository, ClubRepository clubRepository) {
+    public PostService(PostRepository postRepository, ForumClubRepository forumClubRepository) {
         this.postRepository = postRepository;
-        this.clubRepository = clubRepository;
+        this.forumClubRepository = forumClubRepository;
     }
 
     //  分页查询
@@ -42,7 +41,7 @@ public class PostService {
 
     Long clubId = null;
     if (!clubName.isBlank()) {
-        clubId = clubRepository.findByName(clubName)
+        clubId = forumClubRepository.findByName(clubName)
                 .map(club -> club.getId().longValue()) // 转换 Integer -> Long
                 .orElse(null);
     }
@@ -53,7 +52,7 @@ public class PostService {
 
 
         for (Post post : postPage.getContent()) {
-            clubRepository.findById(post.getClubId())
+            forumClubRepository.findById(post.getClubId())
                     .ifPresent(club -> post.setClubName(club.getName()));
         }
 

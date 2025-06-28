@@ -12,10 +12,10 @@ import java.util.*;
 @RestController
 @RequestMapping("/api")
 @CrossOrigin // 允许跨域
-public class UploadController {
+public class ForumUploadController {
 
-    // 上传接口（路径为：/api/upload）
-    @PostMapping("/upload")
+    // 上传接口（路径为：/api/forum/upload）
+    @PostMapping("/forum/upload")
     public ResponseEntity<Map<String, Object>> upload(@RequestParam("file") MultipartFile file) {
         Map<String, Object> res = new HashMap<>();
 
