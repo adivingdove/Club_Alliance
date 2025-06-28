@@ -11,12 +11,9 @@ import com.example.uclub_backend.vo.ClubDetailVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.HashSet;
-import java.util.Set;
 
 @Service
 public class ClubMemberService {
@@ -438,4 +435,39 @@ public class ClubMemberService {
             return memberVO;
         }).collect(Collectors.toList());
     }
+
+    public List<ClubMember> getClubAdminsByClubId(Integer clubId) {
+        // 查询指定社团中角色为干事、副社长、社长的成员
+        return clubMemberRepository.findByClubIdAndRoleIn(
+                clubId,
+                Arrays.asList(ClubMember.MemberRole.干事, ClubMember.MemberRole.副社长, ClubMember.MemberRole.社长)
+        );
+    }
+
+    @Transactional
+    public void revokeAdminRole(Integer memberId) {
+        ClubMember member = clubMemberRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("成员不存在"));
+        // 角色变为普通成员
+        member.setRole(ClubMember.MemberRole.成员);
+        clubMemberRepository.save(member);
+    }
+
+    // 获取所有管理员（排除普通成员）
+    public List<ClubMember> getAllAdmins() {
+        return clubMemberRepository.findAllAdmins();
+    }
+
+    // 根据社团名称模糊查询管理员
+    public List<ClubMember> getAdminsByClubName(String clubName) {
+        List<Club> clubs = clubRepository.findByNameContaining(clubName);
+        if (clubs.isEmpty()) return List.of();
+
+        List<Integer> clubIds = clubs.stream().map(Club::getId).toList();
+
+        // 查询所有这些社团的管理员
+        return clubMemberRepository.findByClubIdInAndRoleNot(clubIds, ClubMember.MemberRole.成员);
+    }
+
+
 }

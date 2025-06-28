@@ -8,6 +8,7 @@ import com.example.uclub_backend.vo.Result;
 import com.example.uclub_backend.vo.ApplicationVO;
 import com.example.uclub_backend.vo.ClubDetailVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
@@ -320,4 +321,18 @@ public class ClubController {
             return Result.error(e.getMessage());
         }
     }
+
+    @GetMapping("/page")
+    public Result<Page<Club>> getClubsPage(
+            @RequestParam(defaultValue = "0") int page,  //默认值改成 0
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String keyword) {
+        try {
+            Page<Club> clubsPage = clubService.getClubsPage(page, pageSize, keyword);
+            return Result.success(clubsPage);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
 } 

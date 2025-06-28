@@ -32,7 +32,12 @@
       <el-table-column prop="nickname" label="昵称" width="180"></el-table-column>
       <el-table-column prop="role" label="角色" width="120"></el-table-column>
       <el-table-column prop="status" label="状态" width="120"></el-table-column>
-      <el-table-column prop="createdAt" label="创建时间" width="180"></el-table-column>
+      <el-table-column
+        prop="createdAt"
+        label="创建时间"
+        width="180"
+        :formatter="formatTime"
+      />
       <el-table-column label="操作" width="120">
         <template #default="scope">
           <el-button type="text" size="small" @click="openStatusDialog(scope.row)">修改状态</el-button>
@@ -70,6 +75,7 @@
 import { ref } from 'vue';
 import axios from 'axios';
 import VerifyPasswordDialog from '@/views/admin/VerifyPasswordDialog.vue';
+import dayjs from 'dayjs'
 
 export default {
   name: 'UserQueryView',
@@ -99,6 +105,10 @@ export default {
 },
 
   methods: {
+    formatTime(row, column, cellValue) {
+      if (!cellValue) return ''
+      return dayjs(cellValue).format('YYYY-MM-DD HH:mm:ss')
+    },
      isPasswordRecentlyVerified() {
     const lastVerify = localStorage.getItem('lastPasswordVerifyTime');
     if (!lastVerify) return false;
@@ -111,7 +121,7 @@ export default {
 
     async queryUsers() {
       try {
-        let url = 'http://localhost:8080/api/users?';
+        let url = 'http://localhost:8080/api/user?';
         if (this.formData.email) {
           url += `email=${this.formData.email}&`;
         }
@@ -155,7 +165,7 @@ export default {
         this.showVerifyDialog = false;
 
         // 调用接口更新状态
-        await axios.put(`http://localhost:8080/api/users/${this.selectedUserId}/status`, {
+        await axios.put(`http://localhost:8080/api/user/${this.selectedUserId}/status`, {
           status: this.selectedStatus
         });
 
