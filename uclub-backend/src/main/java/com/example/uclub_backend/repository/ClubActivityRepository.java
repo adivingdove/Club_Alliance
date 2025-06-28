@@ -13,6 +13,8 @@ public interface ClubActivityRepository extends JpaRepository<ClubActivity, Inte
     
     List<ClubActivity> findByClubId(Integer clubId);
     
+    List<ClubActivity> findByClubIdIn(List<Integer> clubIds);
+    
     List<ClubActivity> findByCreatorId(Integer creatorId);
     
     List<ClubActivity> findByApplyStatus(ClubActivity.ApplyStatus applyStatus);
