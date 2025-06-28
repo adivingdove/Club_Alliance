@@ -13,16 +13,10 @@ const request = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
   config => {
-    // 可以在这里添加token等认证信息
-    const user = localStorage.getItem('user')
-    if (user) {
-      try {
-        const userObj = JSON.parse(user)
-        // 如果需要token，可以在这里添加
-        // config.headers.Authorization = `Bearer ${userObj.token}`
-      } catch (e) {
-        console.error('解析用户信息失败:', e)
-      }
+    // 从localStorage获取token并添加到请求头
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
     }
     return config
   },

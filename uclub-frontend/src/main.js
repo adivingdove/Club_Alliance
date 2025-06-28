@@ -7,6 +7,9 @@ import 'element-plus/dist/index.css'
 
 const app = createApp(App)
 
+// 初始化应用状态
+store.dispatch('initializeApp')
+
 // 注册 Vuex
 app.use(store)
 

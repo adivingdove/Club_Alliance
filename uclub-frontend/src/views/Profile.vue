@@ -1,280 +1,813 @@
 <template>
-    <div class="profile">
-        <h1>个人中心</h1>
-        <p>页面占位符</p>
+  <div class="profile-container">
+    <!-- 未登录状态 -->
+    <div v-if="!isLoggedIn" class="not-logged-in">
+      <el-card class="login-card">
+        <div class="login-header">
+          <el-avatar :size="80" :src="defaultAvatar" />
+          <h2>请先登录</h2>
+          <p>登录后查看您的个人信息</p>
+        </div>
+        <el-button type="primary" size="large" @click="openLoginDialog">
+          立即登录
+        </el-button>
+      </el-card>
     </div>
+
+    <!-- 已登录状态 -->
+    <div v-else class="profile-layout">
+      <!-- 左侧菜单 -->
+      <div class="profile-sidebar">
+        <el-card class="sidebar-card">
+          <!-- 用户头像和基本信息 -->
+          <div class="user-profile">
+            <el-avatar 
+              :size="80" 
+              :src="userAvatarUrl" 
+              @error="handleAvatarError"
+            />
+            <h3>{{ userInfo.nickname || userInfo.account || '用户' }}</h3>
+            <p>{{ userInfo.email }}</p>
+            <el-tag :type="getStatusType(userInfo.status)" size="small">
+              {{ userInfo.status || '正常' }}
+            </el-tag>
+          </div>
+          
+          <!-- 菜单列表 -->
+          <el-menu 
+            :default-active="activeMenu" 
+            class="profile-menu"
+            @select="handleMenuSelect"
+          >
+            <el-menu-item index="profile">
+              <el-icon><User /></el-icon>
+              <span>个人信息</span>
+            </el-menu-item>
+            <el-menu-item index="clubs">
+              <el-icon><Message /></el-icon>
+              <span>我的社团</span>
+            </el-menu-item>
+            <el-menu-item index="activities">
+              <el-icon><Key /></el-icon>
+              <span>我的活动</span>
+            </el-menu-item>
+            <el-menu-item index="settings">
+              <el-icon><Lock /></el-icon>
+              <span>账户设置</span>
+            </el-menu-item>
+            <el-menu-item index="recent">
+              <el-icon><SwitchButton /></el-icon>
+              <span>最近活动</span>
+            </el-menu-item>
+          </el-menu>
+        </el-card>
+      </div>
+
+      <!-- 右侧内容区 -->
+      <div class="profile-content">
+        <!-- 个人信息 -->
+        <div v-if="activeMenu === 'profile'" class="content-section">
+          <el-card>
+            <template #header>
+              <div class="card-header">
+                <span>个人信息</span>
+                <div class="header-actions">
+                  <el-button type="primary" size="small" @click="showAvatarUpload = true">
+                    更换头像
+                  </el-button>
+                  <el-button type="primary" size="small" @click="editUserInfo">
+                    编辑信息
+                  </el-button>
+                </div>
+              </div>
+            </template>
+            
+            <el-table :data="userTableData" style="width: 100%">
+              <el-table-column prop="field" label="字段" width="150"></el-table-column>
+              <el-table-column prop="value" label="值"></el-table-column>
+              <el-table-column prop="status" label="状态" width="120">
+                <template #default="scope">
+                  <el-tag 
+                    :type="getStatusType(scope.row.status)" 
+                    v-if="scope.row.status"
+                  >
+                    {{ scope.row.status }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-card>
+        </div>
+
+        <!-- 我的社团 -->
+        <div v-if="activeMenu === 'clubs'" class="content-section">
+          <el-card>
+            <template #header>
+              <div class="card-header">
+                <span>我的社团</span>
+              </div>
+            </template>
+            <div v-if="myClubs.length > 0">
+              <el-row :gutter="20">
+                <el-col :span="8" v-for="club in myClubs" :key="club.id">
+                  <el-card class="club-card" shadow="hover">
+                    <img :src="club.logoUrl || defaultAvatar" class="club-logo" />
+                    <h4>{{ club.name }}</h4>
+                    <p>{{ club.description }}</p>
+                    <el-tag :type="getClubRoleType(club.role)" size="small">
+                      {{ club.role }}
+                    </el-tag>
+                  </el-card>
+                </el-col>
+              </el-row>
+            </div>
+            <el-empty v-else description="暂无加入的社团" />
+          </el-card>
+        </div>
+
+        <!-- 我的活动 -->
+        <div v-if="activeMenu === 'activities'" class="content-section">
+          <el-card>
+            <template #header>
+              <div class="card-header">
+                <span>我的活动</span>
+              </div>
+            </template>
+            <div v-if="myActivities.length > 0">
+              <el-table :data="myActivities" style="width: 100%">
+                <el-table-column prop="title" label="活动名称" width="200"></el-table-column>
+                <el-table-column prop="description" label="活动描述"></el-table-column>
+                <el-table-column prop="location" label="活动地点" width="150"></el-table-column>
+                <el-table-column prop="startTime" label="开始时间" width="180"></el-table-column>
+                <el-table-column prop="status" label="状态" width="100">
+                  <template #default="scope">
+                    <el-tag :type="getActivityStatusType(scope.row.status)">
+                      {{ scope.row.status }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+            <el-empty v-else description="暂无参与的活动" />
+          </el-card>
+        </div>
+
+        <!-- 账户设置 -->
+        <div v-if="activeMenu === 'settings'" class="content-section">
+          <el-card>
+            <template #header>
+              <div class="card-header">
+                <span>账户设置</span>
+              </div>
+            </template>
+            <el-form label-width="120px">
+              <el-form-item label="修改密码">
+                <el-button type="primary" @click="showChangePassword = true">
+                  修改密码
+                </el-button>
+              </el-form-item>
+              <el-form-item label="隐私设置">
+                <el-button type="primary" @click="showPrivacySettings = true">
+                  隐私设置
+                </el-button>
+              </el-form-item>
+              <el-form-item label="通知设置">
+                <el-button type="primary" @click="showNotificationSettings = true">
+                  通知设置
+                </el-button>
+              </el-form-item>
+            </el-form>
+          </el-card>
+        </div>
+
+        <!-- 最近活动 -->
+        <div v-if="activeMenu === 'recent'" class="content-section">
+          <el-card>
+            <template #header>
+              <div class="card-header">
+                <span>最近活动</span>
+              </div>
+            </template>
+            <div v-if="recentActivities.length > 0">
+              <div 
+                v-for="activity in recentActivities" 
+                :key="activity.id" 
+                class="activity-item"
+              >
+                <div class="activity-icon">
+                  <el-icon><Message /></el-icon>
+                </div>
+                <div class="activity-content">
+                  <h4>{{ activity.title }}</h4>
+                  <p>{{ activity.description }}</p>
+                  <span class="activity-time">{{ formatDate(activity.createdAt) }}</span>
+                </div>
+              </div>
+            </div>
+            <el-empty v-else description="暂无最近活动" />
+          </el-card>
+        </div>
+      </div>
+    </div>
+
+    <!-- 头像上传对话框 -->
+    <el-dialog 
+      v-model="showAvatarUpload" 
+      title="更换头像" 
+      width="400px"
+    >
+      <div class="avatar-upload">
+        <el-upload
+          class="avatar-uploader"
+          :action="uploadUrl"
+          :headers="uploadHeaders"
+          :show-file-list="false"
+          :on-success="handleAvatarSuccess"
+          :before-upload="beforeAvatarUpload"
+        >
+          <img v-if="avatarUrl" :src="avatarUrl" class="avatar" />
+          <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+        </el-upload>
+        <div class="upload-tips">
+          <p>支持 JPG、PNG 格式，文件大小不超过 2MB</p>
+        </div>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showAvatarUpload = false">取消</el-button>
+          <el-button type="primary" @click="confirmAvatarUpload">
+            确认上传
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 编辑用户信息对话框 -->
+    <el-dialog 
+      v-model="showEditDialog" 
+      title="编辑个人信息" 
+      width="500px"
+    >
+      <el-form :model="editForm" label-width="100px">
+        <el-form-item label="账号">
+          <el-input v-model="editForm.account" disabled />
+        </el-form-item>
+        <el-form-item label="邮箱">
+          <el-input v-model="editForm.email" disabled />
+        </el-form-item>
+        <el-form-item label="昵称">
+          <el-input v-model="editForm.nickname" placeholder="请输入昵称" />
+        </el-form-item>
+        <el-form-item label="角色">
+          <el-select v-model="editForm.role" disabled>
+            <el-option label="普通用户" value="普通用户" />
+            <el-option label="社团管理员" value="社团管理员" />
+            <el-option label="系统管理员" value="系统管理员" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="editForm.status" disabled>
+            <el-option label="正常" value="正常" />
+            <el-option label="禁言" value="禁言" />
+            <el-option label="封禁" value="封禁" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showEditDialog = false">取消</el-button>
+          <el-button type="primary" @click="saveUserInfo">
+            保存
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-import { User, Lock, SwitchButton, Message, Key } from '@element-plus/icons-vue'
-import {
-  login,
-  register,
-  sendRegisterCode as sendRegisterCodeAPI,
-  sendResetCode as sendResetCodeAPI,
-  resetPassword as resetPasswordAPI
-} from '@/api/userApi'
-import request from '@/utils/request'
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { User, Lock, SwitchButton, Message, Key, Plus } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
+import { 
+  getProfileInfo, 
+  updateProfile, 
+  changePassword, 
+  getMyClubs, 
+  getMyActivities, 
+  getRecentActivities,
+  uploadAvatar 
+} from '../api/profileApi'
 
+const router = useRouter()
 const store = useStore()
+
+// 响应式数据
 const isLoggedIn = computed(() => store.getters.isLoggedIn)
-const showLoginDialog = ref(false)
-const showUserMenu = ref(false)
-const showUserInfoDialog = ref(false)
-const showForgotPasswordDialog = ref(false)
-const isRegister = ref(false)
-const countdown = ref(0)
-const registerCountdown = ref(0)
+const showAvatarUpload = ref(false)
+const showEditDialog = ref(false)
+const avatarUrl = ref('')
+const activeMenu = ref('profile')
 
-const registerForm = reactive({
+// 编辑表单
+const editForm = ref({
   account: '',
   email: '',
-  password: '',
-  confirmPassword: '',
   nickname: '',
-  emailCode: ''
+  role: '',
+  status: ''
 })
-const loginForm = reactive({
-  account: '',
-  password: ''
-})
-
-// 忘记密码表单数据
-const forgotPasswordForm = reactive({
-  username: '',
-  email: '',
-  verificationCode: '',
-  newPassword: '',
-  confirmNewPassword: ''
-})
-
-// 用户信息
-const userInfo = computed(() => store.getters.currentUser || { username: '', email: '', registerTime: '', avatar: '' })
 
 // 默认头像
-const userAvatar = ref('https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png')
+const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
 
-// 表单验证规则
-const registerRules = {
-  account: [
-    { required: true, message: '请输入账号', trigger: 'blur' }
-  ],
-  email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 20, message: '密码长度在 6 到 20 个字符', trigger: 'blur' }
-  ],
-  confirmPassword: [
-    { required: true, message: '请确认密码', trigger: 'blur' },
-    {
-      validator: (rule, value, callback) => {
-        if (value !== registerForm.password) {
-          callback(new Error('两次输入密码不一致'))
-        } else {
-          callback()
-        }
-      },
-      trigger: 'blur'
-    }
-  ],
-  nickname: [
-    { required: true, message: '请输入昵称', trigger: 'blur' }
-  ],
-  emailCode: [
-    { required: true, message: '请输入邮箱验证码', trigger: 'blur' },
-    { len: 6, message: '验证码长度为6位', trigger: 'blur' }
-  ]
+// 用户信息
+const userInfo = computed(() => store.getters.currentUser || {})
+
+// 用户头像URL
+const userAvatarUrl = computed(() => {
+  if (userInfo.value.headUrl) {
+    return userInfo.value.headUrl.startsWith('http') 
+      ? userInfo.value.headUrl 
+      : `http://localhost:8080${userInfo.value.headUrl}`
+  }
+  return defaultAvatar
+})
+
+// 用户表格数据
+const userTableData = computed(() => [
+  {
+    field: '用户ID',
+    value: userInfo.value.id || '未知',
+    status: null
+  },
+  {
+    field: '账号',
+    value: userInfo.value.account || '未知',
+    status: null
+  },
+  {
+    field: '邮箱',
+    value: userInfo.value.email || '未知',
+    status: null
+  },
+  {
+    field: '昵称',
+    value: userInfo.value.nickname || '未设置',
+    status: null
+  },
+  {
+    field: '角色',
+    value: userInfo.value.role || '普通用户',
+    status: userInfo.value.role || '普通用户'
+  },
+  {
+    field: '账号状态',
+    value: userInfo.value.status || '正常',
+    status: userInfo.value.status || '正常'
+  },
+  {
+    field: '注册时间',
+    value: formatDate(userInfo.value.createdAt) || '未知',
+    status: null
+  }
+])
+
+// 我的社团数据
+const myClubs = ref([])
+
+// 我的活动数据
+const myActivities = ref([])
+
+// 最近活动
+const recentActivities = ref([])
+
+// 上传相关
+const uploadUrl = 'http://localhost:8080/api/profile/upload/avatar'
+const uploadHeaders = computed(() => ({
+  'Authorization': `Bearer ${localStorage.getItem('token')}`
+}))
+
+// 方法
+const openLoginDialog = () => {
+  window.dispatchEvent(new CustomEvent('showLoginDialog'))
 }
-const loginRules = {
-  account: [
-    { required: true, message: '请输入账号或邮箱', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' }
-  ]
-}
 
-const loginFormRef = ref()
-const forgotPasswordFormRef = ref()
-const registerFormRef = ref()
-
-// 切换登录/注册模式
-const toggleMode = () => {
-  isRegister.value = !isRegister.value
-  // 清空表单
-  Object.keys(registerForm).forEach(k => registerForm[k] = '')
-  loginForm.account = ''
-  loginForm.password = ''
-}
-
-// 处理登录/注册
-const handleSubmit = async () => {
-  try {
-    if (isRegister.value) {
-      await registerFormRef.value.validate()
-      if (registerForm.password !== registerForm.confirmPassword) {
-        ElMessage.error('两次输入密码不一致')
-        return
-      }
-      const res = await register({
-        account: registerForm.account,
-        email: registerForm.email,
-        password: registerForm.password,
-        nickname: registerForm.nickname,
-        emailCode: registerForm.emailCode
-      })
-      if (res.data.code === 200) {
-        ElMessage.success('注册成功，请登录')
-        isRegister.value = false
-        showLoginDialog.value = false
-        Object.keys(registerForm).forEach(k => registerForm[k] = '')
-      } else {
-        ElMessage.error(res.data.message || '注册失败')
-      }
-    } else {
-      await loginFormRef.value.validate()
-      const res = await login({
-        account: loginForm.account,
-        password: loginForm.password
-      })
-      if (res.data.code === 200) {
-        ElMessage.success('登录成功')
-        localStorage.setItem('token', res.data.data.token)
-        localStorage.setItem('user', JSON.stringify(res.data.data))
-        store.dispatch('login', res.data.data)
-        showLoginDialog.value = false
-        loginForm.account = ''
-        loginForm.password = ''
-      } else {
-        ElMessage.error(res.data.message || '登录失败')
-      }
-    }
-  } catch (error) {
-    ElMessage.error('请填写所有必填项')
-    console.error('登录/注册错误:', error)
+const handleMenuSelect = (index) => {
+  activeMenu.value = index
+  // 根据菜单加载相应数据
+  switch (index) {
+    case 'clubs':
+      fetchMyClubs()
+      break
+    case 'activities':
+      fetchMyActivities()
+      break
+    case 'recent':
+      fetchRecentActivities()
+      break
   }
 }
 
-// 发送验证码（忘记密码）
-const sendVerificationCode = async () => {
-  try {
-    if (!forgotPasswordForm.username || !forgotPasswordForm.email) {
-      ElMessage.error('请先填写用户名和邮箱')
-      return
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(forgotPasswordForm.email)) {
-      ElMessage.error('请输入正确的邮箱格式')
-      return
-    }
-    await sendResetCodeAPI({
-      username: forgotPasswordForm.username,
-      email: forgotPasswordForm.email
-    })
-    ElMessage.success('验证码已发送到您的邮箱')
-    countdown.value = 60
-    const timer = setInterval(() => {
-      countdown.value--
-      if (countdown.value <= 0) clearInterval(timer)
-    }, 1000)
-  } catch (error) {
-    ElMessage.error('发送验证码失败，请重试')
-    console.error('发送验证码错误:', error)
+const handleAvatarError = () => {
+  ElMessage.error('头像加载失败')
+}
+
+const beforeAvatarUpload = (file) => {
+  const isJPG = file.type === 'image/jpeg' || file.type === 'image/png'
+  const isLt2M = file.size / 1024 / 1024 < 2
+
+  if (!isJPG) {
+    ElMessage.error('上传头像图片只能是 JPG/PNG 格式!')
+  }
+  if (!isLt2M) {
+    ElMessage.error('上传头像图片大小不能超过 2MB!')
+  }
+  return isJPG && isLt2M
+}
+
+const handleAvatarSuccess = (response) => {
+  if (response.code === 200) {
+    avatarUrl.value = response.data.url
+    ElMessage.success('头像上传成功')
+  } else {
+    ElMessage.error('头像上传失败')
   }
 }
 
-// 发送注册验证码
-const sendRegisterCode = async () => {
-  try {
-    if (!registerForm.email) {
-      ElMessage.error('请先填写邮箱')
-      return
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(registerForm.email)) {
-      ElMessage.error('请输入正确的邮箱格式')
+const confirmAvatarUpload = async () => {
+  if (!avatarUrl.value) {
+    ElMessage.error('请先上传头像')
     return
   }
-    await sendRegisterCodeAPI({ email: registerForm.email })
-    ElMessage.success('注册验证码已发送到您的邮箱')
-    registerCountdown.value = 60
-    const timer = setInterval(() => {
-      registerCountdown.value--
-      if (registerCountdown.value <= 0) clearInterval(timer)
-    }, 1000)
-  } catch (error) {
-    ElMessage.error('发送验证码失败，请重试')
-    console.error('发送注册验证码错误:', error)
-  }
-}
-
-// 处理重置密码
-const handleResetPassword = async () => {
+  
   try {
-    await forgotPasswordFormRef.value.validate()
-    if (forgotPasswordForm.newPassword !== forgotPasswordForm.confirmNewPassword) {
-      ElMessage.error('两次输入的新密码不一致')
-      return
-    }
-    await resetPasswordAPI({
-      username: forgotPasswordForm.username,
-      email: forgotPasswordForm.email,
-      verificationCode: forgotPasswordForm.verificationCode,
-      newPassword: forgotPasswordForm.newPassword
+    const res = await updateProfile({
+      headUrl: avatarUrl.value
     })
-    ElMessage.success('密码重置成功！请使用新密码登录')
-    showForgotPasswordDialog.value = false
-    forgotPasswordForm.username = ''
-    forgotPasswordForm.email = ''
-    forgotPasswordForm.verificationCode = ''
-    forgotPasswordForm.newPassword = ''
-    forgotPasswordForm.confirmNewPassword = ''
-  } catch (error) {
-    ElMessage.error('重置密码失败，请重试')
-    console.error('重置密码错误:', error)
-  }
-}
-
-// 显示用户信息
-const showUserInfo = () => {
-  showUserInfoDialog.value = true
-  showUserMenu.value = false
-}
-
-// 退出登录
-const logout = () => {
-  localStorage.removeItem('token')
-  localStorage.removeItem('user')
-  store.dispatch('logout')
-  showUserMenu.value = false
-  ElMessage.success('已退出登录')
-}
-
-// 页面加载时检查登录状态
-const checkLoginStatus = () => {
-  const token = localStorage.getItem('token')
-  const userStr = localStorage.getItem('user')
-  if (token && userStr) {
-    try {
-      const user = JSON.parse(userStr)
+    
+    if (res.data.code === 200) {
+      ElMessage.success('头像更新成功')
+      showAvatarUpload.value = false
+      // 更新本地用户信息
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      user.headUrl = avatarUrl.value
+      localStorage.setItem('user', JSON.stringify(user))
       store.dispatch('login', user)
-    } catch (error) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
+    } else {
+      ElMessage.error(res.data.message || '头像更新失败')
     }
+  } catch (error) {
+    ElMessage.error('头像更新失败')
+    console.error('更新头像错误:', error)
   }
 }
-checkLoginStatus()
+
+const getStatusType = (status) => {
+  switch (status) {
+    case '正常':
+      return 'success'
+    case '禁言':
+      return 'warning'
+    case '封禁':
+      return 'danger'
+    case '普通用户':
+      return 'info'
+    case '社团管理员':
+      return 'warning'
+    case '系统管理员':
+      return 'danger'
+    default:
+      return 'info'
+  }
+}
+
+const getClubRoleType = (role) => {
+  switch (role) {
+    case '社长':
+      return 'danger'
+    case '副社长':
+      return 'warning'
+    case '干事':
+      return 'info'
+    case '成员':
+      return 'success'
+    default:
+      return 'info'
+  }
+}
+
+const getActivityStatusType = (status) => {
+  switch (status) {
+    case '通过':
+      return 'success'
+    case '待审核':
+      return 'warning'
+    case '拒绝':
+      return 'danger'
+    default:
+      return 'info'
+  }
+}
+
+const editUserInfo = () => {
+  editForm.value = {
+    account: userInfo.value.account || '',
+    email: userInfo.value.email || '',
+    nickname: userInfo.value.nickname || '',
+    role: userInfo.value.role || '普通用户',
+    status: userInfo.value.status || '正常'
+  }
+  showEditDialog.value = true
+}
+
+const saveUserInfo = async () => {
+  try {
+    const res = await updateProfile({
+      nickname: editForm.value.nickname
+    })
+    
+    if (res.data.code === 200) {
+      ElMessage.success('信息更新成功')
+      showEditDialog.value = false
+      // 更新本地用户信息
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      user.nickname = editForm.value.nickname
+      localStorage.setItem('user', JSON.stringify(user))
+      store.dispatch('login', user)
+    } else {
+      ElMessage.error(res.data.message || '信息更新失败')
+    }
+  } catch (error) {
+    ElMessage.error('信息更新失败')
+    console.error('更新用户信息错误:', error)
+  }
+}
+
+const formatDate = (dateString) => {
+  if (!dateString) return '未知'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+// 获取我的社团
+const fetchMyClubs = async () => {
+  try {
+    const response = await getMyClubs()
+    
+    if (response.data.code === 200) {
+      myClubs.value = response.data.data || []
+    }
+  } catch (error) {
+    console.error('获取我的社团失败:', error)
+  }
+}
+
+// 获取我的活动
+const fetchMyActivities = async () => {
+  try {
+    const response = await getMyActivities()
+    
+    if (response.data.code === 200) {
+      myActivities.value = response.data.data || []
+    }
+  } catch (error) {
+    console.error('获取我的活动失败:', error)
+  }
+}
+
+// 获取最近活动
+const fetchRecentActivities = async () => {
+  try {
+    const response = await getRecentActivities()
+    
+    if (response.data.code === 200) {
+      recentActivities.value = response.data.data || []
+    }
+  } catch (error) {
+    console.error('获取最近活动失败:', error)
+  }
+}
+
+onMounted(() => {
+  if (isLoggedIn.value) {
+    fetchRecentActivities()
+  }
+})
 </script>
 
 <style scoped>
-.profile {
+.profile-container {
+  max-width: 1400px;
+  margin: 0 auto;
   padding: 20px;
+}
+
+.not-logged-in {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.login-card {
+  text-align: center;
+  padding: 40px;
+}
+
+.login-header {
+  margin-bottom: 30px;
+}
+
+.login-header h2 {
+  margin: 20px 0 10px;
+  color: #333;
+}
+
+.login-header p {
+  color: #666;
+  margin: 0;
+}
+
+.profile-layout {
+  display: flex;
+  gap: 20px;
+  min-height: 600px;
+}
+
+.profile-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+}
+
+.sidebar-card {
+  height: 100%;
+}
+
+.user-profile {
+  text-align: center;
+  padding: 20px 0;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 20px;
+}
+
+.user-profile h3 {
+  margin: 15px 0 5px 0;
+  color: #333;
+}
+
+.user-profile p {
+  margin: 5px 0 10px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.profile-menu {
+  border: none;
+}
+
+.profile-menu .el-menu-item {
+  height: 50px;
+  line-height: 50px;
+}
+
+.profile-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.content-section {
+  height: 100%;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: #333;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.club-card {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.club-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.club-card h4 {
+  margin: 10px 0 5px 0;
+  color: #333;
+}
+
+.club-card p {
+  margin: 5px 0 10px 0;
+  color: #666;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 15px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-icon {
+  margin-right: 15px;
+  color: #409EFF;
+  margin-top: 2px;
+}
+
+.activity-content h4 {
+  margin: 0 0 5px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.activity-content p {
+  margin: 0 0 5px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.activity-time {
+  color: #999;
+  font-size: 12px;
+}
+
+.avatar-upload {
+  text-align: center;
+}
+
+.avatar-uploader {
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  width: 178px;
+  height: 178px;
+  margin: 0 auto;
+}
+
+.avatar-uploader:hover {
+  border-color: #409EFF;
+}
+
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 178px;
+  height: 178px;
+  line-height: 178px;
+  text-align: center;
+}
+
+.avatar {
+  width: 178px;
+  height: 178px;
+  display: block;
+}
+
+.upload-tips {
+  margin-top: 15px;
+  color: #666;
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .profile-layout {
+    flex-direction: column;
+  }
+  
+  .profile-sidebar {
+    width: 100%;
+  }
 }
 </style>

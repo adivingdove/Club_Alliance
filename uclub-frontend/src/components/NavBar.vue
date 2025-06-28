@@ -223,7 +223,7 @@
 
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import LoginFloatingWindow from '../views/LoginFloatingWindow.vue'; 
 import ManageFloatingWindow from '../views/ManageFloatingWindow.vue';
@@ -503,7 +503,30 @@ const checkLoginStatus = () => {
     }
   }
 }
+
+// 监听用户登出事件
+const handleUserLogout = () => {
+  store.dispatch('logout')
+  showUserMenu.value = false
+}
+
 checkLoginStatus()
+
+// 监听来自其他组件的登录请求
+window.addEventListener('showLoginDialog', () => {
+  showLoginDialog.value = true
+})
+
+// 监听用户登出事件
+window.addEventListener('userLogout', handleUserLogout)
+
+// 组件卸载时移除事件监听器
+onUnmounted(() => {
+  window.removeEventListener('showLoginDialog', () => {
+    showLoginDialog.value = true
+  })
+  window.removeEventListener('userLogout', handleUserLogout)
+})
 
 // original functions
 function openLoginModal() {
