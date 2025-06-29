@@ -378,7 +378,7 @@ const handleSubmit = async () => {
       })
       if (res.data.code === 200) {
         ElMessage.success('登录成功')
-        localStorage.setItem('token', res.data.data.token)
+        localStorage.setItem('token', res.data.token)
         localStorage.setItem('user', JSON.stringify(res.data.data))
         store.dispatch('login', res.data.data)
         showLoginDialog.value = false

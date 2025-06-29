@@ -50,9 +50,14 @@ public class ProfileController {
         Map<String, Object> response = new HashMap<>();
 
         try {
+            System.out.println("头像上传请求 - Token: " + token);
+            
             // 验证token并获取用户信息
             String userAccount = tokenManager.validateTokenAndGetUsername(token.replace("Bearer ", ""));
+            System.out.println("Token验证结果 - 用户账号: " + userAccount);
+            
             if (userAccount == null) {
+                System.out.println("Token验证失败");
                 response.put("code", 401);
                 response.put("message", "未授权访问");
                 return ResponseEntity.status(401).body(response);
@@ -60,10 +65,13 @@ public class ProfileController {
 
             Optional<User> userOpt = userRepository.findByAccount(userAccount);
             if (!userOpt.isPresent()) {
+                System.out.println("用户不存在: " + userAccount);
                 response.put("code", 404);
                 response.put("message", "用户不存在");
                 return ResponseEntity.status(404).body(response);
             }
+
+            System.out.println("文件信息 - 名称: " + file.getOriginalFilename() + ", 大小: " + file.getSize());
 
             // 验证文件类型
             String originalName = Objects.requireNonNull(file.getOriginalFilename());
@@ -84,14 +92,17 @@ public class ProfileController {
             // 创建头像存储目录
             String uploadDir = System.getProperty("user.dir") + "/uploads/avatars";
             Files.createDirectories(Paths.get(uploadDir));
+            System.out.println("上传目录: " + uploadDir);
 
             // 生成唯一文件名
             String filename = UUID.randomUUID() + suffix;
             File dest = new File(uploadDir, filename);
             file.transferTo(dest);
+            System.out.println("文件保存成功: " + dest.getAbsolutePath());
 
             // 返回访问URL
             String avatarUrl = "/uploads/avatars/" + filename;
+            System.out.println("头像URL: " + avatarUrl);
 
             response.put("code", 200);
             response.put("message", "头像上传成功");
@@ -100,6 +111,7 @@ public class ProfileController {
 
         } catch (Exception e) {
             e.printStackTrace();
+            System.out.println("头像上传异常: " + e.getMessage());
             response.put("code", 500);
             response.put("message", "头像上传失败：" + e.getMessage());
             return ResponseEntity.status(500).body(response);

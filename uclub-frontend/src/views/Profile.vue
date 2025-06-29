@@ -223,13 +223,15 @@
           :headers="uploadHeaders"
           :show-file-list="false"
           :on-success="handleAvatarSuccess"
+          :on-error="handleAvatarUploadError"
           :before-upload="beforeAvatarUpload"
+          :http-request="customUpload"
         >
-          <img v-if="avatarUrl" :src="avatarUrl" class="avatar" />
+          <img v-if="avatarUrl" :src="getFullAvatarUrl(avatarUrl)" class="avatar" />
           <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
         </el-upload>
         <div class="upload-tips">
-          <p>支持 JPG、PNG 格式，文件大小不超过 2MB</p>
+          <p>支持 JPG、PNG、GIF 格式，文件大小不超过 2MB</p>
         </div>
       </div>
       <template #footer>
@@ -326,12 +328,35 @@ const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e5
 // 用户信息
 const userInfo = computed(() => store.getters.currentUser || {})
 
+// Token状态
+const tokenStatus = computed(() => {
+  try {
+    const token = localStorage.getItem('token')
+    return {
+      exists: !!token,
+      length: token ? token.length : 0
+    }
+  } catch (error) {
+    return {
+      exists: false,
+      length: 0
+    }
+  }
+})
+
 // 用户头像URL
 const userAvatarUrl = computed(() => {
   if (userInfo.value.headUrl) {
-    return userInfo.value.headUrl.startsWith('http') 
-      ? userInfo.value.headUrl 
-      : `http://localhost:8080${userInfo.value.headUrl}`
+    // 如果是完整的URL（以http开头），直接使用
+    if (userInfo.value.headUrl.startsWith('http')) {
+      return userInfo.value.headUrl
+    }
+    // 如果是相对路径，添加后端域名
+    if (userInfo.value.headUrl.startsWith('/')) {
+      return `http://localhost:8080${userInfo.value.headUrl}`
+    }
+    // 其他情况，添加完整路径
+    return `http://localhost:8080/uploads/avatars/${userInfo.value.headUrl}`
   }
   return defaultAvatar
 })
@@ -385,7 +410,11 @@ const myActivities = ref([])
 const recentActivities = ref([])
 
 // 上传相关
-const uploadUrl = 'http://localhost:8080/api/profile/upload/avatar'
+const uploadUrl = computed(() => {
+  const baseURL = 'http://localhost:8080'
+  return `${baseURL}/api/profile/upload/avatar`
+})
+
 const uploadHeaders = computed(() => ({
   'Authorization': `Bearer ${localStorage.getItem('token')}`
 }))
@@ -416,25 +445,82 @@ const handleAvatarError = () => {
 }
 
 const beforeAvatarUpload = (file) => {
-  const isJPG = file.type === 'image/jpeg' || file.type === 'image/png'
+  const isJPG = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/gif'
   const isLt2M = file.size / 1024 / 1024 < 2
 
   if (!isJPG) {
-    ElMessage.error('上传头像图片只能是 JPG/PNG 格式!')
+    ElMessage.error('上传头像图片只能是 JPG、PNG、GIF 格式!')
+    return false
   }
   if (!isLt2M) {
     ElMessage.error('上传头像图片大小不能超过 2MB!')
+    return false
   }
-  return isJPG && isLt2M
+  return true
+}
+
+const customUpload = async (options) => {
+  try {
+    const token = localStorage.getItem('token')
+    console.log('开始自定义上传，文件:', options.file)
+    console.log('Token:', token)
+    console.log('Token长度:', token ? token.length : 0)
+    
+    if (!token) {
+      ElMessage.error('未找到登录token，请重新登录')
+      options.onError(new Error('未找到登录token'))
+      return
+    }
+    
+    const formData = new FormData()
+    formData.append('file', options.file)
+    
+    console.log('发送请求到:', uploadUrl.value)
+    console.log('请求头:', {
+      'Authorization': `Bearer ${token}`
+    })
+    
+    const response = await fetch(uploadUrl.value, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    })
+    
+    console.log('上传响应状态:', response.status)
+    console.log('响应头:', Object.fromEntries(response.headers.entries()))
+    
+    if (response.ok) {
+      const result = await response.json()
+      console.log('上传成功:', result)
+      options.onSuccess(result)
+    } else {
+      const errorText = await response.text()
+      console.error('上传失败:', response.status, errorText)
+      ElMessage.error(`上传失败: ${response.status} - ${errorText}`)
+      options.onError(new Error(`上传失败: ${response.status}`))
+    }
+  } catch (error) {
+    console.error('上传异常:', error)
+    ElMessage.error(`上传异常: ${error.message}`)
+    options.onError(error)
+  }
 }
 
 const handleAvatarSuccess = (response) => {
+  console.log('头像上传响应:', response)
   if (response.code === 200) {
     avatarUrl.value = response.data.url
     ElMessage.success('头像上传成功')
   } else {
-    ElMessage.error('头像上传失败')
+    ElMessage.error(response.message || '头像上传失败')
   }
+}
+
+const handleAvatarUploadError = (error) => {
+  console.error('头像上传错误:', error)
+  ElMessage.error('头像上传失败，请重试')
 }
 
 const confirmAvatarUpload = async () => {
@@ -451,11 +537,32 @@ const confirmAvatarUpload = async () => {
     if (res.data.code === 200) {
       ElMessage.success('头像更新成功')
       showAvatarUpload.value = false
+      
       // 更新本地用户信息
       const user = JSON.parse(localStorage.getItem('user') || '{}')
       user.headUrl = avatarUrl.value
       localStorage.setItem('user', JSON.stringify(user))
       store.dispatch('login', user)
+      
+      // 重新获取用户信息以确保数据同步
+      try {
+        const profileRes = await getProfileInfo()
+        if (profileRes.data.code === 200) {
+          const updatedUser = profileRes.data.data
+          localStorage.setItem('user', JSON.stringify(updatedUser))
+          store.dispatch('login', updatedUser)
+        }
+      } catch (error) {
+        console.error('重新获取用户信息失败:', error)
+      }
+      
+      // 清空临时头像URL
+      avatarUrl.value = ''
+      
+      // 强制刷新页面以确保头像正确显示
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
     } else {
       ElMessage.error(res.data.message || '头像更新失败')
     }
@@ -595,6 +702,13 @@ const fetchRecentActivities = async () => {
   } catch (error) {
     console.error('获取最近活动失败:', error)
   }
+}
+
+const getFullAvatarUrl = (url) => {
+  if (!url) return defaultAvatar
+  if (url.startsWith('http')) return url
+  if (url.startsWith('/')) return `http://localhost:8080${url}`
+  return `http://localhost:8080/uploads/avatars/${url}`
 }
 
 onMounted(() => {
@@ -793,12 +907,17 @@ onMounted(() => {
   width: 178px;
   height: 178px;
   display: block;
+  object-fit: cover;
 }
 
 .upload-tips {
-  margin-top: 15px;
+  margin-top: 10px;
   color: #666;
   font-size: 12px;
+}
+
+.upload-tips p {
+  margin: 0;
 }
 
 @media (max-width: 768px) {

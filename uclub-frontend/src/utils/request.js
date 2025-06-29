@@ -33,6 +33,18 @@ request.interceptors.response.use(
   },
   error => {
     console.error('响应错误:', error)
+    console.error('错误详情:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      headers: error.response?.headers,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers
+      }
+    })
+    
     if (error.response) {
       // 服务器返回错误状态码
       const { status, data } = error.response
@@ -40,9 +52,15 @@ request.interceptors.response.use(
         case 401:
           ElMessage.error('未授权，请重新登录')
           localStorage.removeItem('user')
+          localStorage.removeItem('token')
           break
         case 403:
-          ElMessage.error('拒绝访问')
+          ElMessage.error('拒绝访问 - 请检查您的权限或重新登录')
+          console.error('403错误详情:', {
+            url: error.config?.url,
+            token: error.config?.headers?.Authorization ? '存在' : '不存在',
+            tokenValue: error.config?.headers?.Authorization?.substring(0, 20) + '...'
+          })
           break
         case 404:
           ElMessage.error('请求的资源不存在')
