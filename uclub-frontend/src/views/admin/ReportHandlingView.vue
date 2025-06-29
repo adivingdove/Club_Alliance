@@ -1,42 +1,79 @@
 <template>
-  <div class="report-handling">
-    <h2>举报受理</h2>
-    <el-table :data="reports" stripe border style="width: 100%; margin-top: 20px;">
-      <el-table-column prop="id" label="举报ID" width="100" />
-      <el-table-column prop="reporter" label="举报人" width="120" />
-      <el-table-column prop="target" label="被举报对象" width="150" />
-      <el-table-column prop="reason" label="举报原因" />
-      <el-table-column prop="status" label="状态" width="100" />
-      <el-table-column label="操作" width="180">
-        <template #default="{ row }">
-          <el-button size="small" type="primary" @click="handleReport(row)">处理</el-button>
-          <el-button size="small" type="danger" @click="rejectReport(row)">驳回</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+  <div class="report-manage-page">
+    <el-card>
+      <div class="toolbar">
+        <el-select v-model="statusFilter" placeholder="举报状态" @change="fetchReports">
+          <el-option label="全部" value="" />
+          <el-option label="待处理" value="待处理" />
+          <el-option label="已处理" value="已处理" />
+        </el-select>
+      </div>
+
+      <el-table :data="reports" style="width: 100%">
+        <el-table-column prop="id" label="ID" width="60"/>
+        <el-table-column prop="postId" label="帖子ID"/>
+        <el-table-column prop="reason" label="举报原因"/>
+        <el-table-column prop="status" label="状态"/>
+        <el-table-column prop="createdAt" label="举报时间"/>
+        <el-table-column label="操作" width="200">
+          <template #default="scope">
+            <el-button type="primary" size="small" @click="viewDetail(scope.row)">详情</el-button>
+            <el-button type="success" size="small" @click="changeStatus(scope.row.id, '已处理')">设为已处理</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+
+    <el-dialog v-model="showDetail" title="举报详情" width="50%">
+      <pre>{{ selectedReport }}</pre>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import axios from '@/utils/axios'
+import { ElMessage } from 'element-plus'
 
-const reports = ref([
-  // 模拟数据，后续改成接口请求
-  { id: 1, reporter: '用户A', target: '帖子123', reason: '垃圾广告', status: '待处理' },
-  { id: 2, reporter: '用户B', target: '用户C', reason: '恶意攻击', status: '处理中' }
-])
 
-function handleReport(row) {
-  alert(`处理举报：${row.id}`)
+const reports = ref([])
+const statusFilter = ref('')
+const showDetail = ref(false)
+const selectedReport = ref(null)
+
+const fetchReports = async () => {
+  const { data } = await axios.get('/report/list', {
+    params: { status: statusFilter.value }
+  })
+  reports.value = data
 }
 
-function rejectReport(row) {
-  alert(`驳回举报：${row.id}`)
+const viewDetail = async (report) => {
+  const { data } = await axios.get(`/report/${report.id}`)
+  if (!data) {
+    ElMessage.error('未找到该举报信息')
+    return
+  }
+  selectedReport.value = data
+  showDetail.value = true
 }
+
+const changeStatus = async (id, status) => {
+  await axios.put(`/report/status/${id}`, null, {
+    params: { status }
+  })
+  ElMessage.success('状态更新成功')
+  fetchReports()
+}
+
+
+onMounted(fetchReports)
 </script>
 
 <style scoped>
-.report-handling {
-  padding: 20px;
+.toolbar {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
 }
 </style>
