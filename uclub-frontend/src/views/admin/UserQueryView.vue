@@ -119,29 +119,30 @@ export default {
     return diff < 10 * 60 * 1000; // 10分钟以内有效
   },
 
-    async queryUsers() {
-      try {
-        let url = 'http://localhost:8080/api/user?';
-        if (this.formData.email) {
-          url += `email=${this.formData.email}&`;
-        }
-        if(this.formData.nickname) {
-          url += `nickname=${this.formData.nickname}&`;
-        }
-        if (this.formData.role) {
-          url += `role=${this.formData.role}&`;
-        }
-        if (this.formData.status) {
-          url += `status=${this.formData.status}&`;
-        }
-        
+async queryUsers() {
+  try {
+    let url = 'http://localhost:8080/api/user?';
+    if (this.formData.email) url += `email=${this.formData.email}&`;
+    if (this.formData.nickname) url += `nickname=${this.formData.nickname}&`;
+    if (this.formData.role) url += `role=${this.formData.role}&`;
+    if (this.formData.status) url += `status=${this.formData.status}&`;
 
-        const response = await axios.get(url);
-        this.userList = response.data;
-      } catch (error) {
-        console.error('查询失败', error);
+    const token = localStorage.getItem('token'); // 从localStorage读取token
+    if (!token) {
+      console.warn('没有找到token，请先登录');
+      return;
+    }
+
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${token}`
       }
-    },
+    });
+    this.userList = response.data.data; // 你的后端接口返回格式，用户列表在data字段
+  } catch (error) {
+    console.error('查询失败', error);
+  }
+},
     resetQueryForm() {
       this.formData = {
         nickname: '',

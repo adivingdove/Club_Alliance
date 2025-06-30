@@ -1,5 +1,6 @@
 <template>
   <div class="applications-container">
+    <el-button type="primary" @click="createTestApplications" style="margin-bottom: 20px;">生成测试申请</el-button>
     <el-row :gutter="24">
       <el-col :span="24">
         <h2 class="page-title">申请信息</h2>
@@ -90,20 +91,19 @@ const fetchApplications = async () => {
     
     if (response.data.code === 0) {
       const data = response.data.data || {}
-      // 只显示需要当前用户审批的、且不是自己发起的、且不是社长身份的、且 join_status 为 '待审核' 的申请
+      // 只显示需要当前用户审批的、且不是自己发起的、且不是社长身份的
       pendingApplications.value = (data.pending || []).filter(app =>
-        String(app.user_id) !== String(user.id) &&
-        app.role !== '社长' &&
-        app.join_status === '待审核' &&
-        (String(app.club_creator_id) === String(user.id) || String(app.club?.creatorId) === String(user.id))
+        String(app.userId) !== String(user.id) &&
+        app.memberRole !== '社长' &&
+        app.status === '待审核'
       )
       processedApplications.value = (data.processed || []).filter(app =>
-        String(app.user_id) !== String(user.id) &&
-        app.role !== '社长' &&
-        app.join_status !== '待审核' &&
-        (String(app.club_creator_id) === String(user.id) || String(app.club?.creatorId) === String(user.id))
+        String(app.userId) !== String(user.id) &&
+        app.memberRole !== '社长' &&
+        app.status !== '待审核'
       )
       console.log('pending原始数据:', data.pending)
+      console.log('processed原始数据:', data.processed)
     } else {
       ElMessage.error('获取申请信息失败')
     }
@@ -142,6 +142,25 @@ const handleApplication = async (application, action) => {
       console.error('处理申请失败:', e)
       ElMessage.error('操作失败，请重试')
     }
+  }
+}
+
+// 生成测试申请
+const createTestApplications = async () => {
+  const testData = [
+    { userId: 12, applicant: '测试用户A', reason: '我想加入篮球社' },
+    { userId: 12, applicant: '测试用户B', reason: '热爱篮球，想参与活动' },
+    { userId: 12, applicant: '测试用户C', reason: '希望锻炼身体' }
+  ]
+  try {
+    await Promise.all(testData.map(data =>
+      request.post('/api/clubs/9/apply', data)
+    ))
+    ElMessage.success('测试申请已生成')
+    await fetchApplications()
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('生成测试申请失败')
   }
 }
 

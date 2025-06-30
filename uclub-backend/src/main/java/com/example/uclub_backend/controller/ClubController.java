@@ -345,4 +345,21 @@ public class ClubController {
     }
 }
 
+    // 后台管理接口
+    @PutMapping("/admin/{id}/audit")
+    public Result<Void> auditClub(@PathVariable Integer id, @RequestParam String action) {
+        try {
+            if (!action.equalsIgnoreCase("approve") && !action.equalsIgnoreCase("reject")) {
+                return Result.error("非法操作参数");
+            }
+            Club.ClubStatus status = action.equalsIgnoreCase("approve") ?
+                    Club.ClubStatus.正常 : Club.ClubStatus.已封禁;
+            clubService.updateClubStatus(id, status);
+            return Result.success();
+        } catch (Exception e) {
+            return Result.error("审核失败: " + e.getMessage());
+        }
+    }
+
+
 } 

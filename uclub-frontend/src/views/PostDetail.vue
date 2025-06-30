@@ -5,10 +5,17 @@
       <h2 class="post-title">{{ post.title }}</h2>
 
       <!-- 元信息 + 删除按钮 -->
-     <div class="post-meta">
+    <div class="post-meta">
+  <el-avatar
+    :src="getUserAvatar(post.user?.avatarUrl)"
+    :size="40"
+    style="margin-right: 10px"
+  />
+  <span class="post-author-nickname">{{ post.user?.nickname || '匿名用户' }}</span>
   <el-tag type="success" size="small">社团ID: {{ post.clubId }}</el-tag>
   <span>作者ID: {{ post.userId }}</span>
   <span>发表于: {{ formatTime(post.createdAt) }}</span>
+
 
   <!-- 删除按钮 -->
 <el-tooltip
@@ -89,58 +96,67 @@
         <!-- 评论列表 -->
         <div v-if="comments.length" class="comment-list">
           <div v-for="(comment, index) in comments" :key="index" class="comment-item">
-    <p class="comment-meta">
-  👤 用户ID: {{ comment.userId }} 发表时间：{{ formatTime(comment.createdAt) }}
-
-  <!-- 删除按钮 -->
-  <el-tooltip
-  v-if="comment.userId === currentUserId"
+  <!-- 用户头像与昵称 -->
+  <div class="comment-user-info">
+    <el-avatar
+      :src="getUserAvatar(comment.user?.avatarUrl)"
+      :size="40"
+      style="margin-right: 10px"
+    />
+    <span class="comment-nickname">{{ comment.user?.nickname || '匿名用户' }}</span>
+    <span class="comment-time">发表于：{{ formatTime(comment.createdAt) }}</span>
+      <!-- 删除/举报按钮 -->
+  <div class="comment-actions">
+   <el-tooltip
+  v-if="comment.user?.id === currentUserId || comment.userId === currentUserId"
   content="删除评论"
   placement="top"
 >
-  <el-button
-    :icon="Delete"
-    circle
-    type="default"
-    size="small"
-    @click="deleteComment(comment.id)"
-    class="delete-icon-btn"
-    style="color: #888; border-color: #ccc;"
-  />
-</el-tooltip>
 
-  <!-- 举报按钮：伪按钮效果，保持一致大小 -->
-  <el-tooltip content="举报评论" placement="top">
+      <el-button
+        :icon="Delete"
+        circle
+        type="default"
+        size="small"
+        @click="deleteComment(comment.id)"
+        class="delete-icon-btn"
+      />
+    </el-tooltip>
+
+    <el-tooltip content="举报评论" placement="top">
+      <el-button
+        circle
+        type="default"
+        size="small"
+        @click="() => openReportDialog('评论', comment.id)"
+        style="color: #888; border-color: #ccc; margin-left: 8px;"
+      >
+        <el-icon><WarnTriangleFilled /></el-icon>
+      </el-button>
+    </el-tooltip>
+  </div>
+  </div>
+
+
+
+  <!-- 评论内容 -->
+  <p class="comment-content">{{ comment.content }}</p>
+
+  <!-- 点赞按钮 -->
+  <div class="comment-like-bar">
     <el-button
-      circle
-      type="default"
       size="small"
-      @click="() => openReportDialog('评论', comment.id)"
-
-      style="color: #888; border-color: #ccc; margin-left: 8px;"
+      class="like-comment-button"
+      @click="toggleCommentLike(comment)"
+      :plain="!comment.liked"
+      text
     >
-      <el-icon><WarnTriangleFilled /></el-icon>
+      <img :src="thumbIcon" alt="点赞" class="icon-thumb" />
+      {{ comment.likeCount }}
     </el-button>
-  </el-tooltip>
-</p>
+  </div>
+</div>
 
-
-            <p class="comment-content">{{ comment.content }}</p>
-
-            <!-- 点赞按钮右下角 -->
-            <div class="comment-like-bar">
-              <el-button
-                size="small"
-                class="like-comment-button"
-                @click="toggleCommentLike(comment)"
-                :plain="!comment.liked"
-                text
-              >
-                <img :src="thumbIcon" alt="点赞" class="icon-thumb" />
-                {{ comment.likeCount }}
-              </el-button>
-            </div>
-          </div>
         </div>
         <p v-else class="no-comment">暂无评论</p>
       </div>
@@ -361,6 +377,20 @@ async function openReportDialog(targetType, targetId) {
   }
 }
 
+function getUserAvatar(url) {
+  if (!url) {
+    return 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png' // 默认头像
+  }
+  if (url.startsWith('http')) {
+    return url
+  }
+  if (url.startsWith('/')) {
+    return `http://localhost:8080${url}`
+  }
+  return `http://localhost:8080/uploads/avatars/${url}`
+}
+
+
 // 初始化加载
 onMounted(() => {
   loadPost()
@@ -395,6 +425,12 @@ onMounted(() => {
   display: flex;
   gap: 20px;
   margin-bottom: 20px;
+}
+
+.post-author-nickname {
+  font-weight: 600;
+  margin-right: 12px;
+  font-size: 14px;
 }
 
 .post-content {
@@ -483,6 +519,31 @@ onMounted(() => {
 .icon-thumb {
   width: 16px;
   height: 16px;
+}
+
+.comment-user-info {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.comment-nickname {
+  font-weight: 600;
+  margin-right: 12px;
+}
+
+.comment-time {
+  font-size: 13px;
+  color: #999;
+}
+
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 </style>

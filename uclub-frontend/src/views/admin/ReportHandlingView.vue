@@ -14,7 +14,7 @@
         <el-table-column prop="postId" label="帖子ID"/>
         <el-table-column prop="reason" label="举报原因"/>
         <el-table-column prop="status" label="状态"/>
-        <el-table-column prop="createdAt" label="举报时间"/>
+        <el-table-column label="举报时间":formatter="(row) => formatTime(row.createdAt)"/>
         <el-table-column label="操作" width="200">
           <template #default="scope">
             <el-button type="primary" size="small" @click="viewDetail(scope.row)">详情</el-button>
@@ -25,8 +25,18 @@
     </el-card>
 
     <el-dialog v-model="showDetail" title="举报详情" width="50%">
-      <pre>{{ selectedReport }}</pre>
+      <div v-if="selectedReport">
+        <div><strong>举报ID：</strong>{{ selectedReport.id }}</div>
+        <div><strong>举报人ID：</strong>{{ selectedReport.reporterId }}</div>
+        <div><strong>目标类型：</strong>{{ selectedReport.targetType }}</div>
+        <div><strong>目标ID：</strong>{{ selectedReport.targetId }}</div>
+        <div><strong>举报原因：</strong>{{ selectedReport.reason }}</div>
+        <div><strong>状态：</strong>{{ selectedReport.status }}</div>
+        <div><strong>创建时间：</strong>{{ formatTime(selectedReport.createdAt) }}</div>
+      </div>
+      <div v-else>加载中...</div>
     </el-dialog>
+
   </div>
 </template>
 
@@ -34,12 +44,17 @@
 import { ref, onMounted } from 'vue'
 import axios from '@/utils/axios'
 import { ElMessage } from 'element-plus'
-
+import dayjs from 'dayjs'
 
 const reports = ref([])
 const statusFilter = ref('')
 const showDetail = ref(false)
 const selectedReport = ref(null)
+
+
+const formatTime = (time) => {
+  return time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : '-'
+}
 
 const fetchReports = async () => {
   const { data } = await axios.get('/report/list', {
@@ -49,13 +64,25 @@ const fetchReports = async () => {
 }
 
 const viewDetail = async (report) => {
-  const { data } = await axios.get(`/report/${report.id}`)
-  if (!data) {
-    ElMessage.error('未找到该举报信息')
-    return
-  }
-  selectedReport.value = data
+  selectedReport.value = null
   showDetail.value = true
+
+  try {
+    const res = await axios.get(`/report/${report.id}`)
+    console.log('完整响应:', res) // 这里的 res 就是数据对象
+    selectedReport.value = res     // 直接赋值
+  } catch (error) {
+    showDetail.value = false
+    if (error.response) {
+      if (error.response.status === 404) {
+        ElMessage.error('举报记录不存在')
+      } else {
+        ElMessage.error(error.response.data?.error || '查询失败')
+      }
+    } else {
+      ElMessage.error('请求举报详情失败')
+    }
+  }
 }
 
 const changeStatus = async (id, status) => {

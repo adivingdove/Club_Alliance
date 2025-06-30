@@ -8,6 +8,8 @@ import com.example.uclub_backend.forum.service.LikeService;
 import com.example.uclub_backend.forum.service.PostService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.uclub_backend.entity.User;
+import com.example.uclub_backend.service.UserService; 
 
 import java.util.*;
 
@@ -15,35 +17,48 @@ import java.util.*;
 @RequestMapping("/api/posts/{postId}/comments")
 @CrossOrigin
 public class CommentController {
-
+    
     private final CommentService commentService;
     private final PostService postService;
     private final LikeService likeService; // 添加 LikeService 注入
+    private final UserService userService;
 
-    public CommentController(CommentService commentService, PostService postService, LikeService likeService) {
-        this.commentService = commentService;
-        this.postService = postService;
-        this.likeService = likeService;
+   public CommentController(CommentService commentService, PostService postService, LikeService likeService, UserService userService) {
+    this.commentService = commentService;
+    this.postService = postService;
+    this.likeService = likeService;
+    this.userService = userService;
     }
 
     @GetMapping
-    public List<Map<String, Object>> getComments(@PathVariable Long postId, @RequestParam(required = false) Long userId) {
-        List<Comment> comments = commentService.getCommentsByPostId(postId);
-        List<Map<String, Object>> result = new ArrayList<>();
+public List<Map<String, Object>> getComments(@PathVariable Long postId, @RequestParam(required = false) Long userId) {
+    List<Comment> comments = commentService.getCommentsByPostId(postId);
+    List<Map<String, Object>> result = new ArrayList<>();
 
-        for (Comment comment : comments) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", comment.getId());
-            map.put("userId", comment.getUserId());
-            map.put("content", comment.getContent());
-            map.put("createdAt", comment.getCreatedAt());
-            map.put("likeCount", comment.getLikeCount());
-            map.put("liked", userId != null && likeService.hasLiked(userId, Like.TargetType.comment, comment.getId()));
-            result.add(map);
+    for (Comment comment : comments) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", comment.getId());
+        map.put("content", comment.getContent());
+        map.put("createdAt", comment.getCreatedAt());
+        map.put("likeCount", comment.getLikeCount());
+        map.put("liked", userId != null && likeService.hasLiked(userId, Like.TargetType.comment, comment.getId()));
+
+        // 查询用户信息
+        User user = userService.getUserById(comment.getUserId().intValue());
+        if (user != null) {
+            Map<String, Object> userMap = new HashMap<>();
+            userMap.put("id", user.getId());
+            userMap.put("nickname", user.getNickname());
+            userMap.put("avatarUrl", user.getHeadUrl()); // 或 getAvatarUrl()
+            map.put("user", userMap);
         }
 
-        return result;
+        result.add(map);
     }
+
+    return result;
+}
+
 
     @PostMapping
     public ResponseEntity<?> addComment(@PathVariable Long postId, @RequestBody Comment comment) {

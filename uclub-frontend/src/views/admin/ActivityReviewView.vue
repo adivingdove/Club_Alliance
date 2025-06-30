@@ -1,42 +1,83 @@
 <template>
-  <div class="club-activity-application">
-    <h2>社团活动申请管理</h2>
-    <el-table :data="activityApplications" stripe border style="width: 100%; margin-top: 20px;">
-      <el-table-column prop="id" label="活动申请ID" width="100" />
-      <el-table-column prop="clubName" label="社团名称" width="150" />
-      <el-table-column prop="activityTitle" label="活动标题" />
-      <el-table-column prop="applicant" label="申请人" width="120" />
-      <el-table-column prop="status" label="审核状态" width="100" />
-      <el-table-column prop="submittedAt" label="提交时间" width="180" />
-      <el-table-column label="操作" width="200">
-        <template #default="{ row }">
-          <el-button size="small" type="success" @click="approveActivity(row)">通过</el-button>
-          <el-button size="small" type="danger" @click="rejectActivity(row)">驳回</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+  <div class="activity-audit-container">
+    <el-card>
+      <div class="header">
+        <h2>社团活动审核</h2>
+      </div>
+      <el-table :data="pendingActivities" v-loading="loading" border stripe>
+        <el-table-column prop="id" label="活动ID" width="80" />
+        <el-table-column prop="title" label="标题" />
+        <el-table-column prop="clubId" label="所属社团ID" />
+        <el-table-column prop="applyStatus" label="状态" />
+        <el-table-column label="开始时间" :formatter="(row) => formatTime(row.startTime)" />
+        <el-table-column label="结束时间" :formatter="(row) => formatTime(row.endTime)" />
+        <el-table-column label="操作" width="200">
+          <template #default="scope">
+            <el-button type="success" size="small" @click="audit(scope.row.id, '通过')">通过</el-button>
+            <el-button type="danger" size="small" @click="audit(scope.row.id, '拒绝')">拒绝</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import axios from '@/utils/axios'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import dayjs from 'dayjs'
 
-const activityApplications = ref([
-  { id: 1, clubName: '音乐社', activityTitle: '音乐晚会', applicant: '王五', status: '待审核', submittedAt: '2025-06-23 13:00' },
-  { id: 2, clubName: '舞蹈社', activityTitle: '舞蹈表演', applicant: '赵六', status: '已通过', submittedAt: '2025-06-21 16:00' }
-])
+const pendingActivities = ref([])
+const loading = ref(false)
 
-function approveActivity(row) {
-  alert(`通过活动申请：${row.id}`)
+const fetchPendingActivities = async () => {
+  loading.value = true
+  try {
+    const res = await axios.get('/activities/pending')
+    pendingActivities.value = res.data
+  } catch (err) {
+    ElMessage.error('获取待审核活动失败')
+  } finally {
+    loading.value = false
+  }
 }
 
-function rejectActivity(row) {
-  alert(`驳回活动申请：${row.id}`)
+const formatTime = (time) => {
+  return time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : '-'
 }
+
+const audit = async (activityId, status) => {
+  try {
+    await ElMessageBox.confirm(`确认将活动设为“${status}”？`, '审核确认', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: status === '通过' ? 'success' : 'warning'
+    })
+
+    await axios.put(`/activities/${activityId}/apply-status`, null, {
+      params: { applyStatus: status }
+    })
+
+    ElMessage.success(`审核成功：${status}`)
+    fetchPendingActivities()
+  } catch (err) {
+    if (err !== 'cancel') {
+      ElMessage.error(`审核失败：${status}`)
+    }
+  }
+}
+
+onMounted(() => {
+  fetchPendingActivities()
+})
 </script>
 
 <style scoped>
-.club-activity-application {
+.activity-audit-container {
   padding: 20px;
+}
+.header {
+  margin-bottom: 20px;
 }
 </style>

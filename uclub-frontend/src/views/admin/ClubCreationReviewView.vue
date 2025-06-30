@@ -1,42 +1,73 @@
 <template>
-  <div class="club-creation-application">
-    <h2>社团创建申请管理</h2>
-    <el-table :data="applications" stripe border style="width: 100%; margin-top: 20px;">
-      <el-table-column prop="id" label="申请ID" width="100" />
-      <el-table-column prop="applicant" label="申请人" width="120" />
-      <el-table-column prop="clubName" label="申请社团名称" width="180" />
-      <el-table-column prop="reason" label="申请理由" />
-      <el-table-column prop="status" label="审核状态" width="100" />
-      <el-table-column prop="submittedAt" label="提交时间" width="180" />
-      <el-table-column label="操作" width="200">
-        <template #default="{ row }">
-          <el-button size="small" type="success" @click="approveApplication(row)">通过</el-button>
-          <el-button size="small" type="danger" @click="rejectApplication(row)">驳回</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+  <div class="club-audit-container">
+    <el-card>
+      <div class="header">
+        <h2>社团创建审核</h2>
+      </div>
+      <el-table :data="pendingClubs" v-loading="loading" border stripe>
+        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column prop="name" label="社团名称" />
+        <el-table-column prop="creatorId" label="创建者ID" />
+        <el-table-column prop="description" label="社团简介" />
+        <el-table-column label="操作" width="180">
+          <template #default="scope">
+            <el-button type="success" size="small" @click="audit(scope.row.id, 'approve')">通过</el-button>
+            <el-button type="danger" size="small" @click="audit(scope.row.id, 'reject')">拒绝</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import axios from '@/utils/axios'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
-const applications = ref([
-  { id: 1, applicant: '张三', clubName: '文学社', reason: '热爱文学', status: '待审核', submittedAt: '2025-06-20 09:00' },
-  { id: 2, applicant: '李四', clubName: '编程社', reason: '技术交流', status: '已驳回', submittedAt: '2025-06-22 14:00' }
-])
+const pendingClubs = ref([])
+const loading = ref(false)
 
-function approveApplication(row) {
-  alert(`通过申请：${row.id}`)
+const fetchPendingClubs = async () => {
+  loading.value = true
+  try {
+    const res = await axios.get('/clubs/pending')
+    pendingClubs.value = res.data
+  } catch (err) {
+    ElMessage.error('获取待审核社团失败')
+  } finally {
+    loading.value = false
+  }
 }
 
-function rejectApplication(row) {
-  alert(`驳回申请：${row.id}`)
+const audit = async (clubId, action) => {
+  const actionText = action === 'approve' ? '通过' : '拒绝'
+  try {
+    await ElMessageBox.confirm(`确认要${actionText}该社团申请吗？`, '提示', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: action === 'approve' ? 'success' : 'warning'
+    })
+    await axios.put(`/clubs/admin/${clubId}/audit`, null, {
+      params: { action }
+    })
+    ElMessage.success(`${actionText}成功`)
+    fetchPendingClubs()
+  } catch (err) {
+    if (err !== 'cancel') ElMessage.error(`${actionText}失败`)
+  }
 }
+
+onMounted(() => {
+  fetchPendingClubs()
+})
 </script>
 
 <style scoped>
-.club-creation-application {
+.club-audit-container {
   padding: 20px;
+}
+.header {
+  margin-bottom: 20px;
 }
 </style>

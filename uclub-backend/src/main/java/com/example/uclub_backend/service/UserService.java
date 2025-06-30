@@ -256,4 +256,8 @@ public class UserService {
                 && requiredRole.equals(user.getRole())
                 && requiredStatus.equals(user.getStatus());
     }
+    public User getUserById(Integer id) {
+        return userRepository.findById(id)
+                .orElse(null);
+    }
 }
