@@ -59,10 +59,6 @@
               <el-icon><Clock /></el-icon>
               <span>浏览历史</span>
             </el-menu-item>
-            <el-menu-item index="settings">
-              <el-icon><Lock /></el-icon>
-              <span>账户设置</span>
-            </el-menu-item>
             <el-menu-item index="recent">
               <el-icon><Timer /></el-icon>
               <span>最近活动</span>
@@ -85,6 +81,12 @@
                   </el-button>
                   <el-button type="primary" size="small" @click="editUserInfo">
                     编辑信息
+                  </el-button>
+                  <el-button type="primary" size="small" @click="showChangePassword = true">
+                    修改密码
+                  </el-button>
+                  <el-button type="danger" size="small" @click="handleLogout">
+                    退出登录
                   </el-button>
                 </div>
               </div>
@@ -271,35 +273,6 @@
               ></el-pagination>
             </div>
             <el-empty v-else description="暂无浏览历史" />
-          </el-card>
-        </div>
-
-        <!-- 账户设置 -->
-        <div v-if="activeMenu === 'settings'" class="content-section">
-          <el-card>
-            <template #header>
-              <div class="card-header">
-                <span>账户设置</span>
-              </div>
-            </template>
-            <el-form label-width="120px">
-              <el-form-item label="修改密码">
-                <el-button type="primary" @click="showChangePassword = true">
-                  修改密码
-                </el-button>
-              </el-form-item>
-              <el-form-item label="隐私设置">
-                <el-button type="primary" @click="showPrivacySettings = true">
-                  隐私设置
-                </el-button>
-              </el-form-item>
-              <el-form-item label="通知设置">
-                <el-button type="primary" @click="showNotificationSettings = true">
-                  通知设置
-                </el-button>
-              </el-form-item>
-            </el-form>
-            <el-button type="danger" style="width: 100%; margin-top: 20px;" @click="handleLogout">退出登录</el-button>
           </el-card>
         </div>
 
