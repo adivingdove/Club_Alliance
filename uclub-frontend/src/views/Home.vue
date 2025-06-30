@@ -494,7 +494,7 @@ const getImageUrl = (url) => {
 .main-search-input.beautify-input {
   width: 100%;
   height: 56px;
-  border-radius: 36px;
+  border-radius: 0;
   box-shadow: 0 4px 24px 0 rgba(64,158,255,0.13);
   background: #fff;
   font-size: 22px;

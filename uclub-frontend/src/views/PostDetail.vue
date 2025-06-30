@@ -152,7 +152,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
+import request from '../utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Vue3MarkdownIt from 'vue3-markdown-it'
 import thumbIcon from '@/assets/icons/thumb_up.svg'
@@ -193,23 +193,19 @@ function formatTime(str) {
   }
 }
 
-
 // 加载帖子详情
 async function loadPost() {
   try {
-    const res = await axios.get(`http://localhost:8080/api/posts/${postId}`, {
+    const res = await request.get(`/api/posts/${postId}`, {
       params: { userId: currentUserId }
     });
-
     post.value = res.data.post
     liked.value = res.data.liked ?? false 
     console.log('帖子详情返回:', res.data)
-
   } catch (err) {
     console.error('加载帖子失败', err)
   }
 }
-
 
 // 删除帖子
 async function deletePost() {
@@ -217,11 +213,9 @@ async function deletePost() {
     await ElMessageBox.confirm('确认删除此帖子？此操作不可撤销', '提示', {
       type: 'warning',
     })
-
-    await axios.delete(`http://localhost:8080/api/posts/${postId}`, {
+    await request.delete(`/api/posts/${postId}`, {
       params: { userId: currentUserId },
     })
-
     ElMessage.success('删除成功')
     router.push('/')
   } catch (err) {
@@ -235,7 +229,7 @@ async function deletePost() {
 // 加载评论
 async function loadComments() {
   try {
-    const res = await axios.get(`http://localhost:8080/api/posts/${postId}/comments`)
+    const res = await request.get(`/api/posts/${postId}/comments`)
     console.log(' 获取评论数据:', res.data)
     comments.value = res.data
   } catch (err) {
@@ -249,15 +243,13 @@ async function submitComment() {
     ElMessage.warning('评论内容不能为空')
     return
   }
-
-  const url = `http://localhost:8080/api/posts/${postId}/comments`
+  const url = `/api/posts/${postId}/comments`
   const payload = {
     userId: currentUserId,
     content: newComment.value.trim(),
   }
-
   try {
-    await axios.post(url, payload)
+    await request.post(url, payload)
     ElMessage.success('评论成功')
     newComment.value = ''
     await loadComments()
@@ -266,34 +258,21 @@ async function submitComment() {
     console.error('评论失败 AxiosError:')
     console.error(' 请求地址:', url)
     console.error('请求参数:', payload)
-
-    if (axios.isAxiosError(err)) {
-      console.error(' 响应状态码:', err.response?.status)
-      console.error(' 响应内容:', err.response?.data)
-      console.error(' 请求配置:', err.config)
-    } else {
-      console.error(' 非 Axios 错误:', err)
-    }
-
     ElMessage.error('评论失败，请查看控制台详细信息')
   }
 }
-
-
 
 async function deleteComment(commentId) {
   try {
     await ElMessageBox.confirm('确定要删除这条评论吗？', '提示', {
       type: 'warning'
     })
-
-    const url = `http://localhost:8080/api/posts/${postId}/comments/${commentId}`
-    await axios.delete(url, {
+    const url = `/api/posts/${postId}/comments/${commentId}`
+    await request.delete(url, {
       params: {
         userId: currentUserId
       }
     })
-
     ElMessage.success('删除成功')
     await loadComments()
     await loadPost()
@@ -305,20 +284,15 @@ async function deleteComment(commentId) {
   }
 }
 
-
-
-
 const liked = ref(false)
 const likeLoading = ref(false)
 
 async function likePost() {
   if (likeLoading.value) return
   likeLoading.value = true
-
   try {
-    const url = `http://localhost:8080/api/posts/${postId}/like?userId=${currentUserId}`
-    const res = await axios.post(url)
-
+    const url = `/api/posts/${postId}/like?userId=${currentUserId}`
+    const res = await request.post(url)
     ElMessage.success(res.data.message)
     liked.value = res.data.liked
     await loadPost()
@@ -332,8 +306,8 @@ async function likePost() {
 
 async function toggleCommentLike(comment) {
   try {
-    const url = `http://localhost:8080/api/posts/${postId}/comments/${comment.id}/like?userId=${currentUserId}`
-    const res = await axios.post(url)
+    const url = `/api/posts/${postId}/comments/${comment.id}/like?userId=${currentUserId}`
+    const res = await request.post(url)
     comment.liked = res.data.liked
     comment.likeCount = Number(res.data.likeCount || 0)
     ElMessage.success(res.data.message)
@@ -343,48 +317,32 @@ async function toggleCommentLike(comment) {
   }
 }
 
-
 async function openReportDialog(targetType, targetId) {
   reportReason.value = ''
   try {
     await ElMessageBox.prompt('请输入举报理由（不少于5个字）', `举报${targetType}`, {
       confirmButtonText: '提交举报',
       cancelButtonText: '取消',
-      inputPattern: /^.{5,}$/,
+      inputPattern: /^.{5,}$/, 
       inputErrorMessage: '理由不得少于5个字',
       inputValue: '',
     }).then(async ({ value }) => {
       reportReason.value = value
-
-      await axios.post('http://localhost:8080/api/report', {
+      await request.post('/api/report', {
         reporterId: currentUserId,
         targetType,
         targetId,
         reason: reportReason.value,
       })
-
       ElMessage.success('举报成功，感谢你的反馈')
     })
   } catch (err) {
-  if (err !== 'cancel') {
-    console.error('举报失败', err)
-
-    // 打印更详细的错误信息
-    if (err.response) {
-      console.error('状态码：', err.response.status)
-      console.error('响应体：', err.response.data)
-      console.error('响应头：', err.response.headers)
-    } else if (err.request) {
-      console.error('请求已发出但无响应：', err.request)
-    } else {
-      console.error('请求设置出错：', err.message)
+    if (err !== 'cancel') {
+      console.error('举报失败', err)
+      ElMessage.error('举报失败：服务器错误')
     }
-
-    ElMessage.error('举报失败：服务器错误')
   }
 }
-}
-
 
 // 初始化加载
 onMounted(() => {
