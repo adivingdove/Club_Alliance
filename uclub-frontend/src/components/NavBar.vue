@@ -18,10 +18,11 @@
         <div v-if="!isLoggedIn" class="login-button" @click="showLoginDialog = true">
           <el-icon><User /></el-icon>
         </div>
-        <div v-else class="user-avatar" @click="showUserMenu = !showUserMenu">
+        <div v-else class="user-avatar" ref="avatarRef" @click="openUserMenu">
           <el-avatar :size="52" :src="userAvatar" />
-          <!-- 用户菜单 -->
-          <div v-if="showUserMenu" class="user-menu">
+        </div>
+        <teleport to="body">
+          <div v-if="showUserMenu" class="user-menu" :style="userMenuStyle" @click.stop>
             <div class="menu-item" @click="goToProfile">
               <el-icon><User /></el-icon>
               个人中心
@@ -31,7 +32,7 @@
               退出登录
             </div>
           </div>
-        </div>
+        </teleport>
       </div>
 
       <!-- 后台管理按钮 -->
@@ -207,7 +208,7 @@
 
 
 <script setup>
-import { ref, onUnmounted, onMounted } from 'vue';
+import { ref, onUnmounted, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import LoginFloatingWindow from '../views/LoginFloatingWindow.vue'; 
 import ManageFloatingWindow from '../views/ManageFloatingWindow.vue';
@@ -242,10 +243,13 @@ const showForgotPasswordDialog = ref(false)
 const isRegister = ref(false)
 const countdown = ref(0)
 const registerCountdown = ref(0)
+const userMenuStyle = ref({})
+const avatarRef = ref(null)
 
 // 组件挂载时初始化用户信息
 onMounted(() => {
   store.dispatch('initializeApp')
+  document.addEventListener('click', handleClickOutside)
 })
 
 const registerForm = reactive({
@@ -521,6 +525,7 @@ onUnmounted(() => {
     showLoginDialog.value = true
   })
   window.removeEventListener('userLogout', handleUserLogout)
+  document.removeEventListener('click', handleClickOutside)
 })
 
 // original functions
@@ -546,6 +551,46 @@ function goToProfile() {
   showUserMenu.value = false
 }
 
+const openUserMenu = async (event) => {
+  await nextTick();
+  let rect;
+  if (avatarRef.value) {
+    rect = avatarRef.value.getBoundingClientRect();
+  } else if (event && event.target) {
+    rect = event.target.getBoundingClientRect();
+  }
+  showUserMenu.value = true;
+  await nextTick();
+  // 获取菜单实际宽度
+  const menu = document.querySelector('.user-menu');
+  let menuWidth = menu ? menu.offsetWidth : 0;
+  if (rect) {
+    userMenuStyle.value = {
+      position: 'absolute',
+      left: `${rect.right - menuWidth}px`,
+      top: `${rect.bottom + 8}px`,
+      zIndex: 99999,
+    };
+  }
+};
+
+const closeUserMenu = () => {
+  showUserMenu.value = false;
+};
+
+// 点击空白处关闭菜单
+const handleClickOutside = (e) => {
+  if (showUserMenu.value) {
+    // 判断点击是否在菜单或头像内
+    const menu = document.querySelector('.user-menu');
+    const avatar = avatarRef.value;
+    if (menu && (menu.contains(e.target) || (avatar && avatar.contains(e.target)))) {
+      return;
+    }
+    closeUserMenu();
+  }
+};
+
 </script>
 
 <style scoped>
@@ -557,6 +602,7 @@ function goToProfile() {
   background-color: #1e293b; /* 深蓝色背景 */
   box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  overflow: visible;
 }
 
 .nav-left {
@@ -824,15 +870,17 @@ function goToProfile() {
 /* 用户菜单样式 */
 .user-menu {
   position: absolute;
-  top: 100%;
   right: 0;
-  background: white;
+  top: 60px;
+  background: #fff;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 150px;
-  z-index: 1000;
-  margin-top: 8px;
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  z-index: 99999 !important;
+  padding: 8px 0;
+  width: max-content;
+  min-width: 0;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .user-menu::before {
@@ -868,5 +916,14 @@ function goToProfile() {
   margin-right: 8px;
   font-size: 16px;
   color: #64748b;
+}
+
+:deep(.el-dropdown-menu__item),
+:deep(.el-dropdown-menu__item *) {
+  cursor: pointer !important;
+}
+
+:deep(.el-dropdown-menu) {
+  z-index: 3000 !important;
 }
 </style>

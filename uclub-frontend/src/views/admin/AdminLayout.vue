@@ -1,6 +1,22 @@
 <template>
   <div class="admin-layout">
     <aside class="sidebar" :class="{ collapsed }">
+      <!-- 头像栏区域 -->
+      <div class="sidebar-avatar-area">
+        <el-avatar :size="64" :src="userAvatar" />
+        <div class="admin-name">{{ adminName || '管理员' }}</div>
+        <div class="profile-actions">
+          <div class="action-btn" @click="goToProfile">
+            <el-icon><User /></el-icon>
+            <span>个人中心</span>
+          </div>
+          <div class="action-btn" @click="logout">
+            <el-icon><SwitchButton /></el-icon>
+            <span>退出登录</span>
+          </div>
+        </div>
+      </div>
+      <!-- 菜单内容 -->
       <el-menu
         :collapse="collapsed"
         router
@@ -96,7 +112,7 @@
         </el-sub-menu>
       </el-menu>
 
-    <el-button
+      <el-button
         class="collapse-btn"
         circle
         icon="Menu"
@@ -129,10 +145,22 @@ import {
   Calendar,
   Warning,
   Ticket,
-  Setting
+  Setting,
+  SwitchButton
 } from '@element-plus/icons-vue'
 
 const collapsed = ref(false)
+// 头像和管理员名变量（如无实际数据可用占位符）
+const userAvatar = ref('https://img1.baidu.com/it/u=1234567890,1234567890&fm=253&fmt=auto&app=138&f=JPEG?w=200&h=200')
+const adminName = ref('管理员')
+
+const goToProfile = () => {
+  // 跳转到个人中心页面
+  // 例如：router.push('/admin/profile')
+}
+const logout = () => {
+  // 退出登录逻辑
+}
 </script>
 
 <style scoped>
@@ -219,4 +247,61 @@ const collapsed = ref(false)
   background: white;
 }
 
+/* 只针对侧边栏下所有可点击元素及其子元素，保证鼠标指针为手型 */
+.sidebar .el-menu-item,
+.sidebar .el-menu-item *,
+.sidebar .el-sub-menu__title,
+.sidebar .el-sub-menu__title *,
+.sidebar .el-icon,
+.sidebar .el-icon * {
+  cursor: pointer !important;
+}
+
+/* 保证折叠按钮及其所有子元素为手型指针 */
+.collapse-btn, .collapse-btn * {
+  cursor: pointer !important;
+}
+
+.sidebar-avatar-area {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #2d3a4b;
+  padding: 24px 0 12px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-bottom: 1px solid #223040;
+}
+.admin-name {
+  color: #fff;
+  font-size: 16px;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.profile-actions {
+  margin-top: 16px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.action-btn {
+  color: #fff;
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.action-btn:hover {
+  background: #223040;
+}
+/* 鼠标指针为pointer */
+.sidebar-avatar-area .profile-actions .action-btn,
+.sidebar-avatar-area .profile-actions .action-btn * {
+  cursor: pointer !important;
+}
 </style>

@@ -152,7 +152,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import request from '../utils/request'
+
+import request from '@/utils/request'
+
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Vue3MarkdownIt from 'vue3-markdown-it'
 import thumbIcon from '@/assets/icons/thumb_up.svg'
@@ -224,6 +226,7 @@ async function deletePost() {
     await ElMessageBox.confirm('确认删除此帖子？此操作不可撤销', '提示', {
       type: 'warning',
     })
+
     await request.delete(`/api/posts/${postId}`, {
       params: { userId: currentUserId },
     })
@@ -254,6 +257,7 @@ async function submitComment() {
     ElMessage.warning('评论内容不能为空')
     return
   }
+
   const url = `/api/posts/${postId}/comments`
   const payload = {
     userId: currentUserId,
@@ -304,6 +308,7 @@ async function likePost() {
   try {
     const url = `/api/posts/${postId}/like?userId=${currentUserId}`
     const res = await request.post(url)
+
     ElMessage.success(res.data.message)
     liked.value = res.data.liked
     await loadPost()
@@ -339,6 +344,7 @@ async function openReportDialog(targetType, targetId) {
       inputValue: '',
     }).then(async ({ value }) => {
       reportReason.value = value
+
       await request.post('/api/report', {
         reporterId: currentUserId,
         targetType,

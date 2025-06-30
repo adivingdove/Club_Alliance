@@ -27,7 +27,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import axios from 'axios'
+import request from '@/utils/request'
 import { useRouter } from 'vue-router'
 
 const hotClubs = ['康腾实践中心', '茶艺协会', '摄影兴趣组']
@@ -37,7 +37,7 @@ const router = useRouter()
 
 async function fetchHotPosts() {
   try {
-    const res = await axios.get('http://localhost:8080/api/posts/hot')
+    const res = await request.get('/api/posts/hot')
     hotPosts.value = res.data
   } catch (err) {
     console.error('获取热门帖子失败:', err)
