@@ -222,7 +222,7 @@ const fetchClubs = async () => {
           img: imgUrl,
           type: club.type, // Keep the numeric type from backend
           avatars: club.avatars || [],
-          memberCount: club.memberCount || 1
+          memberCount: club.currentMembers ?? club.current_members ?? club.memberCount ?? 0
         }
       })
     }

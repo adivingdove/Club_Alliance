@@ -37,6 +37,9 @@ public class Club {
     @Column(name = "type")
     private Integer type;
 
+    @Column(name = "current_members")
+    private Integer currentMembers;
+
     public enum ClubStatus {
         正常, 待审核, 已封禁
     }

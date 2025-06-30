@@ -16,4 +16,6 @@ public class ApplicationVO {
     private LocalDateTime appliedAt;
     private LocalDateTime processedAt;
     private Integer creatorId;
+    private String memberRole;
+
 } 

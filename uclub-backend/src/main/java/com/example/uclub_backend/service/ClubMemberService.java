@@ -8,6 +8,7 @@ import com.example.uclub_backend.repository.ClubRepository;
 import com.example.uclub_backend.repository.UserRepository;
 import com.example.uclub_backend.vo.ApplicationVO;
 import com.example.uclub_backend.vo.ClubDetailVO;
+import com.example.uclub_backend.mapper.ClubMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,9 @@ public class ClubMemberService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ClubMapper clubMapper;
 
     public List<ClubMember> getMembersByClubId(Integer clubId) {
         return clubMemberRepository.findByClubId(clubId);
@@ -317,6 +321,10 @@ public class ClubMemberService {
         // 更新申请状态
         if ("approve".equals(action)) {
             app.setJoinStatus(ClubMember.JoinStatus.已通过);
+            // 新增：同意后更新社团人数
+            Integer clubId = app.getClubId();
+            Integer currentMembers = club.getCurrentMembers() != null ? club.getCurrentMembers() : 0;
+            clubMapper.updateMemberCount(Long.valueOf(clubId), currentMembers + 1);
         } else if ("reject".equals(action)) {
             app.setJoinStatus(ClubMember.JoinStatus.已拒绝);
         } else {
@@ -357,6 +365,9 @@ public class ClubMemberService {
                 applicantName = "用户" + member.getUserId();
             }
             vo.setApplicantName(applicantName);
+
+            // 新增：设置成员角色
+            vo.setMemberRole(member.getRole() != null ? member.getRole().name() : null);
 
             return vo;
         }).collect(Collectors.toList());
