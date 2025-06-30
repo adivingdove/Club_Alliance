@@ -10,6 +10,15 @@ const request = axios.create({
   }
 })
 
+// 创建不需要token认证的请求实例
+const publicRequest = axios.create({
+  baseURL: 'http://localhost:8080', // 后端服务地址
+  timeout: 10000, // 请求超时时间
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
 // 请求拦截器
 request.interceptors.request.use(
   config => {
@@ -82,6 +91,40 @@ request.interceptors.response.use(
   }
 )
 
+// 公开请求的响应拦截器
+publicRequest.interceptors.response.use(
+  response => {
+    return response
+  },
+  error => {
+    console.error('公开API响应错误:', error)
+    if (error.response) {
+      const { status, data } = error.response
+      switch (status) {
+        case 400:
+          ElMessage.error(data?.message || '请求参数错误')
+          break
+        case 403:
+          ElMessage.error('操作被拒绝，请稍后重试')
+          break
+        case 404:
+          ElMessage.error('请求的资源不存在')
+          break
+        case 500:
+          ElMessage.error('服务器内部错误')
+          break
+        default:
+          ElMessage.error(data?.message || '请求失败')
+      }
+    } else if (error.request) {
+      ElMessage.error('网络错误，请检查网络连接')
+    } else {
+      ElMessage.error('请求配置错误')
+    }
+    return Promise.reject(error)
+  }
+)
+
 // 封装常用的请求方法
 export const http = {
   get(url, params) {
@@ -103,3 +146,6 @@ export const http = {
 
 
 export default request
+
+// 导出公开请求实例
+export { publicRequest }
