@@ -12,7 +12,6 @@ import ClubDetails from '../views/ClubDetails.vue'
 import CollectClubs from '../views/CollectClubs.vue'
 import Applications from '../views/Applications.vue'
 
-
 // 新增论坛模块页面
 import ForumPage from '../views/ForumPage.vue'
 import PostCreate from '../views/PostCreate.vue'

@@ -5,7 +5,6 @@
       <!-- 原导航项 -->
       <li><router-link to="/" class="nav-link" exact-active-class="active-link">首页</router-link></li>
       <li><router-link to="/forum" class="nav-link" active-class="active-link">交流论坛</router-link></li>
-      <li><router-link to="/clubs" class="nav-link" active-class="active-link">社团</router-link></li>
       <li><router-link to="/activities" class="nav-link" active-class="active-link">社团活动</router-link></li>
       <!-- 追加的导航项（保持样式一致） -->
       <li><router-link to="/applications" class="nav-link" active-class="active-link">申请信息</router-link></li>
