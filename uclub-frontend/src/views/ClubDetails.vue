@@ -109,7 +109,7 @@ const fetchClub = async (id) => {
       
       // 兼容主页图片逻辑
       let imgUrl = data.logoUrl || DEFAULT_IMG
-      if (imgUrl.startsWith('/upload/')) {
+      if (imgUrl && imgUrl.startsWith('/uploads/')) {
         imgUrl = 'http://localhost:8080' + imgUrl
       }
       data.img = imgUrl
@@ -117,8 +117,10 @@ const fetchClub = async (id) => {
       // 处理成员头像
       if (Array.isArray(data.members)) {
         data.members.forEach(m => {
-          if (!m.avatar || m.avatar.startsWith('/upload/')) {
-            m.avatar = m.avatar ? 'http://localhost:8080' + m.avatar : DEFAULT_IMG
+          if (m.avatar && m.avatar.startsWith('/uploads/')) {
+            m.avatar = 'http://localhost:8080' + m.avatar
+          } else if (!m.avatar) {
+            m.avatar = DEFAULT_IMG
           }
         })
       } else {

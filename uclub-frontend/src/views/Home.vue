@@ -103,7 +103,7 @@
         <el-form-item label="社团主页图片" prop="logoUrl">
           <el-upload
             action="http://localhost:8080/api/upload"
-            :headers="{ 'X-Requested-With': 'XMLHttpRequest' }"
+            :headers="uploadHeaders"
             :on-success="handleUploadSuccess"
             :on-error="handleUploadError"
             :before-upload="beforeUpload"
@@ -111,6 +111,15 @@
           >
             <el-button type="primary">上传图片</el-button>
           </el-upload>
+          <!-- 图片预览 -->
+          <div v-if="createForm.logoUrl" style="margin-top: 10px;">
+            <img 
+              :src="getImageUrl(createForm.logoUrl)" 
+              style="max-width: 200px; max-height: 150px; border-radius: 8px; border: 1px solid #ddd;"
+              alt="社团图片预览"
+            />
+            <p style="margin-top: 5px; font-size: 12px; color: #666;">图片预览</p>
+          </div>
         </el-form-item>
         <el-form-item label="社团分类" prop="type">
           <el-select v-model="createForm.type" placeholder="请选择社团分类">
@@ -196,8 +205,10 @@ const fetchClubs = async () => {
     if (res.data.code === 0) {
       clubs.value = (res.data.data || []).map(club => {
         let imgUrl = club.logoUrl || '/logo.png'
-        if (imgUrl.startsWith('/upload/')) {
+        console.log('原始logoUrl:', club.logoUrl)
+        if (imgUrl && imgUrl.startsWith('/uploads/')) {
           imgUrl = 'http://localhost:8080' + imgUrl
+          console.log('处理后的imgUrl:', imgUrl)
         }
         return {
           ...club,
@@ -216,20 +227,41 @@ const fetchClubs = async () => {
 // 页面加载时拉取社团列表
 fetchClubs()
 
-const uploadHeaders = { 'X-Requested-With': 'XMLHttpRequest' }
+const uploadHeaders = computed(() => {
+  const token = localStorage.getItem('token')
+  return {
+    'X-Requested-With': 'XMLHttpRequest',
+    'Authorization': token ? `Bearer ${token}` : ''
+  }
+})
 const uploadAction = 'http://localhost:8080/api/upload' // 你需要有后端上传接口
 const handleUploadSuccess = (response) => {
+  console.log('上传成功响应:', response)
   if (response.code === 0 && response.url) {
     createForm.value.logoUrl = response.url
+    console.log('设置logoUrl:', response.url)
     ElMessage.success('图片上传成功')
   } else {
+    console.error('上传响应格式错误:', response)
     ElMessage.error('图片上传失败')
   }
 }
 const handleUploadError = (error) => {
-  ElMessage.error('上传失败，请重试')
+  console.error('上传错误详情:', error)
+  if (error.status === 403) {
+    ElMessage.error('上传失败：请先登录')
+  } else {
+    ElMessage.error('上传失败，请重试')
+  }
 }
 const beforeUpload = (file) => {
+  // 检查用户是否已登录
+  const token = localStorage.getItem('token')
+  if (!token) {
+    ElMessage.error('请先登录后再上传图片')
+    return false
+  }
+  
   const isJPG = file.type === 'image/jpeg' || file.type === 'image/png'
   const isLt5M = file.size / 1024 / 1024 < 5
 
@@ -344,6 +376,13 @@ function goToDetail(id) {
 const doSearch = () => {
   // 触发搜索时可聚焦并显示建议，也可做其他扩展
   onSearchInput()
+}
+
+const getImageUrl = (url) => {
+  if (url && url.startsWith('/uploads/')) {
+    return 'http://localhost:8080' + url
+  }
+  return url
 }
 </script>
 
