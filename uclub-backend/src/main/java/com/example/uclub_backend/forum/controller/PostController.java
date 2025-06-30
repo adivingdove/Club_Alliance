@@ -5,12 +5,12 @@ import com.example.uclub_backend.forum.entity.Post;
 import com.example.uclub_backend.forum.mapper.PostMapper;
 import com.example.uclub_backend.forum.service.LikeService;
 import com.example.uclub_backend.forum.service.PostService;
-
+import com.example.uclub_backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.example.uclub_backend.entity.User;
 import java.util.*;
 
 @RestController
@@ -22,10 +22,13 @@ public class PostController {
     private final LikeService likeService;
 
     
-   public  PostController(PostService postService, LikeService likeService) {
-        this.postService = postService;
-        this.likeService = likeService;
-    }
+   private final UserService userService;
+
+   public PostController(PostService postService, LikeService likeService, UserService userService) {
+    this.postService = postService;
+    this.likeService = likeService;
+    this.userService = userService;
+   }
 
     @PostMapping
     public Map<String, Object> create(@RequestBody Post post) {
@@ -87,8 +90,37 @@ public ResponseEntity<?> getHotPosts() {
 public ResponseEntity<?> getPost(@PathVariable Long id, @RequestParam(required = false) Long userId) {
     try {
         Post post = postService.getPostById(id);
+        if (post == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("code", 404, "message", "帖子不存在"));
+        }
+
+        // 查询发帖人信息
+        User author = userService.getUserById(post.getUserId().intValue());
+
+        // 构造 user 显示信息
+        Map<String, Object> userMap = new HashMap<>();
+        if (author != null) {
+            userMap.put("id", author.getId());
+            userMap.put("nickname", author.getNickname());
+            userMap.put("avatarUrl", author.getHeadUrl()); 
+        }
+
+        // 构造 post 数据
+        Map<String, Object> postMap = new HashMap<>();
+        postMap.put("id", post.getId());
+        postMap.put("title", post.getTitle());
+        postMap.put("content", post.getContent());
+        postMap.put("clubId", post.getClubId());
+        postMap.put("userId", post.getUserId());
+        postMap.put("createdAt", post.getCreatedAt());
+        postMap.put("likeCount", post.getLikeCount());
+        postMap.put("commentCount", post.getCommentCount());
+        postMap.put("user", userMap); //  嵌入 user 对象
+
+        // 构造最终响应体
         Map<String, Object> res = new HashMap<>();
-        res.put("post", post);
+        res.put("post", postMap);
 
         if (userId != null) {
             boolean liked = likeService.hasLiked(userId, Like.TargetType.post, id);
@@ -96,11 +128,13 @@ public ResponseEntity<?> getPost(@PathVariable Long id, @RequestParam(required =
         }
 
         return ResponseEntity.ok(res);
+
     } catch (RuntimeException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of("code", 404, "message", e.getMessage()));
     }
 }
+
 
 @PostMapping("/{id}/like")
 public ResponseEntity<Map<String, Object>> toggleLike(@PathVariable Long id, @RequestParam Long userId) {
