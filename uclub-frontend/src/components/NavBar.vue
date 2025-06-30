@@ -5,10 +5,8 @@
       <!-- 原导航项 -->
       <li><router-link to="/" class="nav-link" exact-active-class="active-link">首页</router-link></li>
       <li><router-link to="/forum" class="nav-link" active-class="active-link">交流论坛</router-link></li>
-      <!-- 删除社团导航项 -->
-      <!-- <li><router-link to="/clubs" class="nav-link" active-class="active-link">社团</router-link></li> -->
+  
       <li><router-link to="/activities" class="nav-link" active-class="active-link">社团活动</router-link></li>
-      <li><router-link to="/profile" class="nav-link" active-class="active-link">个人中心</router-link></li>
       <!-- 追加的导航项（保持样式一致） -->
       <li><router-link to="/applications" class="nav-link" active-class="active-link">申请信息</router-link></li>
     </ul>
@@ -24,9 +22,9 @@
           <el-avatar :size="52" :src="userAvatar" />
           <!-- 用户菜单 -->
           <div v-if="showUserMenu" class="user-menu">
-            <div class="menu-item" @click="showUserInfo">
+            <div class="menu-item" @click="goToProfile">
               <el-icon><User /></el-icon>
-              个人信息
+              个人中心
             </div>
             <div class="menu-item" @click="logout">
               <el-icon><SwitchButton /></el-icon>
@@ -204,26 +202,12 @@
         </div>
       </template>
     </el-dialog>
-
-    <!-- 用户信息对话框 -->
-        <el-dialog
-        v-model="showUserInfoDialog"
-        title="个人信息"
-        width="500px"
-    >
-      <div class="user-info">
-        <el-avatar :size="100" :src="userAvatar" />
-        <h3>{{ userInfo.username }}</h3>
-        <p>邮箱：{{ userInfo.email }}</p>
-        <p>注册时间：{{ userInfo.registerTime }}</p>
-      </div>
-    </el-dialog>
   </nav>
 </template>
 
 
 <script setup>
-import { ref, onUnmounted } from 'vue';
+import { ref, onUnmounted, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import LoginFloatingWindow from '../views/LoginFloatingWindow.vue'; 
 import ManageFloatingWindow from '../views/ManageFloatingWindow.vue';
@@ -254,13 +238,15 @@ const store = useStore()
 const isLoggedIn = computed(() => store.getters.isLoggedIn)
 const showLoginDialog = ref(false)
 const showUserMenu = ref(false)
-const showUserInfoDialog = ref(false)
 const showForgotPasswordDialog = ref(false)
 const isRegister = ref(false)
 const countdown = ref(0)
 const registerCountdown = ref(0)
 
-
+// 组件挂载时初始化用户信息
+onMounted(() => {
+  store.dispatch('initializeApp')
+})
 
 const registerForm = reactive({
   account: '',
@@ -287,8 +273,23 @@ const forgotPasswordForm = reactive({
 // 用户信息
 const userInfo = computed(() => store.getters.currentUser || { username: '', email: '', registerTime: '', avatar: '' })
 
-// 默认头像
-const userAvatar = ref('https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png')
+// 用户头像计算属性
+const userAvatar = computed(() => {
+  const user = userInfo.value
+  if (user.headUrl) {
+    // 如果是完整的URL（以http开头），直接使用
+    if (user.headUrl.startsWith('http')) {
+      return user.headUrl
+    }
+    // 如果是相对路径，添加后端域名
+    if (user.headUrl.startsWith('/')) {
+      return `http://localhost:8080${user.headUrl}`
+    }
+    // 其他情况，添加完整路径
+    return `http://localhost:8080/uploads/avatars/${user.headUrl}`
+  }
+  return 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
+})
 
 // 表单验证规则
 const registerRules = {
@@ -474,12 +475,6 @@ const handleResetPassword = async () => {
   }
 }
 
-// 显示用户信息
-const showUserInfo = () => {
-  showUserInfoDialog.value = true
-  showUserMenu.value = false
-}
-
 // 退出登录
 const logout = () => {
   localStorage.removeItem('token')
@@ -541,6 +536,14 @@ function goSearch() {
   if (query.value.trim() !== '') {
     router.push({ name: 'Search', query: { q: query.value.trim() } });
   }
+}
+
+// 添加新的方法
+function goToProfile() {
+  // 跳转到个人中心页面
+  router.push('/profile')
+  // 关闭用户菜单
+  showUserMenu.value = false
 }
 
 </script>
@@ -805,5 +808,65 @@ function goSearch() {
 
 .btn-cancel:hover {
   background-color: #cbd5e1;
+}
+
+/* 用户头像样式 */
+.user-avatar {
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+}
+
+/* 用户菜单样式 */
+.user-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 150px;
+  z-index: 1000;
+  margin-top: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.user-menu::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 20px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid white;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-item:hover {
+  background-color: #f8fafc;
+}
+
+.menu-item .el-icon {
+  margin-right: 8px;
+  font-size: 16px;
+  color: #64748b;
 }
 </style>

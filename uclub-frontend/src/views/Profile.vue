@@ -55,12 +55,16 @@
               <el-icon><Star /></el-icon>
               <span>我的收藏</span>
             </el-menu-item>
+            <el-menu-item index="history">
+              <el-icon><Clock /></el-icon>
+              <span>浏览历史</span>
+            </el-menu-item>
             <el-menu-item index="settings">
               <el-icon><Lock /></el-icon>
               <span>账户设置</span>
             </el-menu-item>
             <el-menu-item index="recent">
-              <el-icon><SwitchButton /></el-icon>
+              <el-icon><Timer /></el-icon>
               <span>最近活动</span>
             </el-menu-item>
           </el-menu>
@@ -215,6 +219,58 @@
               ></el-pagination>
             </div>
             <el-empty v-else description="暂无收藏的社团" />
+          </el-card>
+        </div>
+
+        <!-- 浏览历史 -->
+        <div v-if="activeMenu === 'history'" class="content-section">
+          <el-card>
+            <template #header>
+              <div class="card-header">
+                <span>浏览历史</span>
+                <div class="header-actions">
+                  <el-button type="danger" size="small" @click="clearHistory">
+                    清空历史
+                  </el-button>
+                </div>
+              </div>
+            </template>
+            <div v-if="browsingHistory.length > 0">
+              <div 
+                v-for="post in pagedHistory" 
+                :key="post.id" 
+                class="history-item"
+                @click="goToPost(post.id)"
+              >
+                <div class="history-content">
+                  <div class="post-title">{{ post.title }}</div>
+                  <div class="post-meta">
+                    <span class="author">作者: {{ post.author }}</span>
+                    <span class="browse-time">浏览时间: {{ formatBrowseTime(post.browseTime) }}</span>
+                  </div>
+                  <div class="post-preview">{{ post.content ? post.content.substring(0, 100) + '...' : '暂无内容' }}</div>
+                </div>
+                <div class="history-actions">
+                  <el-button 
+                    type="danger" 
+                    size="small" 
+                    @click.stop="removeHistoryItem(post.id)"
+                  >
+                    删除
+                  </el-button>
+                </div>
+              </div>
+              <el-pagination
+                v-if="browsingHistory.length > historyPageSize"
+                :current-page="historyPage"
+                :page-size="historyPageSize"
+                :total="browsingHistory.length"
+                @current-change="handleHistoryPageChange"
+                layout="prev, pager, next"
+                style="text-align: center; margin-top: 20px;"
+              ></el-pagination>
+            </div>
+            <el-empty v-else description="暂无浏览历史" />
           </el-card>
         </div>
 
@@ -392,7 +448,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { User, Lock, SwitchButton, Message, Key, Plus, Star } from '@element-plus/icons-vue'
+import { User, Lock, SwitchButton, Message, Key, Plus, Star, Clock, Timer } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { 
@@ -405,6 +461,12 @@ import {
   uploadAvatar 
 } from '../api/profileApi'
 import request from '../utils/request'
+import { 
+  getBrowsingHistory, 
+  clearBrowsingHistory, 
+  removeBrowsingHistory, 
+  formatBrowseTime 
+} from '../utils/history'
 
 const router = useRouter()
 const store = useStore()
@@ -535,6 +597,11 @@ const recentPageSize = ref(6)
 const favoritesPage = ref(1)
 const favoritesPageSize = ref(6)
 
+// 浏览历史相关
+const browsingHistory = ref([])
+const historyPage = ref(1)
+const historyPageSize = ref(10)
+
 // 计算当前页数据
 const pagedClubs = computed(() => {
   const start = (clubsPage.value - 1) * clubsPageSize.value
@@ -551,6 +618,11 @@ const pagedRecentActivities = computed(() => {
 const pagedFavoriteClubs = computed(() => {
   const start = (favoritesPage.value - 1) * favoritesPageSize.value
   return favoriteClubs.value.slice(start, start + favoritesPageSize.value)
+})
+
+const pagedHistory = computed(() => {
+  const start = (historyPage.value - 1) * historyPageSize.value
+  return browsingHistory.value.slice(start, start + historyPageSize.value)
 })
 
 // 上传相关
@@ -580,6 +652,9 @@ const handleMenuSelect = (index) => {
       break
     case 'favorites':
       fetchFavoriteClubs()
+      break
+    case 'history':
+      loadBrowsingHistory()
       break
     case 'recent':
       fetchRecentActivities()
@@ -1010,6 +1085,42 @@ const handleLogout = () => {
   }, 800)
 }
 
+// 浏览历史相关方法
+const loadBrowsingHistory = () => {
+  browsingHistory.value = getBrowsingHistory()
+}
+
+const clearHistory = async () => {
+  try {
+    await ElMessageBox.confirm('确定要清空所有浏览历史吗？', '确认清空', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    clearBrowsingHistory()
+    browsingHistory.value = []
+    historyPage.value = 1
+    ElMessage.success('浏览历史已清空')
+  } catch (error) {
+    // 用户取消操作
+  }
+}
+
+const removeHistoryItem = (postId) => {
+  removeBrowsingHistory(postId)
+  browsingHistory.value = browsingHistory.value.filter(item => item.id !== postId)
+  ElMessage.success('已删除该浏览记录')
+}
+
+const goToPost = (postId) => {
+  router.push(`/post/${postId}`)
+}
+
+const handleHistoryPageChange = (page) => {
+  historyPage.value = page
+}
+
 onMounted(() => {
   if (isLoggedIn.value) {
     fetchRecentActivities()
@@ -1286,5 +1397,70 @@ onMounted(() => {
   .profile-sidebar {
     width: 100%;
   }
+}
+
+/* 浏览历史样式 */
+.history-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.history-item:hover {
+  background-color: #f8f9fa;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.post-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post-meta {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #666;
+}
+
+.author {
+  color: #409EFF;
+}
+
+.browse-time {
+  color: #999;
+}
+
+.post-preview {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.history-actions {
+  margin-left: 15px;
+  flex-shrink: 0;
 }
 </style>

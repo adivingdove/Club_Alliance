@@ -39,12 +39,21 @@
 </template>
 
 <script setup>
-
-
 import { useRouter } from 'vue-router'
+import { addBrowsingHistory } from '../utils/history'
+
 const router = useRouter()
 
 function goToDetail() {
+  // 记录浏览历史
+  addBrowsingHistory({
+    id: props.post.id,
+    title: props.post.title,
+    content: props.post.content,
+    author: `用户${props.post.userId}`,
+    createdAt: props.post.createdAt
+  })
+  
   router.push(`/post/${props.post.id}`)  
 }
 const props = defineProps({
