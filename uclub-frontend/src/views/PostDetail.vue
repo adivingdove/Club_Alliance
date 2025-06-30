@@ -160,6 +160,7 @@ import { Delete } from '@element-plus/icons-vue'
 import{ WarnTriangleFilled }from '@element-plus/icons-vue'
 import { useStore } from 'vuex'
 import { computed } from 'vue'
+import { addBrowsingHistory } from '../utils/history'
 
 const store = useStore()
 const userId = computed(() => store.getters.currentUser?.id || null)
@@ -204,6 +205,15 @@ async function loadPost() {
     post.value = res.data.post
     liked.value = res.data.liked ?? false 
     console.log('帖子详情返回:', res.data)
+
+    // 记录浏览历史
+    addBrowsingHistory({
+      id: post.value.id,
+      title: post.value.title,
+      content: post.value.content,
+      author: `用户${post.value.userId}`,
+      createdAt: post.value.createdAt
+    })
 
   } catch (err) {
     console.error('加载帖子失败', err)
