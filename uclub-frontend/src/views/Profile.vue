@@ -51,6 +51,10 @@
               <el-icon><Key /></el-icon>
               <span>我的活动</span>
             </el-menu-item>
+            <el-menu-item index="favorites">
+              <el-icon><Star /></el-icon>
+              <span>我的收藏</span>
+            </el-menu-item>
             <el-menu-item index="settings">
               <el-icon><Lock /></el-icon>
               <span>账户设置</span>
@@ -109,14 +113,18 @@
             </template>
             <div v-if="myClubs.length > 0">
               <el-row :gutter="20">
-                <el-col :span="8" v-for="club in pagedClubs" :key="club.id">
-                  <el-card class="club-card" shadow="hover">
-                    <img :src="club.logoUrl || defaultAvatar" class="club-logo" />
-                    <h4>{{ club.name }}</h4>
-                    <p>{{ club.description }}</p>
-                    <el-tag :type="getClubRoleType(club.role)" size="small">
-                      {{ club.role }}
-                    </el-tag>
+                <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="club in pagedClubs" :key="club.id" class="favorite-col">
+                  <el-card shadow="hover" class="favorite-card" @click="goToClubDetail(club.id)">
+                    <img :src="club.logoUrl || defaultAvatar" class="club-img" />
+                    <div class="club-info">
+                      <div class="club-title">{{ club.name }}</div>
+                      <div class="club-desc">{{ club.description }}</div>
+                      <div class="club-tags">
+                        <el-tag :type="getClubRoleType(club.role)" size="small">
+                          {{ club.role }}
+                        </el-tag>
+                      </div>
+                    </div>
                   </el-card>
                 </el-col>
               </el-row>
@@ -167,6 +175,46 @@
               ></el-pagination>
             </div>
             <el-empty v-else description="暂无参与的活动" />
+          </el-card>
+        </div>
+
+        <!-- 我的收藏 -->
+        <div v-if="activeMenu === 'favorites'" class="content-section">
+          <el-card>
+            <template #header>
+              <div class="card-header">
+                <span>我的收藏</span>
+              </div>
+            </template>
+            <div v-if="favoriteClubs.length > 0">
+              <el-row :gutter="20">
+                <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="club in pagedFavoriteClubs" :key="club.id" class="favorite-col">
+                  <el-card shadow="hover" class="favorite-card" @click="goToClubDetail(club.id)">
+                    <img :src="club.logoUrl || defaultAvatar" class="club-img" />
+                    <div class="club-info">
+                      <div class="club-title">{{ club.name }}</div>
+                      <div class="club-desc">{{ club.description }}</div>
+                      <div class="club-tags">{{ club.tags }}</div>
+                    </div>
+                    <div class="club-actions">
+                      <el-button type="danger" size="small" @click.stop="removeFromFavorites(club.id)">
+                        取消收藏
+                      </el-button>
+                    </div>
+                  </el-card>
+                </el-col>
+              </el-row>
+              <el-pagination
+                v-if="favoriteClubs.length > favoritesPageSize"
+                :current-page="favoritesPage"
+                :page-size="favoritesPageSize"
+                :total="favoriteClubs.length"
+                @current-change="handleFavoritesPageChange"
+                layout="prev, pager, next"
+                style="text-align: center; margin-top: 20px;"
+              ></el-pagination>
+            </div>
+            <el-empty v-else description="暂无收藏的社团" />
           </el-card>
         </div>
 
@@ -344,7 +392,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { User, Lock, SwitchButton, Message, Key, Plus } from '@element-plus/icons-vue'
+import { User, Lock, SwitchButton, Message, Key, Plus, Star } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { 
@@ -356,6 +404,7 @@ import {
   getRecentActivities,
   uploadAvatar 
 } from '../api/profileApi'
+import request from '../utils/request'
 
 const router = useRouter()
 const store = useStore()
@@ -473,6 +522,9 @@ const myActivities = ref([])
 // 最近活动
 const recentActivities = ref([])
 
+// 我的收藏数据
+const favoriteClubs = ref([])
+
 // 分页相关
 const clubsPage = ref(1)
 const clubsPageSize = ref(6)
@@ -480,6 +532,8 @@ const activitiesPage = ref(1)
 const activitiesPageSize = ref(6)
 const recentPage = ref(1)
 const recentPageSize = ref(6)
+const favoritesPage = ref(1)
+const favoritesPageSize = ref(6)
 
 // 计算当前页数据
 const pagedClubs = computed(() => {
@@ -493,6 +547,10 @@ const pagedActivities = computed(() => {
 const pagedRecentActivities = computed(() => {
   const start = (recentPage.value - 1) * recentPageSize.value
   return recentActivities.value.slice(start, start + recentPageSize.value)
+})
+const pagedFavoriteClubs = computed(() => {
+  const start = (favoritesPage.value - 1) * favoritesPageSize.value
+  return favoriteClubs.value.slice(start, start + favoritesPageSize.value)
 })
 
 // 上传相关
@@ -519,6 +577,9 @@ const handleMenuSelect = (index) => {
       break
     case 'activities':
       fetchMyActivities()
+      break
+    case 'favorites':
+      fetchFavoriteClubs()
       break
     case 'recent':
       fetchRecentActivities()
@@ -757,7 +818,16 @@ const fetchMyClubs = async () => {
     const response = await getMyClubs()
     
     if (response.data.code === 200) {
-      myClubs.value = response.data.data || []
+      myClubs.value = (response.data.data || []).map(club => {
+        let imgUrl = club.logoUrl || defaultAvatar
+        if (imgUrl && imgUrl.startsWith('/uploads/')) {
+          imgUrl = 'http://localhost:8080' + imgUrl
+        }
+        return {
+          ...club,
+          logoUrl: imgUrl
+        }
+      })
     }
   } catch (error) {
     console.error('获取我的社团失败:', error)
@@ -787,6 +857,39 @@ const fetchRecentActivities = async () => {
     }
   } catch (error) {
     console.error('获取最近活动失败:', error)
+  }
+}
+
+// 获取我的收藏
+const fetchFavoriteClubs = async () => {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    if (!user.id) {
+      ElMessage.error('请先登录')
+      return
+    }
+    
+    const response = await request.get('/api/clubs/favorites', {
+      params: { userId: user.id }
+    })
+    
+    if (response.data.code === 0) {
+      favoriteClubs.value = (response.data.data || []).map(club => {
+        let imgUrl = club.logoUrl || defaultAvatar
+        if (imgUrl && imgUrl.startsWith('/uploads/')) {
+          imgUrl = 'http://localhost:8080' + imgUrl
+        }
+        return {
+          ...club,
+          logoUrl: imgUrl
+        }
+      })
+    } else {
+      ElMessage.error('获取收藏列表失败')
+    }
+  } catch (error) {
+    console.error('获取收藏列表失败:', error)
+    ElMessage.error('获取收藏列表失败')
   }
 }
 
@@ -858,6 +961,43 @@ const handleChangePassword = async () => {
   } finally {
     changePasswordLoading.value = false
   }
+}
+
+// 跳转到社团详情
+const goToClubDetail = (clubId) => {
+  router.push(`/club/${clubId}`)
+}
+
+// 取消收藏
+const removeFromFavorites = async (clubId) => {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    if (!user.id) {
+      ElMessage.error('请先登录')
+      return
+    }
+    
+    const response = await request.delete(`/api/clubs/${clubId}/favorite`, {
+      data: { userId: user.id }
+    })
+    
+    if (response.data.code === 0) {
+      ElMessage.success('已取消收藏')
+      // 重新获取收藏列表
+      await fetchFavoriteClubs()
+    } else {
+      ElMessage.error('取消收藏失败')
+    }
+  } catch (error) {
+    console.error('取消收藏失败:', error)
+    ElMessage.error('操作失败，请重试')
+  }
+}
+
+// 收藏分页处理
+const handleFavoritesPageChange = (newPage) => {
+  favoritesPage.value = newPage
+  fetchFavoriteClubs()
 }
 
 const handleLogout = () => {
@@ -1032,6 +1172,65 @@ onMounted(() => {
 .activity-time {
   color: #999;
   font-size: 12px;
+}
+
+.favorite-col {
+  padding-left: 1%;
+  padding-right: 1%;
+  margin-bottom: 2%;
+}
+
+.favorite-card {
+  width: 100%;
+  min-height: 200px;
+  margin-bottom: 0;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.favorite-card:hover {
+  transform: translateY(-2px);
+}
+
+.club-img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.club-info {
+  padding: 0 8px;
+}
+
+.club-title {
+  font-size: 1.3vw;
+  font-weight: bold;
+  margin-bottom: 1vw;
+  color: #303133;
+}
+
+.club-desc {
+  margin-bottom: 1vw;
+  font-size: 1vw;
+  color: #606266;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.club-tags {
+  color: #409EFF;
+  font-size: 0.9vw;
+  font-weight: 500;
+}
+
+.club-actions {
+  margin-top: 10px;
+  text-align: center;
 }
 
 .avatar-upload {
