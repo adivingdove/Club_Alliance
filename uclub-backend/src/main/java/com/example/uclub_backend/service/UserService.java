@@ -219,7 +219,6 @@ public class UserService {
     private UserRepository userRepository;
 
     public List<User> getUsersByQuery(String email, String nickname, String role, String status) {
-        // 如果为空，传 null；让 JPQL @Query 自行判断是否忽略条件
         return userRepository.queryUsers(
                 (email == null || email.isEmpty()) ? null : email,
                 (nickname == null || nickname.isEmpty())? null :nickname,
@@ -257,7 +256,4 @@ public class UserService {
                 && requiredRole.equals(user.getRole())
                 && requiredStatus.equals(user.getStatus());
     }
-
-
-
 }

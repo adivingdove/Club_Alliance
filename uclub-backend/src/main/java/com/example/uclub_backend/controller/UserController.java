@@ -11,11 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.Random;
 
 @RestController
 @RequestMapping("/api/user")
@@ -259,4 +256,21 @@ public class UserController {
         response.put("message", "密码重置成功");
         return response;
     }
+
+    // 列出用户
+    @GetMapping
+    public Map<String, Object> queryUsers(
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String nickname,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String status
+    ) {
+        List<User> list = userService.getUsersByQuery(email,nickname ,role ,status);
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("code", 200);
+        resp.put("data", list);
+        return resp;
+    }
+
+
 }
