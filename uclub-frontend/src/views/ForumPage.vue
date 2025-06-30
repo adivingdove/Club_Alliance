@@ -66,8 +66,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { Edit, EditPen } from '@element-plus/icons-vue'
 
 import PostCard from '../components/PostCard.vue'
@@ -75,6 +75,7 @@ import ForumSidebar from '../components/ForumSidebar.vue'
 import { fetchPostList } from '../api/forum'
 
 const router = useRouter()
+const route = useRoute()
 const posts = ref([])
 const total = ref(0)
 const page = ref(1)
@@ -127,8 +128,6 @@ const loadPosts = async () => {
   }
 }
 
-
-
 const resetFilter = () => {
   filter.value = {
     title: '',
@@ -152,6 +151,15 @@ const handleFilterSearch = () => {
 }
 
 onMounted(loadPosts)
+
+// 添加路由监听，当从发帖页面返回时自动刷新帖子列表
+watch(route, (newRoute, oldRoute) => {
+  // 只有当从发帖页面返回时才刷新
+  if (oldRoute?.path === '/post/create' && newRoute.path === '/forum') {
+    console.log('[ForumPage] 从发帖页面返回，刷新帖子列表')
+    loadPosts()
+  }
+})
 </script>
 
 <style scoped>

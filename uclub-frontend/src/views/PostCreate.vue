@@ -71,7 +71,7 @@ const form = ref({
   clubId: '', 
   title: '',
   content: '',
-  image_urls: [],
+  imageUrlList: [],
   userId: userId.value || 1001 // 默认用户ID为1001
 })
 
@@ -106,40 +106,50 @@ const insertAtCursor = (text) => {
 
 const handleUploadRemove = (file) => {
   const url = file.response?.url || file.url
-  form.value.image_urls = form.value.image_urls.filter((img) => img !== url)
+  form.value.imageUrlList = form.value.imageUrlList.filter((img) => img !== url)
 }
 
 const submitPost = async () => {
+  const token = localStorage.getItem('token')
+  if (!token) {
+    ElMessage.error('请先登录后再发帖')
+    return
+  }
   const payload = {
     ...form.value,
-    image_urls: form.value.image_urls,
+    imageUrlList: form.value.imageUrlList,
   }
 
   console.log('[提交帖子] 请求体:', payload)
 
   try {
     const res = await createPost(payload)
-    const result = res
+    console.log('[提交帖子] 成功响应:', res)
 
-    console.log('[提交帖子] 成功响应:', result)
+    // 后端直接返回 { code: 200, message: "发布成功", data: { post_id: xxx } }
+    if (res.data && res.data.code === 200) {
+      const postId = res.data.data?.post_id
+      if (postId) {
+        ElMessage.success('发布成功')
+        // 跳转回论坛页面
+        router.push('/forum')
 
-    const postId = res?.data?.data?.post_id
-if (postId) {
-  ElMessage.success('发布成功')
-  router.push(`/post/${postId}`)
-
-  // 重置表单
-  form.value = {
-    clubId: '',
-    title: '',
-    content: '',
-    image_urls: [],
-    userId: userId.value || 1001 // 默认用户ID为1001
-  }
-} else {
-  console.error('[提交帖子] 失败响应结构异常:', res)
-  ElMessage.error(res?.data?.message || '发布失败')
-}
+        // 重置表单
+        form.value = {
+          clubId: '',
+          title: '',
+          content: '',
+          imageUrlList: [], // 修改字段名以匹配后端
+          userId: userId.value || 1001 // 默认用户ID为1001
+        }
+      } else {
+        console.error('[提交帖子] 响应中缺少post_id:', res.data)
+        ElMessage.error('发布失败：响应数据异常')
+      }
+    } else {
+      console.error('[提交帖子] 响应状态异常:', res.data)
+      ElMessage.error(res.data?.message || '发布失败')
+    }
 
   } catch (err) {
     console.error('[提交帖子] 请求失败:', err)
@@ -147,7 +157,7 @@ if (postId) {
     console.error('[提交帖子] err.response:', err.response)
     console.error('[提交帖子] err.response?.data:', err.response?.data)
 
-    ElMessage.error(err?.response?.data?.message || '发布失败，请检查后端 /api/post 接口')
+    ElMessage.error(err?.response?.data?.message || '发布失败，请检查后端 /api/posts 接口')
   }
 }
 
@@ -163,7 +173,7 @@ const handleUploadSuccess = (res, file) => {
   const url = res.url?.startsWith('http') ? res.url : `http://localhost:8080${res.url}`
   const markdownImage = `\n![${file.name}](${url})\n`
   insertAtCursor(markdownImage)
-  form.value.image_urls.push(url)
+  form.value.imageUrlList.push(url)
   ElMessage.success('图片上传成功')
 }
 
