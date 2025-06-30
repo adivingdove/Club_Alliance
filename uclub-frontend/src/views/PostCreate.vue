@@ -35,6 +35,7 @@
     <!-- 图片上传 -->
 <el-upload
   action="/api/forum/upload"
+  :headers="uploadHeaders"
   list-type="picture-card"
   :limit="9"
   :on-success="handleUploadSuccess"
@@ -86,7 +87,12 @@ const loadClubs = () => {
 
 onMounted(loadClubs)
 
-
+const uploadHeaders = computed(() => {
+  const token = localStorage.getItem('token')
+  return {
+    'Authorization': token ? `Bearer ${token}` : ''
+  }
+})
 
 const insertAtCursor = (text) => {
   const textarea = document.querySelector('.markdown-textarea')
@@ -160,7 +166,6 @@ const submitPost = async () => {
     ElMessage.error(err?.response?.data?.message || '发布失败，请检查后端 /api/posts 接口')
   }
 }
-
 
 const handleBeforeUpload = (file) => {
   console.log('[上传准备]', file)
