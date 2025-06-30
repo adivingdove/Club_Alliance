@@ -13,10 +13,19 @@ const request = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
   config => {
-    // 从localStorage获取token并添加到请求头
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    // 不需要 token 的接口
+    const noAuthUrls = [
+      '/api/user/sendRegisterCode',
+      '/api/user/register',
+      '/api/user/login',
+      '/api/user/sendResetCode'
+    ]
+    // 只有不在 noAuthUrls 里的接口才加 token
+    if (!noAuthUrls.some(url => config.url && config.url.includes(url))) {
+      const token = localStorage.getItem('token')
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
     }
     return config
   },

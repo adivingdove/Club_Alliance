@@ -90,8 +90,20 @@ const fetchApplications = async () => {
     
     if (response.data.code === 0) {
       const data = response.data.data || {}
-      pendingApplications.value = data.pending || []
-      processedApplications.value = data.processed || []
+      // 只显示需要当前用户审批的、且不是自己发起的、且不是社长身份的、且 join_status 为 '待审核' 的申请
+      pendingApplications.value = (data.pending || []).filter(app =>
+        String(app.user_id) !== String(user.id) &&
+        app.role !== '社长' &&
+        app.join_status === '待审核' &&
+        (String(app.club_creator_id) === String(user.id) || String(app.club?.creatorId) === String(user.id))
+      )
+      processedApplications.value = (data.processed || []).filter(app =>
+        String(app.user_id) !== String(user.id) &&
+        app.role !== '社长' &&
+        app.join_status !== '待审核' &&
+        (String(app.club_creator_id) === String(user.id) || String(app.club?.creatorId) === String(user.id))
+      )
+      console.log('pending原始数据:', data.pending)
     } else {
       ElMessage.error('获取申请信息失败')
     }
