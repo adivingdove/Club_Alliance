@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import request from '../utils/request' // 你的 axios 封装
 import { ElMessage } from 'element-plus'
@@ -21,6 +21,16 @@ const applyRules = {
   applicant: [{ required: true, message: '请填写申请人信息', trigger: 'blur' }],
   reason: [{ required: true, message: '请填写申请理由', trigger: 'blur' }]
 }
+
+const user = computed(() => {
+  try {
+    return JSON.parse(localStorage.getItem('user') || '{}')
+  } catch {
+    return {}
+  }
+})
+
+const isPresident = computed(() => user.value.id && club.value.creatorId === user.value.id)
 
 // 检查收藏状态
 const checkFavoriteStatus = async (clubId) => {
@@ -297,6 +307,106 @@ const getActivityStatusClass = (status) => {
       return 'activity-status-pending'
   }
 }
+
+// 编辑社团相关
+const showEditDialog = ref(false)
+const editForm = ref({
+  name: '',
+  description: '',
+  logoUrl: ''
+})
+const editRules = {
+  name: [{ required: true, message: '请输入社团名称', trigger: 'blur' }],
+  description: [{ required: true, message: '请输入简介', trigger: 'blur' }],
+}
+const editFormRef = ref()
+
+const openEditDialog = () => {
+  editForm.value = {
+    name: club.value.name || '',
+    description: club.value.description || '',
+    logoUrl: club.value.logoUrl || ''
+  }
+  showEditDialog.value = true
+}
+
+const uploadHeaders = computed(() => {
+  const token = localStorage.getItem('token')
+  return {
+    'Authorization': token ? `Bearer ${token}` : '',
+    'X-Requested-With': 'XMLHttpRequest'
+  }
+})
+
+const handleEditLogoUploadSuccess = (response) => {
+  // 兼容后端返回 { code: 0, data: { url: 'xxx' } } 或 { code: 0, url: 'xxx' }
+  let url = response.url
+  if (!url && response.data && response.data.url) {
+    url = response.data.url
+  }
+  if (response.code === 0 && url) {
+    editForm.value.logoUrl = url
+    ElMessage.success('图片上传成功')
+  } else {
+    ElMessage.error('图片上传失败')
+  }
+}
+
+const handleEditLogoUploadError = (err) => {
+  console.error('图片上传失败:', err);
+  ElMessage.error('图片上传失败，请重试');
+};
+
+const handleBeforeEditLogoUpload = (file) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    ElMessage.error('请先登录后再上传图片');
+    return false;
+  }
+  const isJPG = file.type === 'image/jpeg' || file.type === 'image/png';
+  const isLt5M = file.size / 1024 / 1024 < 5;
+  if (!isJPG) {
+    ElMessage.error('上传图片必须是 JPG 或 PNG 格式');
+    return false;
+  }
+  if (!isLt5M) {
+    ElMessage.error('上传图片大小不能超过 5MB');
+    return false;
+  }
+  return true;
+};
+
+const handleEditSubmit = () => {
+  editFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        const clubId = route.params.id
+        const payload = {
+          name: editForm.value.name,
+          description: editForm.value.description,
+          logoUrl: editForm.value.logoUrl
+        }
+        const res = await request.put(`/api/clubs/${clubId}`, payload)
+        if (res.data.code === 0) {
+          ElMessage.success('社团信息更新成功')
+          showEditDialog.value = false
+          await fetchClub(clubId)
+        } else {
+          ElMessage.error(res.data.message || '更新失败')
+        }
+      } catch (e) {
+        ElMessage.error('更新失败，请重试')
+      }
+    }
+  })
+}
+
+const getImageUrl = (url) => {
+  if (url && url.startsWith('/uploads/')) {
+    return 'http://localhost:8080' + url
+  }
+  return url
+}
 </script>
 
 <template>
@@ -317,6 +427,9 @@ const getActivityStatusClass = (status) => {
             @click="canApply() ? showApplyDialog = true : null"
           >
             {{ getApplicationStatusText() }}
+          </el-button>
+          <el-button v-if="isPresident" type="primary" plain @click="openEditDialog" style="margin-left: 12px;">
+            编辑社团信息
           </el-button>
         </div>
       </div>
@@ -380,6 +493,38 @@ const getActivityStatusClass = (status) => {
       <template #footer>
         <el-button @click="showApplyDialog = false">取消</el-button>
         <el-button type="primary" @click="submitApply">提交申请</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="showEditDialog" title="编辑社团信息" width="400px" :close-on-click-modal="false">
+      <el-form :model="editForm" :rules="editRules" ref="editFormRef" label-width="90px">
+        <el-form-item label="社团名称" prop="name">
+          <el-input v-model="editForm.name" />
+        </el-form-item>
+        <el-form-item label="简介" prop="description">
+          <el-input v-model="editForm.description" type="textarea" />
+        </el-form-item>
+        <el-form-item label="主页图片" prop="logoUrl">
+          <el-input v-model="editForm.logoUrl" placeholder="图片URL或上传" style="width: 70%; margin-right: 8px;" />
+          <el-upload
+            action="http://localhost:8080/api/upload"
+            :headers="uploadHeaders"
+            :show-file-list="false"
+            :on-success="handleEditLogoUploadSuccess"
+            :on-error="handleEditLogoUploadError"
+            :before-upload="handleBeforeEditLogoUpload"
+          >
+            <el-button type="primary" size="small">上传图片</el-button>
+          </el-upload>
+          <div v-if="editForm.logoUrl" style="margin-top: 10px;">
+            <img :src="getImageUrl(editForm.logoUrl)" style="max-width: 200px; max-height: 150px; border-radius: 8px; border: 1px solid #ddd;" alt="图片预览" />
+            <p style="margin-top: 5px; font-size: 12px; color: #666;">图片预览</p>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showEditDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleEditSubmit">保存</el-button>
       </template>
     </el-dialog>
   </div>

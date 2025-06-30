@@ -68,7 +68,14 @@
                 <div class="club-members">
                   <img v-for="(avatar, idx) in club.avatars" :key="idx" :src="avatar" class="member-avatar" />
                 </div>
-                <el-button type="primary" size="small" class="join-btn">加入社团</el-button>
+                <el-button
+                  type="primary"
+                  size="small"
+                  class="join-btn"
+                  @click.stop="joinClub(club)"
+                >
+                  加入社团
+                </el-button>
               </div>
             </el-card>
           </el-col>
@@ -383,6 +390,29 @@ const getImageUrl = (url) => {
     return 'http://localhost:8080' + url
   }
   return url
+}
+
+const joinClub = async (club) => {
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  if (!user.id) {
+    ElMessage.error('请先登录')
+    return
+  }
+  try {
+    // 调用后端申请加入社团接口
+    const res = await request.post(`/api/clubs/${club.id}/apply`, {
+      userId: user.id
+      // 可根据后端需要补充申请理由、联系方式等
+    })
+    if (res.data.code === 0) {
+      ElMessage.success('申请已提交，等待社长审批')
+      // 不要修改 club.memberCount
+    } else {
+      ElMessage.error(res.data.message || '申请失败')
+    }
+  } catch (e) {
+    ElMessage.error('网络错误，申请失败')
+  }
 }
 </script>
 
