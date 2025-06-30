@@ -28,7 +28,7 @@ public class Post {
 
     private Integer likeCount = 0;
     private Integer commentCount = 0;
-
+    @Column(name = "created_at")
     private java.time.LocalDateTime createdAt = java.time.LocalDateTime.now();
 
     @Transient

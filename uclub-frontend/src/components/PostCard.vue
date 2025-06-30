@@ -15,7 +15,7 @@
         <div class="post-content-preview">{{ getTextSummary(post.content) }}</div>
 
         <div class="post-meta">
-          <el-tag type="success" size="small" class="club-tag">社团ID: {{ post.clubId }}</el-tag>
+          <el-tag type="success" size="small" class="club-tag"> {{ post.clubName || '未知社团' }}</el-tag>
           <span class="author">发布用户ID: {{ post.userId }}</span>
           <span class="time">{{ formatTime(post.createdAt) }}</span>
         </div>

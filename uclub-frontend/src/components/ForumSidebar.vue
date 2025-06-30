@@ -8,7 +8,7 @@
         type="success"
         class="tag"
       >
-        {{ club }}
+       {{ club.name }}
       </el-tag>
     </el-card>
 
@@ -27,10 +27,12 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
+import { publicRequest } from '@/utils/request'
 import request from '@/utils/request'
 import { useRouter } from 'vue-router'
 
-const hotClubs = ['康腾实践中心', '茶艺协会', '摄影兴趣组']
+const hotClubs = ref([]) // 修改为响应式
+
 const hotPosts = ref([])
 
 const router = useRouter()
@@ -48,8 +50,22 @@ function goToPost(id) {
   router.push(`/post/${id}`)
 }
 
+async function fetchHotClubs() {
+  try {
+    const res = await publicRequest.get('/api/clubs/hot')
+    if (res.data?.code === 0) {
+      hotClubs.value = res.data.data || []
+    } else {
+      console.error('获取热门社团失败:', res.data?.message)
+    }
+  } catch (err) {
+    console.error('获取热门社团失败:', err)
+  }
+}
+
 onMounted(() => {
   fetchHotPosts()
+   fetchHotClubs()
 })
 
 </script>

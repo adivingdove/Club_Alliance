@@ -335,4 +335,14 @@ public class ClubController {
         }
     }
 
+    @GetMapping("/hot")
+  public Result<List<Club>> getHotClubs() {
+    try {
+        List<Club> hotClubs = clubService.getHotClubs();
+        return Result.success(hotClubs);
+    } catch (Exception e) {
+        return Result.error("获取热门社团失败：" + e.getMessage());
+    }
+}
+
 } 

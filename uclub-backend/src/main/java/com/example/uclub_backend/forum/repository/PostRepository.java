@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
-
+import java.util.List;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
 
@@ -37,6 +37,9 @@ void incrementLikeCount(@Param("postId") Long postId);
 @Modifying
 @Query("UPDATE Post p SET p.likeCount = p.likeCount - 1 WHERE p.id = :postId AND p.likeCount > 0")
 void decrementLikeCount(@Param("postId") Long postId);
+
+@Query("SELECT DISTINCT p.clubId FROM Post p WHERE p.createdAt >= :since")
+List<Integer> findRecentActiveClubIds(@Param("since") LocalDateTime since);
 
 
 }

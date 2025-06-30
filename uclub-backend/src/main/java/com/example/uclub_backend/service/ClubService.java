@@ -3,6 +3,7 @@ package com.example.uclub_backend.service;
 import com.example.uclub_backend.entity.Club;
 import com.example.uclub_backend.entity.ClubMember;
 import com.example.uclub_backend.entity.User;
+import com.example.uclub_backend.forum.repository.PostRepository;
 import com.example.uclub_backend.entity.ClubActivity;
 import com.example.uclub_backend.repository.ClubRepository;
 import com.example.uclub_backend.repository.UserRepository;
@@ -16,6 +17,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -216,4 +220,22 @@ public class ClubService {
             return clubRepository.findByKeyword(keyword, pageable);
         }
     }
+
+    
+
+
+   @Autowired
+   private PostRepository postRepository;
+
+   
+    public List<Club> getHotClubs() {
+    LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+    List<Integer> clubIds = postRepository.findRecentActiveClubIds(sevenDaysAgo);
+
+    if (clubIds.isEmpty()) {
+        return new ArrayList<>();
+    }
+
+    return clubRepository.findAllById(clubIds);
+}
 } 

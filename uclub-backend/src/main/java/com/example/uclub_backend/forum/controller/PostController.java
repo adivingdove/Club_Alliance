@@ -47,27 +47,25 @@ public Map<String, Object> getPosts(
         @RequestParam(defaultValue = "") String title,
         @RequestParam(defaultValue = "") String clubName,
         @RequestParam(defaultValue = "") String timeRange,
+        @RequestParam(required = false) String startTime,
         @RequestParam(defaultValue = "1") int page,
         @RequestParam(defaultValue = "10") int pageSize) {
 
-    // 目前只用 title 查询，clubName 和 timeRange 可保留拓展用
-  Map<String, String> filters = new HashMap<>();
-filters.put("title", title);
-
-if (!clubName.isBlank()) {
+    Map<String, String> filters = new HashMap<>();
+    filters.put("title", title);
     filters.put("clubName", clubName);
-}
-
-if (!timeRange.isBlank()) {
     filters.put("timeRange", timeRange);
-}
+    if (startTime != null && !startTime.isBlank()) {
+        filters.put("startTime", startTime);
+    }
 
-     var postPage = postService.getPostPage(filters, page, pageSize);
+    var postPage = postService.getPostPage(filters, page, pageSize);
     Map<String, Object> res = new HashMap<>();
     res.put("posts", postPage.getContent());
     res.put("total", postPage.getTotalElements());
     return res;
 }
+
 
      @Autowired
     private PostMapper postMapper; 

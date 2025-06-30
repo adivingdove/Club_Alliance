@@ -62,6 +62,7 @@ import { createPost } from '@/api/forum'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { computed } from 'vue'
+import {clubApi} from '@/utils/api'
 
 const store = useStore()
 const userId = computed(() => store.getters.currentUser?.id || null)
@@ -78,12 +79,27 @@ const form = ref({
 
 const clubs = ref([])
 
-const loadClubs = () => {
-  clubs.value = [
-    { id: 1, name: '摄影社' },
-    { id: 2, name: '编程协会' },
-  ]
+const loadClubs = async () => {
+  try {
+    const res = await clubApi.getAllClubs()
+    console.log('[获取社团列表] 原始响应:', res)
+    console.log('[获取社团列表] 响应数据:', res.data)
+
+    if (res.data?.code === 0) {  
+      clubs.value = (res.data.data || []).map(c => ({
+        id: c.id,
+        name: c.name
+      }))
+      console.log('[获取社团列表] 转换后:', clubs.value)
+    } else {
+      ElMessage.error(res.data?.message || '获取社团失败')
+    }
+  } catch (error) {
+    console.error('[获取社团列表失败]', error)
+    ElMessage.error('无法加载社团列表，请检查 /api/clubs 接口是否正常')
+  }
 }
+
 
 onMounted(loadClubs)
 

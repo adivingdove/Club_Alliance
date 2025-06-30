@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -22,15 +23,23 @@ public class PostService {
     }
 
     //  分页查询
-    public Page<Post> getPostPage(Map<String, String> filters, int page, int size) {
-        String title = filters.getOrDefault("title", "");
-        String clubName = filters.getOrDefault("clubName", "");
-        String timeRange = filters.getOrDefault("timeRange", "");
-        //String status = "active";
+public Page<Post> getPostPage(Map<String, String> filters, int page, int size) {
+    String title = filters.getOrDefault("title", "");
+    String clubName = filters.getOrDefault("clubName", "");
+    String timeRange = filters.getOrDefault("timeRange", "");
+    String startTimeStr = filters.get("startTime"); // 前端显式传入
 
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+    Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
 
-        LocalDateTime startTime = null;
+    // 支持 startTime 优先（前端传 ISO 字符串）
+    LocalDateTime startTime = null;
+    if (startTimeStr != null && !startTimeStr.isBlank()) {
+        try {
+           startTime = LocalDateTime.parse(startTimeStr, DateTimeFormatter.ISO_DATE_TIME);
+        } catch (Exception e) {
+            // 可记录日志，继续使用 timeRange fallback
+        }
+    } else {
         if ("today".equals(timeRange)) {
             startTime = LocalDate.now().atStartOfDay();
         } else if ("7days".equals(timeRange)) {
@@ -38,26 +47,26 @@ public class PostService {
         } else if ("30days".equals(timeRange)) {
             startTime = LocalDateTime.now().minusDays(30);
         }
+    }
 
     Long clubId = null;
     if (!clubName.isBlank()) {
         clubId = forumClubRepository.findByName(clubName)
-                .map(club -> club.getId().longValue()) // 转换 Integer -> Long
+                .map(club -> club.getId().longValue())
                 .orElse(null);
     }
 
+    Page<Post> postPage = postRepository.findByFilters(title, clubId, startTime, pageable);
 
-
-        Page<Post> postPage = postRepository.findByFilters(title, clubId, startTime, pageable);
-
-
-        for (Post post : postPage.getContent()) {
-            forumClubRepository.findById(post.getClubId())
-                    .ifPresent(club -> post.setClubName(club.getName()));
-        }
-
-        return postPage;
+    // 填充社团名
+    for (Post post : postPage.getContent()) {
+        forumClubRepository.findById(post.getClubId())
+                .ifPresent(club -> post.setClubName(club.getName()));
     }
+
+    return postPage;
+}
+
 
     // 发帖
     public Post save(Post post) {

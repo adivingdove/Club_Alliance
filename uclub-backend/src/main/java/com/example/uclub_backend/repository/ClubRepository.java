@@ -1,6 +1,9 @@
 package com.example.uclub_backend.repository;
 
 import com.example.uclub_backend.entity.Club;
+import com.example.uclub_backend.forum.repository.PostRepository;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,5 +35,6 @@ public interface ClubRepository extends JpaRepository<Club, Integer> {
     Page<Club> findByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
     List<Club> findByNameContaining(String keyword);
+
 
 }
