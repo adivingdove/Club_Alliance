@@ -109,7 +109,7 @@
             </template>
             <div v-if="myClubs.length > 0">
               <el-row :gutter="20">
-                <el-col :span="8" v-for="club in myClubs" :key="club.id">
+                <el-col :span="8" v-for="club in pagedClubs" :key="club.id">
                   <el-card class="club-card" shadow="hover">
                     <img :src="club.logoUrl || defaultAvatar" class="club-logo" />
                     <h4>{{ club.name }}</h4>
@@ -120,6 +120,15 @@
                   </el-card>
                 </el-col>
               </el-row>
+              <el-pagination
+                v-if="myClubs.length > clubsPageSize"
+                :current-page="clubsPage"
+                :page-size="clubsPageSize"
+                :total="myClubs.length"
+                @current-change="handleClubsPageChange"
+                layout="prev, pager, next"
+                style="text-align: center; margin-top: 20px;"
+              ></el-pagination>
             </div>
             <el-empty v-else description="暂无加入的社团" />
           </el-card>
@@ -134,7 +143,7 @@
               </div>
             </template>
             <div v-if="myActivities.length > 0">
-              <el-table :data="myActivities" style="width: 100%">
+              <el-table :data="pagedActivities" style="width: 100%">
                 <el-table-column prop="title" label="活动名称" width="200"></el-table-column>
                 <el-table-column prop="description" label="活动描述"></el-table-column>
                 <el-table-column prop="location" label="活动地点" width="150"></el-table-column>
@@ -147,6 +156,15 @@
                   </template>
                 </el-table-column>
               </el-table>
+              <el-pagination
+                v-if="myActivities.length > activitiesPageSize"
+                :current-page="activitiesPage"
+                :page-size="activitiesPageSize"
+                :total="myActivities.length"
+                @current-change="handleActivitiesPageChange"
+                layout="prev, pager, next"
+                style="text-align: center; margin-top: 20px;"
+              ></el-pagination>
             </div>
             <el-empty v-else description="暂无参与的活动" />
           </el-card>
@@ -177,6 +195,7 @@
                 </el-button>
               </el-form-item>
             </el-form>
+            <el-button type="danger" style="width: 100%; margin-top: 20px;" @click="handleLogout">退出登录</el-button>
           </el-card>
         </div>
 
@@ -190,7 +209,7 @@
             </template>
             <div v-if="recentActivities.length > 0">
               <div 
-                v-for="activity in recentActivities" 
+                v-for="activity in pagedRecentActivities" 
                 :key="activity.id" 
                 class="activity-item"
               >
@@ -203,6 +222,15 @@
                   <span class="activity-time">{{ formatDate(activity.createdAt) }}</span>
                 </div>
               </div>
+              <el-pagination
+                v-if="recentActivities.length > recentPageSize"
+                :current-page="recentPage"
+                :page-size="recentPageSize"
+                :total="recentActivities.length"
+                @current-change="handleRecentPageChange"
+                layout="prev, pager, next"
+                style="text-align: center; margin-top: 20px;"
+              ></el-pagination>
             </div>
             <el-empty v-else description="暂无最近活动" />
           </el-card>
@@ -284,6 +312,32 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 修改密码对话框 -->
+    <el-dialog 
+      v-model="showChangePassword" 
+      title="修改密码" 
+      width="400px"
+      @close="resetChangePasswordForm"
+    >
+      <el-form :model="changePasswordForm" label-width="100px">
+        <el-form-item label="旧密码">
+          <el-input v-model="changePasswordForm.oldPassword" type="password" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="新密码">
+          <el-input v-model="changePasswordForm.newPassword" type="password" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="确认新密码">
+          <el-input v-model="changePasswordForm.confirmNewPassword" type="password" autocomplete="off" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showChangePassword = false">取消</el-button>
+          <el-button type="primary" :loading="changePasswordLoading" @click="handleChangePassword">确认修改</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -310,6 +364,7 @@ const store = useStore()
 const isLoggedIn = computed(() => store.getters.isLoggedIn)
 const showAvatarUpload = ref(false)
 const showEditDialog = ref(false)
+const showChangePassword = ref(false)
 const avatarUrl = ref('')
 const activeMenu = ref('profile')
 
@@ -321,6 +376,15 @@ const editForm = ref({
   role: '',
   status: ''
 })
+
+// 修改密码表单
+const changePasswordForm = ref({
+  oldPassword: '',
+  newPassword: '',
+  confirmNewPassword: ''
+})
+
+const changePasswordLoading = ref(false)
 
 // 默认头像
 const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
@@ -408,6 +472,28 @@ const myActivities = ref([])
 
 // 最近活动
 const recentActivities = ref([])
+
+// 分页相关
+const clubsPage = ref(1)
+const clubsPageSize = ref(6)
+const activitiesPage = ref(1)
+const activitiesPageSize = ref(6)
+const recentPage = ref(1)
+const recentPageSize = ref(6)
+
+// 计算当前页数据
+const pagedClubs = computed(() => {
+  const start = (clubsPage.value - 1) * clubsPageSize.value
+  return myClubs.value.slice(start, start + clubsPageSize.value)
+})
+const pagedActivities = computed(() => {
+  const start = (activitiesPage.value - 1) * activitiesPageSize.value
+  return myActivities.value.slice(start, start + activitiesPageSize.value)
+})
+const pagedRecentActivities = computed(() => {
+  const start = (recentPage.value - 1) * recentPageSize.value
+  return recentActivities.value.slice(start, start + recentPageSize.value)
+})
 
 // 上传相关
 const uploadUrl = computed(() => {
@@ -709,6 +795,79 @@ const getFullAvatarUrl = (url) => {
   if (url.startsWith('http')) return url
   if (url.startsWith('/')) return `http://localhost:8080${url}`
   return `http://localhost:8080/uploads/avatars/${url}`
+}
+
+const handleClubsPageChange = (newPage) => {
+  clubsPage.value = newPage
+  fetchMyClubs()
+}
+
+const handleActivitiesPageChange = (newPage) => {
+  activitiesPage.value = newPage
+  fetchMyActivities()
+}
+
+const handleRecentPageChange = (newPage) => {
+  recentPage.value = newPage
+  fetchRecentActivities()
+}
+
+const resetChangePasswordForm = () => {
+  changePasswordForm.value.oldPassword = ''
+  changePasswordForm.value.newPassword = ''
+  changePasswordForm.value.confirmNewPassword = ''
+}
+
+const handleChangePassword = async () => {
+  if (
+    !changePasswordForm.value.oldPassword.trim() ||
+    !changePasswordForm.value.newPassword.trim() ||
+    !changePasswordForm.value.confirmNewPassword.trim()
+  ) {
+    ElMessage.error('请填写所有字段')
+    return
+  }
+  if (changePasswordForm.value.newPassword !== changePasswordForm.value.confirmNewPassword) {
+    ElMessage.error('两次输入的新密码不一致')
+    return
+  }
+  if (changePasswordForm.value.newPassword.length < 6) {
+    ElMessage.error('新密码长度不能少于6位')
+    return
+  }
+  changePasswordLoading.value = true
+  try {
+    const res = await changePassword({
+      oldPassword: changePasswordForm.value.oldPassword,
+      newPassword: changePasswordForm.value.newPassword,
+      confirmPassword: changePasswordForm.value.confirmNewPassword
+    })
+    if (res.data.code === 200) {
+      ElMessage.success('密码修改成功，请重新登录')
+      showChangePassword.value = false
+      resetChangePasswordForm()
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
+    } else {
+      ElMessage.error(res.data.message || '密码修改失败')
+    }
+  } catch (error) {
+    ElMessage.error('密码修改失败')
+    console.error('修改密码错误:', error)
+  } finally {
+    changePasswordLoading.value = false
+  }
+}
+
+const handleLogout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  store.dispatch('logout')
+  ElMessage.success('已退出登录')
+  setTimeout(() => {
+    window.location.reload()
+  }, 800)
 }
 
 onMounted(() => {
