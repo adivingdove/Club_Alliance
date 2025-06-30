@@ -1,6 +1,8 @@
 package com.example.uclub_backend.repository;
 
 import com.example.uclub_backend.entity.Club;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,4 +26,11 @@ public interface ClubRepository extends JpaRepository<Club, Integer> {
     List<Club> findPendingClubs();
 
     boolean existsByName(String name);
+
+    // 关键字模糊查询（搜索名字或描述等字段）
+    @Query("SELECT c FROM Club c WHERE (:keyword IS NULL OR c.name LIKE %:keyword% OR c.description LIKE %:keyword%)")
+    Page<Club> findByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    List<Club> findByNameContaining(String keyword);
+
 }

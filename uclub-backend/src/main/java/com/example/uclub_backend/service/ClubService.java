@@ -10,6 +10,10 @@ import com.example.uclub_backend.repository.ClubMemberRepository;
 import com.example.uclub_backend.repository.ClubActivityRepository;
 import com.example.uclub_backend.vo.ClubDetailVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -200,5 +204,16 @@ public class ClubService {
         detailVO.setActivities(activityVOs);
         
         return detailVO;
+    }
+
+
+    public Page<Club> getClubsPage(int page, int pageSize, String keyword) {
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("id").descending()); // 根据需要排序
+
+        if (keyword == null || keyword.isBlank()) {
+            return clubRepository.findAll(pageable);
+        } else {
+            return clubRepository.findByKeyword(keyword, pageable);
+        }
     }
 } 

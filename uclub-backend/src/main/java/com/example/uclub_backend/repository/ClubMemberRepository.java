@@ -37,4 +37,20 @@ public interface ClubMemberRepository extends JpaRepository<ClubMember, Integer>
     List<ClubMember> findByUserIdAndJoinStatus(Integer userId, ClubMember.JoinStatus joinStatus);
 
     List<ClubMember> findByClubIdIn(List<Integer> clubIds);
+
+    List<ClubMember> findByClubIdAndRoleIn(Integer clubId, List<ClubMember.MemberRole> roles);
+
+    // 查询指定社团的管理员（非普通成员）
+    @Query("select cm from ClubMember cm where cm.clubId = :clubId and cm.role <> '成员'")
+    List<ClubMember> findAdminsByClubId(@Param("clubId") Integer clubId);
+
+    // 查询所有管理员（非普通成员）
+    @Query("select cm from ClubMember cm where cm.role <> '成员'")
+    List<ClubMember> findAllAdmins();
+
+    @Query("select cm from ClubMember cm where cm.clubId in :clubIds and cm.role <> '成员'")
+    List<ClubMember> findByClubIdInAndRoleNot(@Param("clubIds") List<Integer> clubIds,
+                                              @Param("role") ClubMember.MemberRole role);
+
+
 }

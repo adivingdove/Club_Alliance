@@ -33,4 +33,11 @@ public class Result<T> {
         result.setMessage(message);
         return result;
     }
+
+    public static <T> Result<T> fail(String message) {
+        Result<T> result = new Result<>();
+        result.setCode(-1);
+        result.setMessage(message);
+        return result;
+    }
 }
