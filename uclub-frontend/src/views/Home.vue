@@ -388,11 +388,11 @@ const getImageUrl = (url) => {
 
 <style scoped>
 .main-container.no-header-layout {
-  background: linear-gradient(90deg, #1ec8c8 0%, #409eff 100%);
+  background: #fff;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  width: 100%;
 }
 .center-content {
   width: 100%;
@@ -400,8 +400,7 @@ const getImageUrl = (url) => {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  background: transparent;
+  background: #fff;
 }
 .search-bar-wrapper {
   width: 100%;
@@ -416,7 +415,7 @@ const getImageUrl = (url) => {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  background: none;
+  background: #fff;
   padding-left: 0;
   padding-right: 0;
 }
@@ -426,7 +425,7 @@ const getImageUrl = (url) => {
   margin-left: 0;
   margin-right: 0;
   border-radius: 0;
-  background: transparent;
+  background: #fff;
 }
 .club-tabs {
   width: 100%;
