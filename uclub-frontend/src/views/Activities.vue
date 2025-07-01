@@ -1,30 +1,28 @@
 <template>
   <div class="activities-container">
-    <!-- 页面标题 -->
-    <div class="page-header">
-      <h1 style="font-family:楷体;font-size:50px;color:red;">社团活动</h1>
-      <p>参与社团活动，发现精彩生活</p>
-    </div>
 
     <!-- 搜索和筛选区域 -->
     <div class="search-filter-section">
-      <div class="search-box">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索活动标题或描述"
-          prefix-icon="Search"
-          clearable
-          @input="handleSearch"
-          @clear="handleSearch"
-        />
-      </div>
+      <el-card class="search-card" shadow="hover" style="margin-bottom: 25px;">
+        <div class="search-box">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="搜索活动标题或描述"
+            prefix-icon="Search"
+            clearable
+            @input="handleSearch"
+            @clear="handleSearch"
+          />
+        </div>
+      </el-card>
+    
 
        <!-- Banner -->
       <div class="banner">
         <img src="../assets/ABack.jpg" class="banner-img" />
         <div class="banner-content">
           <h1>2025 年武汉大学社团活动开始啦</h1>
-          <p>丰富多彩的活动，让你的校院生活丰富多彩！</p>
+          <p>丰富多彩的活动，让你的校园生活丰富多彩！</p>
  <!--        <el-button type="primary" size="large">了解更多</el-button>-->
         </div>
       </div>
@@ -1035,7 +1033,7 @@ const checkUserParticipation = async () => {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
- background: #87CEEB;
+ background: #feffff;
 
 }
 
@@ -1295,4 +1293,6 @@ const checkUserParticipation = async () => {
     height: 50px;
   }
 }
+
+
 </style>

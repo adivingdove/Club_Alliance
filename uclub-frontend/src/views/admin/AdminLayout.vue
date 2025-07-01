@@ -134,9 +134,6 @@ import {
 } from '@element-plus/icons-vue'
 
 const collapsed = ref(false)
-// 头像和管理员名变量（如无实际数据可用占位符）
-const userAvatar = ref('https://img1.baidu.com/it/u=1234567890,1234567890&fm=253&fmt=auto&app=138&f=JPEG?w=200&h=200')
-const adminName = ref('管理员')
 
 
 </script>
