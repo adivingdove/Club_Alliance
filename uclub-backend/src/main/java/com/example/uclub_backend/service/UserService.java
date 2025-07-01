@@ -5,9 +5,15 @@ import com.example.uclub_backend.entity.User;
 import com.example.uclub_backend.mapper.UserMapper;
 import com.example.uclub_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import com.example.uclub_backend.*;
+import jakarta.persistence.criteria.Predicate;
+
 
 import java.util.*;
 
@@ -224,15 +230,6 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    public List<User> getUsersByQuery(String email, String nickname, User.UserRole role,User.UserStatus status) {
-        return userRepository.queryUsers(
-                (email == null || email.isEmpty()) ? null : email,
-                (nickname == null || nickname.isEmpty())? null :nickname,
-                (role == null || role.describeConstable().isEmpty()) ? null : role,
-                (status == null || status.describeConstable().isEmpty()) ? null : status
-        );
-    }
-
     public void updateUserStatus(Integer id, String newStatus) {
         Optional<User> optionalUser = userRepository.findById(id);
         if (optionalUser.isPresent()) {
@@ -271,6 +268,31 @@ public class UserService {
     public String getUserNameById(Integer userId) {
         User user = userMapper.selectById(userId);
         return user != null ? user.getNickname() : "未知用户";
+    }
+
+    public Page<User> getUsersByQuery(String email, String nickname, User.UserRole role, User.UserStatus status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Specification<User> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (email != null && !email.trim().isEmpty()) {
+                predicates.add(cb.like(root.get("email"), "%" + email + "%"));
+            }
+            if (nickname != null && !nickname.trim().isEmpty()) {
+                predicates.add(cb.like(root.get("nickname"), "%" + nickname + "%"));
+            }
+            if (role != null) {
+                predicates.add(cb.equal(root.get("role"), role));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return userRepository.findAll(spec, pageable);
     }
 
 }

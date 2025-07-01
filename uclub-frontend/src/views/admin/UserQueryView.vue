@@ -10,7 +10,6 @@
       <el-form-item label="角色">
         <el-select v-model="formData.role" placeholder="选择角色">
           <el-option label="普通用户" value="普通用户"></el-option>
-          <el-option label="社团管理员" value="社团管理员"></el-option>
           <el-option label="系统管理员" value="系统管理员"></el-option>
         </el-select>
       </el-form-item>
@@ -22,7 +21,7 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="queryUsers">查询</el-button>
+        <el-button type="primary" @click="handleQueryClick">查询</el-button>
         <el-button @click="resetQueryForm" style="margin-left: 10px;">清除</el-button>
       </el-form-item>
     </el-form>
@@ -44,6 +43,14 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <el-pagination
+      :total="total"
+      :page-size="pageSize"
+      :current-page="currentPage"
+      @current-change="handlePageChange"
+    />
+
     
     <el-dialog title="修改用户状态" v-model="statusDialogVisible" width="30%">
   <el-form label-width="80px">
@@ -88,7 +95,8 @@ export default {
       email: '',
       nickname: '',
       role: '',
-      status: ''
+      status: '',
+      
     },
     userList: [],
     // 状态修改相关
@@ -100,7 +108,11 @@ export default {
     dialogVisible: false,
     showVerifyDialog: false,
     pendingStatusChangeUserId: null,
-    newStatus: ''
+    newStatus: '',
+    // 分页相关
+    pageSize: 10,
+    currentPage: 1,
+    total: 0,
   };
 },
 
@@ -119,68 +131,60 @@ export default {
     return diff < 10 * 60 * 1000; // 10分钟以内有效
   },
 
-async queryUsers() {
-  try {
-    let url = 'http://localhost:8080/api/user?';
-    if (this.formData.email) url += `email=${this.formData.email}&`;
-    if (this.formData.nickname) url += `nickname=${this.formData.nickname}&`;
-    if (this.formData.role) url += `role=${this.formData.role}&`;
-    if (this.formData.status) url += `status=${this.formData.status}&`;
+  handleQueryClick() {
+    this.currentPage = 1;
+    this.queryUsers(1);
+  },
+  handlePageChange(page) {
+    this.currentPage = page;
+    this.queryUsers(page);
+  },
+  async queryUsers(page = 1) {
+    try {
+      let url = 'http://localhost:8080/api/user?';
+      if (this.formData.email) url += `email=${this.formData.email}&`;
+      if (this.formData.nickname) url += `nickname=${this.formData.nickname}&`;
+      if (this.formData.role) url += `role=${this.formData.role}&`;
+      if (this.formData.status) url += `status=${this.formData.status}&`;
 
-    const token = localStorage.getItem('token'); // 从localStorage读取token
-    if (!token) {
-      console.warn('没有找到token，请先登录');
-      return;
+      url += `page=${page - 1}&size=${this.pageSize}`;
+
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      this.userList = response.data.data || [];
+      this.total = response.data.total || 0;
+      this.pageSize = response.data.size || 10;
+      this.currentPage = response.data.page + 1 || 1;
+    } catch (error) {
+      console.error('查询失败', error);
     }
+  },
 
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    this.userList = response.data.data; // 你的后端接口返回格式，用户列表在data字段
-  } catch (error) {
-    console.error('查询失败', error);
-  }
+  openStatusDialog(user) {
+    this.selectedUserId = user.id;
+    this.statusDialogVisible = true;
+  },
+  resetQueryForm() {
+    this.formData = {
+      email: '',
+      nickname: '',
+      role: '',
+      status: ''
+    };
+    this.queryUsers(1);
+  },
 },
-    resetQueryForm() {
-      this.formData = {
-        nickname: '',
-        email: '',
-        role: '',
-        status: ''
-      };
-    },
+  mounted() {
+  this.queryUsers(this.currentPage);
+}
 
-    openStatusDialog(user) {
-      this.selectedUserId = user.id;
-      this.newStatus = user.status;
-      this.statusDialogVisible = true;
-    },
-
-  async onPasswordVerified() {
-      try {
-        // 缓存10分钟
-        localStorage.setItem('lastPasswordVerifyTime', Date.now().toString());
-        // 关闭验证框
-        this.showVerifyDialog = false;
-
-        // 调用接口更新状态
-        await axios.put(`http://localhost:8080/api/user/${this.selectedUserId}/status`, {
-          status: this.selectedStatus
-        });
-
-        this.$message.success("状态更新成功");
-        this.statusDialogVisible = false;
-        this.queryUsers();
-      } catch (err) {
-        this.$message.error("更新失败");
-      }
-    },
-
-
-  }
 };
+
 </script>
 
 <style scoped>
