@@ -97,7 +97,7 @@
         </el-sub-menu>
       </el-menu>
 
-      <el-button
+    <el-button
         class="collapse-btn"
         circle
         icon="Menu"

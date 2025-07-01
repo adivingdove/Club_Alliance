@@ -49,6 +49,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/activities/{id}").permitAll()
                         .requestMatchers("/api/activities/search").permitAll()
                         .requestMatchers("/api/activities/club/{clubId}/approved").permitAll()
+                        .requestMatchers("/api/profile/**").authenticated()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/admin/**").permitAll()
                         .anyRequest().authenticated()

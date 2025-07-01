@@ -86,6 +86,8 @@ public ResponseEntity<?> getHotPosts() {
     }
 }
 
+
+
 @GetMapping("/{id}")
 public ResponseEntity<?> getPost(@PathVariable Long id, @RequestParam(required = false) Long userId) {
     try {

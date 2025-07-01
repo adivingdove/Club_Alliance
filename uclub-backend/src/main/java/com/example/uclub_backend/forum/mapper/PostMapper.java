@@ -18,4 +18,12 @@ public interface PostMapper {
 """)
 List<Post> selectHotPosts();
 
+// 根据用户ID查询帖子
+List<Post> selectByUserId(@org.apache.ibatis.annotations.Param("userId") Long userId,
+                         @org.apache.ibatis.annotations.Param("offset") int offset,
+                         @org.apache.ibatis.annotations.Param("limit") int limit);
+
+// 统计用户帖子数量
+int countByUserId(@org.apache.ibatis.annotations.Param("userId") Long userId);
+
 }

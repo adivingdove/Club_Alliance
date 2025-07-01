@@ -208,7 +208,7 @@ const userInfo = computed(() => store.getters.currentUser)
 
 const fetchClubs = async () => {
   try {
-    const res = await request.get('/api/clubs')
+    const res = await request.get('/api/clubs/active')
     if (res.data.code === 0) {
       clubs.value = (res.data.data || []).map(club => {
         let imgUrl = club.logoUrl || '/logo.png'
