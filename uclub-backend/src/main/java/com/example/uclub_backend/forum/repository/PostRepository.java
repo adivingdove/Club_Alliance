@@ -41,5 +41,9 @@ void decrementLikeCount(@Param("postId") Long postId);
 @Query("SELECT DISTINCT p.clubId FROM Post p WHERE p.createdAt >= :since")
 List<Integer> findRecentActiveClubIds(@Param("since") LocalDateTime since);
 
+// 根据用户ID查询帖子，按创建时间倒序排列
+List<Post> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+
 
 }

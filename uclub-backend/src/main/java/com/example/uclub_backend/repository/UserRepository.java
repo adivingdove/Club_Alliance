@@ -1,7 +1,10 @@
 package com.example.uclub_backend.repository;
 
 import com.example.uclub_backend.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -9,7 +12,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User, Integer> {
+public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecificationExecutor<User> {
     List<User> findByRole(User.UserRole role);
 
     List<User> findByStatus(User.UserStatus status);
@@ -36,5 +39,10 @@ public interface UserRepository extends JpaRepository<User, Integer> {
                           @Param("status") User.UserStatus status);
 
     Optional<User> findByEmail(String email);
+
+    Page<User> findByEmailContainingAndNicknameContainingAndRoleAndStatus(
+            String email, String nickname, User.UserRole role, User.UserStatus status, Pageable pageable);
+
+
 }
 

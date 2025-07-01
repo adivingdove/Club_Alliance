@@ -250,4 +250,8 @@ public class ClubService {
         Club club = clubMapper.selectById(clubId);
         return club != null ? club.getName() : "未知社团";
     }
-} 
+
+    public List<Club> getHistoryClubs() {
+        return clubRepository.findByStatusNot(Club.ClubStatus.待审核);
+    }
+}

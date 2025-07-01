@@ -5,10 +5,14 @@ import com.example.uclub_backend.entity.User;
 import com.example.uclub_backend.entity.Club;
 import com.example.uclub_backend.entity.ClubMember;
 import com.example.uclub_backend.entity.ClubActivity;
+import com.example.uclub_backend.entity.ActivityParticipant;
+import com.example.uclub_backend.forum.entity.Post;
 import com.example.uclub_backend.repository.UserRepository;
 import com.example.uclub_backend.repository.ClubRepository;
 import com.example.uclub_backend.repository.ClubMemberRepository;
 import com.example.uclub_backend.repository.ClubActivityRepository;
+import com.example.uclub_backend.repository.ActivityParticipantRepository;
+import com.example.uclub_backend.forum.repository.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,6 +40,12 @@ public class ProfileController {
 
     @Autowired
     private ClubActivityRepository clubActivityRepository;
+
+    @Autowired
+    private ActivityParticipantRepository activityParticipantRepository;
+
+    @Autowired
+    private PostRepository postRepository;
 
     @Autowired
     private TokenManager tokenManager;
@@ -380,10 +390,11 @@ public class ProfileController {
 
             User user = userOpt.get();
 
-            // 获取用户创建的活动
-            List<ClubActivity> createdActivities = clubActivityRepository.findByCreatorId(user.getId());
+            // 获取用户参与的所有活动（包括自己创建的和别人创建但自己参与的活动）
             List<Map<String, Object>> activities = new ArrayList<>();
 
+            // 1. 获取用户创建的活动
+            List<ClubActivity> createdActivities = clubActivityRepository.findByCreatorId(user.getId());
             for (ClubActivity activity : createdActivities) {
                 Map<String, Object> activityInfo = new HashMap<>();
                 activityInfo.put("id", activity.getId());
@@ -394,6 +405,19 @@ public class ProfileController {
                 activityInfo.put("location", activity.getLocation());
                 activityInfo.put("applyStatus", activity.getApplyStatus());
                 activityInfo.put("createdAt", activity.getCreatedAt());
+                activityInfo.put("isCreator", true); // 标记为创建者
+                
+                // 判断活动状态
+                java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                String activityStatus;
+                if (activity.getEndTime().isBefore(now)) {
+                    activityStatus = "已结束";
+                } else if (activity.getStartTime().isBefore(now)) {
+                    activityStatus = "进行中";
+                } else {
+                    activityStatus = "未开始";
+                }
+                activityInfo.put("activityStatus", activityStatus);
                 
                 // 获取社团信息
                 Optional<Club> clubOpt = clubRepository.findById(activity.getClubId());
@@ -402,6 +426,53 @@ public class ProfileController {
                 }
                 
                 activities.add(activityInfo);
+            }
+            
+            // 2. 获取用户参与但不是创建者的活动
+            List<ActivityParticipant> participatedActivities = activityParticipantRepository.findByUserId(user.getId());
+            for (ActivityParticipant participant : participatedActivities) {
+                // 检查是否已经添加过（避免重复）
+                boolean alreadyAdded = activities.stream()
+                    .anyMatch(activity -> activity.get("id").equals(participant.getActivityId()));
+                
+                if (!alreadyAdded) {
+                    Optional<ClubActivity> activityOpt = clubActivityRepository.findById(participant.getActivityId());
+                    if (activityOpt.isPresent()) {
+                        ClubActivity activity = activityOpt.get();
+                        Map<String, Object> activityInfo = new HashMap<>();
+                        activityInfo.put("id", activity.getId());
+                        activityInfo.put("title", activity.getTitle());
+                        activityInfo.put("description", activity.getDescription());
+                        activityInfo.put("startTime", activity.getStartTime());
+                        activityInfo.put("endTime", activity.getEndTime());
+                        activityInfo.put("location", activity.getLocation());
+                        activityInfo.put("applyStatus", activity.getApplyStatus());
+                        activityInfo.put("createdAt", activity.getCreatedAt());
+                        activityInfo.put("isCreator", false); // 标记为参与者
+                        activityInfo.put("joinTime", participant.getJoinTime());
+                        activityInfo.put("participantStatus", participant.getStatus());
+                        
+                        // 判断活动状态
+                        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                        String activityStatus;
+                        if (activity.getEndTime().isBefore(now)) {
+                            activityStatus = "已结束";
+                        } else if (activity.getStartTime().isBefore(now)) {
+                            activityStatus = "进行中";
+                        } else {
+                            activityStatus = "未开始";
+                        }
+                        activityInfo.put("activityStatus", activityStatus);
+                        
+                        // 获取社团信息
+                        Optional<Club> clubOpt = clubRepository.findById(activity.getClubId());
+                        if (clubOpt.isPresent()) {
+                            activityInfo.put("clubName", clubOpt.get().getName());
+                        }
+                        
+                        activities.add(activityInfo);
+                    }
+                }
             }
 
             response.put("code", 200);
@@ -440,23 +511,62 @@ public class ProfileController {
 
             User user = userOpt.get();
 
-            // 获取用户加入的社团
-            List<ClubMember> memberships = clubMemberRepository.findByUserIdAndJoinStatus(user.getId(), ClubMember.JoinStatus.已通过);
-            List<Integer> clubIds = new ArrayList<>();
-            for (ClubMember membership : memberships) {
-                clubIds.add(membership.getClubId());
-            }
-
-            // 获取这些社团的最近活动
+            // 获取用户参与或创建的所有活动（只包括未开始和进行中的活动）
             List<Map<String, Object>> activities = new ArrayList<>();
-            if (!clubIds.isEmpty()) {
-                List<ClubActivity> recentActivities = clubActivityRepository.findByClubIdIn(clubIds);
+            
+            // 1. 获取用户创建的活动
+            List<ClubActivity> createdActivities = clubActivityRepository.findByCreatorId(user.getId());
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            
+            // 过滤出未开始和进行中的活动（不包含已结束的活动）
+            List<ClubActivity> recentCreatedActivities = createdActivities.stream()
+                .filter(activity -> activity.getEndTime().isAfter(now))
+                .collect(java.util.stream.Collectors.toList());
+            
+            for (ClubActivity activity : recentCreatedActivities) {
+                Map<String, Object> activityInfo = new HashMap<>();
+                activityInfo.put("id", activity.getId());
+                activityInfo.put("title", activity.getTitle());
+                activityInfo.put("description", activity.getDescription());
+                activityInfo.put("startTime", activity.getStartTime());
+                activityInfo.put("endTime", activity.getEndTime());
+                activityInfo.put("location", activity.getLocation());
+                activityInfo.put("applyStatus", activity.getApplyStatus());
+                activityInfo.put("createdAt", activity.getCreatedAt());
+                activityInfo.put("isCreator", true); // 标记为创建者
                 
-                // 按创建时间排序，取最近10个
-                recentActivities.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
-                recentActivities = recentActivities.subList(0, Math.min(10, recentActivities.size()));
-
-                for (ClubActivity activity : recentActivities) {
+                // 判断活动状态
+                String activityStatus;
+                if (activity.getStartTime().isAfter(now)) {
+                    activityStatus = "未开始";
+                } else {
+                    activityStatus = "进行中";
+                }
+                activityInfo.put("activityStatus", activityStatus);
+                
+                // 获取社团信息
+                Optional<Club> clubOpt = clubRepository.findById(activity.getClubId());
+                if (clubOpt.isPresent()) {
+                    activityInfo.put("clubName", clubOpt.get().getName());
+                }
+                
+                activities.add(activityInfo);
+            }
+            
+            // 2. 获取用户参与但不是创建者的活动
+            List<ActivityParticipant> participatedActivities = activityParticipantRepository.findByUserId(user.getId());
+            for (ActivityParticipant participant : participatedActivities) {
+                // 检查是否已经添加过（避免重复）
+                boolean alreadyAdded = activities.stream()
+                    .anyMatch(activity -> activity.get("id").equals(participant.getActivityId()));
+                
+                if (!alreadyAdded) {
+                    Optional<ClubActivity> activityOpt = clubActivityRepository.findById(participant.getActivityId());
+                    if (activityOpt.isPresent()) {
+                        ClubActivity activity = activityOpt.get();
+                        
+                        // 只添加未开始和进行中的活动
+                        if (activity.getEndTime().isAfter(now)) {
                     Map<String, Object> activityInfo = new HashMap<>();
                     activityInfo.put("id", activity.getId());
                     activityInfo.put("title", activity.getTitle());
@@ -466,6 +576,18 @@ public class ProfileController {
                     activityInfo.put("location", activity.getLocation());
                     activityInfo.put("applyStatus", activity.getApplyStatus());
                     activityInfo.put("createdAt", activity.getCreatedAt());
+                            activityInfo.put("isCreator", false); // 标记为参与者
+                            activityInfo.put("joinTime", participant.getJoinTime());
+                            activityInfo.put("participantStatus", participant.getStatus());
+                            
+                            // 判断活动状态
+                            String activityStatus;
+                            if (activity.getStartTime().isAfter(now)) {
+                                activityStatus = "未开始";
+                            } else {
+                                activityStatus = "进行中";
+                            }
+                            activityInfo.put("activityStatus", activityStatus);
                     
                     // 获取社团信息
                     Optional<Club> clubOpt = clubRepository.findById(activity.getClubId());
@@ -474,8 +596,14 @@ public class ProfileController {
                     }
                     
                     activities.add(activityInfo);
+                        }
+                    }
                 }
             }
+            
+            // 按开始时间排序，取最近10个
+            activities.sort((a, b) -> ((java.time.LocalDateTime) a.get("startTime")).compareTo((java.time.LocalDateTime) b.get("startTime")));
+            activities = activities.subList(0, Math.min(10, activities.size()));
 
             response.put("code", 200);
             response.put("message", "获取成功");
@@ -486,6 +614,80 @@ public class ProfileController {
             e.printStackTrace();
             response.put("code", 500);
             response.put("message", "获取最近活动失败：" + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    // 获取我的帖子接口
+    @GetMapping("/my-posts")
+    public ResponseEntity<Map<String, Object>> getMyPosts(@RequestHeader("Authorization") String token) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            System.out.println("ProfileController - getMyPosts called");
+            System.out.println("ProfileController - Token: " + (token != null ? token.substring(0, Math.min(20, token.length())) + "..." : "null"));
+            
+            // 验证token并获取用户信息
+            String userAccount = tokenManager.validateTokenAndGetUsername(token.replace("Bearer ", ""));
+            System.out.println("ProfileController - User account from token: " + userAccount);
+            
+            if (userAccount == null) {
+                response.put("code", 401);
+                response.put("message", "未授权访问");
+                return ResponseEntity.status(401).body(response);
+            }
+
+            Optional<User> userOpt = userRepository.findByAccount(userAccount);
+            if (!userOpt.isPresent()) {
+                response.put("code", 404);
+                response.put("message", "用户不存在");
+                return ResponseEntity.status(404).body(response);
+            }
+
+            User user = userOpt.get();
+
+            // 获取用户发布的帖子
+            List<Post> posts = postRepository.findByUserIdOrderByCreatedAtDesc(Long.valueOf(user.getId()));
+            List<Map<String, Object>> postsList = new ArrayList<>();
+
+            for (Post post : posts) {
+                Map<String, Object> postInfo = new HashMap<>();
+                postInfo.put("id", post.getId());
+                postInfo.put("title", post.getTitle());
+                postInfo.put("content", post.getContent());
+                postInfo.put("likeCount", post.getLikeCount());
+                postInfo.put("commentCount", post.getCommentCount());
+                postInfo.put("status", post.getStatus());
+                postInfo.put("createdAt", post.getCreatedAt());
+                postInfo.put("imageUrlList", post.getImageUrlList());
+                
+                // 获取社团信息
+                if (post.getClubId() != null) {
+                    Optional<Club> clubOpt = clubRepository.findById(post.getClubId().intValue());
+                    if (clubOpt.isPresent()) {
+                        postInfo.put("clubName", clubOpt.get().getName());
+                        postInfo.put("clubId", clubOpt.get().getId());
+                    } else {
+                        postInfo.put("clubName", "无");
+                        postInfo.put("clubId", null);
+                    }
+                } else {
+                    postInfo.put("clubName", "无");
+                    postInfo.put("clubId", null);
+                }
+                
+                postsList.add(postInfo);
+            }
+
+            response.put("code", 200);
+            response.put("message", "获取成功");
+            response.put("data", postsList);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("code", 500);
+            response.put("message", "获取我的帖子失败：" + e.getMessage());
             return ResponseEntity.status(500).body(response);
         }
     }
