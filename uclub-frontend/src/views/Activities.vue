@@ -44,7 +44,7 @@
           :sm="12" 
           :md="8" 
           :lg="6" 
-          v-for="activity in filteredActivities" 
+          v-for="activity in pagedActivities" 
           :key="activity.id"
         >
           <el-card 
@@ -132,7 +132,7 @@
       </el-row>
       
       <!-- 空状态 -->
-      <div v-if="filteredActivities.length === 0" class="empty-state">
+      <div v-if="pagedActivities.length === 0" class="empty-state">
         <el-empty description="暂无活动" />
       </div>
     </div>
@@ -388,6 +388,16 @@
         <el-button type="primary" @click="submitEdit">保存修改</el-button>
       </template>
     </el-dialog>
+
+    <el-pagination
+      v-if="filteredActivities.length > recentPageSize"
+      :current-page="recentPage"
+      :page-size="recentPageSize"
+      :total="filteredActivities.length"
+      @current-change="handleRecentPageChange"
+      layout="prev, pager, next"
+      style="text-align: center; margin-top: 20px;"
+    ></el-pagination>
   </div>
 </template>
 
@@ -567,7 +577,7 @@ const fetchActivities = async () => {
     console.log('API响应:', response)
     
     if (response && response.data && response.data.code === 0) {
-      activities.value = response.data.data || []
+      activities.value = Array.isArray(response.data.data) ? response.data.data : []
       console.log('成功获取活动列表，数量:', activities.value.length)
       
       // 检查用户参与状态
@@ -980,6 +990,17 @@ const checkUserParticipation = async () => {
     }
   }
 }
+
+const recentPage = ref(1)
+const recentPageSize = ref(8)
+const handleRecentPageChange = (page) => {
+  recentPage.value = page
+}
+
+const pagedActivities = computed(() => {
+  const start = (recentPage.value - 1) * recentPageSize.value
+  return filteredActivities.value.slice(start, start + recentPageSize.value)
+})
 </script>
 
 <style scoped>
