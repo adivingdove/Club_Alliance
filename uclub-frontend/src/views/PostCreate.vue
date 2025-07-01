@@ -18,6 +18,21 @@
     >
       <el-option v-for="club in clubs" :key="club.id" :label="club.name" :value="club.id" />
     </el-select>
+   <!-- Emoji 面板按钮 -->
+<div class="emoji-picker-wrapper" ref="emojiWrapper">
+  <el-button
+    circle
+    size="small"
+    @click="showEmoji = !showEmoji"
+    style="margin-bottom: 6px; font-size: 18px;"
+  >😊</el-button>
+
+  <emoji-picker
+    v-show="showEmoji"
+    @emoji-click="onEmojiClick"
+  ></emoji-picker>
+</div>
+
 
     <!-- 内容编辑区（原生 textarea）-->
     <textarea
@@ -55,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted,nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import Vue3MarkdownIt from 'vue3-markdown-it'
 import { createPost } from '@/api/forum'
@@ -63,11 +78,13 @@ import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { computed } from 'vue'
 import {clubApi} from '@/utils/api'
+import 'emoji-picker-element'
 
 const store = useStore()
 const userId = computed(() => store.getters.currentUser?.id || null)
 
 const router = useRouter()
+
 
 const form = ref({
   clubId: '', 
@@ -203,10 +220,75 @@ const handleUploadError = (err, file) => {
   ElMessage.error('图片上传失败，请检查后端是否启用 /api/forum/upload 接口')
 }
 
+const showEmoji = ref(false)
+const emojiWrapper = ref(null)
+
+function onEmojiClick(event) {
+  const emoji = event.detail.unicode
+  insertAtCursor(emoji)
+  showEmoji.value = false
+}
+
+function handleOutsideClick(event) {
+  if (emojiWrapper.value && !emojiWrapper.value.contains(event.target)) {
+    showEmoji.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleOutsideClick)
+})
+onUnmounted(() => {
+  document.removeEventListener('click', handleOutsideClick)
+})
+
 </script>
 
 <style scoped>
 .post-create {
   padding: 30px;
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  max-width: 900px;
+  margin: 30px auto;
 }
+
+.emoji-toolbar {
+  margin-bottom: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.markdown-textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: Consolas, 'Courier New', monospace;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+.markdown-textarea:focus {
+  border-color: #409eff;
+  outline: none;
+}
+
+.vue3-markdown-it {
+  background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+.vue3-markdown-it img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  border-radius: 6px;
+  margin: 10px 0;
+}
+
 </style>

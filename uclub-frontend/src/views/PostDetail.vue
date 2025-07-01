@@ -75,15 +75,33 @@
       <!-- 评论区域 -->
       <div class="post-comments">
         <h3>💬 评论</h3>
+       
+<!-- Emoji 面板容器 -->
+<div class="emoji-picker-wrapper" ref="emojiWrapper">
+ <el-button
+  circle
+  size="small"
+  @click="showEmoji = !showEmoji"
+  style="margin-bottom: 6px; font-size: 18px;"
+>😊</el-button>
 
-        <!-- 评论输入框 -->
-        <el-input
-          v-model="newComment"
-          type="textarea"
-          placeholder="写下你的评论..."
-          :rows="3"
-          resize="none"
-        />
+  <emoji-picker
+    v-show="showEmoji"
+    @emoji-click="onEmojiClick"
+  ></emoji-picker>
+</div>
+
+       <!-- 评论输入框区域 -->
+<div ref="textareaWrapper">
+  <el-input
+    v-model="newComment"
+    type="textarea"
+    placeholder="写下你的评论..."
+    :rows="3"
+    resize="none"
+  />
+</div>
+
         <el-button
           type="primary"
           size="small"
@@ -158,7 +176,7 @@
 </div>
 
         </div>
-        <p v-else class="no-comment">暂无评论</p>
+        <p v-else class="no-comment">暂无评论，快来抢沙发！</p>
       </div>
     </el-card>
   </div>
@@ -166,19 +184,27 @@
 
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
+
 import { useRoute, useRouter } from 'vue-router'
-
 import request from '@/utils/request'
-
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Vue3MarkdownIt from 'vue3-markdown-it'
 import thumbIcon from '@/assets/icons/thumb_up.svg'
 import { Delete } from '@element-plus/icons-vue'
 import{ WarnTriangleFilled }from '@element-plus/icons-vue'
 import { useStore } from 'vuex'
-import { computed } from 'vue'
 import { addBrowsingHistory } from '../utils/history'
+import 'emoji-picker-element'
+
+
+const showEmoji = ref(false)
+const textareaWrapper = ref(null)
+function onEmojiClick(event) {
+  const emoji = event.detail.unicode
+  insertEmoji(emoji)
+  showEmoji.value = false
+}
 
 const store = useStore()
 const userId = computed(() => store.getters.currentUser?.id || null)
@@ -390,40 +416,79 @@ function getUserAvatar(url) {
   return `http://localhost:8080/uploads/avatars/${url}`
 }
 
+function insertEmoji(emoji) {
+  // 使用 wrapper 查询 textarea
+  const textarea = textareaWrapper.value?.querySelector('textarea')
+  if (!textarea) return
+
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const before = newComment.value.slice(0, start)
+  const after = newComment.value.slice(end)
+  newComment.value = before + emoji + after
+
+  nextTick(() => {
+    textarea.selectionStart = textarea.selectionEnd = start + emoji.length
+    textarea.focus()
+  })
+}
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleOutsideClick)
+})
+
+const emojiWrapper = ref(null)
+
+function handleOutsideClick(event) {
+  if (emojiWrapper.value && !emojiWrapper.value.contains(event.target)) {
+    showEmoji.value = false
+  }
+}
+
+
 
 // 初始化加载
 onMounted(() => {
   loadPost()
   loadComments()
+    document.addEventListener('click', handleOutsideClick)
 })
 </script>
 
 <style scoped>
-.delete-icon-btn {
-  margin-left: 10px;
-  vertical-align: middle;
-}
+/* 容器整体样式 */
 .post-detail-container {
   padding: 20px;
   max-width: 900px;
   margin: 0 auto;
 }
 
+/* 帖子卡片风格 */
 .post-detail-card {
   padding: 24px;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  background-color: #ffffff;
 }
 
+/* 帖子标题样式 */
 .post-title {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 10px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #303133;
+  margin-bottom: 16px;
+  border-left: 4px solid #409eff;
+  padding-left: 12px;
 }
 
+/* 元信息栏 */
 .post-meta {
-  font-size: 14px;
-  color: #888;
   display: flex;
-  gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #909399;
   margin-bottom: 20px;
 }
 
@@ -433,17 +498,37 @@ onMounted(() => {
   font-size: 14px;
 }
 
+/* 正文 Markdown 样式 */
 .post-content {
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.8;
+  color: #2c3e50;
+  background-color: #f9f9f9;
+  padding: 16px;
+  border-radius: 6px;
   margin-bottom: 30px;
   word-break: break-word;
 }
+.post-content h1,
+.post-content h2,
+.post-content h3 {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  font-weight: bold;
+}
+.post-content code {
+  background: #f0f0f0;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: Consolas, Monaco, monospace;
+}
 
+/* 点赞统计 */
 .post-stats {
   display: flex;
   align-items: center;
   gap: 20px;
+  margin-bottom: 30px;
 }
 
 .ml-10 {
@@ -465,60 +550,33 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 4px;
+  transition: color 0.2s;
 }
 .like-button:hover {
   background-color: transparent;
   color: #66b1ff;
 }
 
+/* 评论区域 */
 .post-comments {
   margin-top: 40px;
 }
 
 .comment-list {
   margin-top: 20px;
-}
-
-
-.comment-meta {
-  font-size: 13px;
-  color: #999;
-}
-
-.comment-content {
-  font-size: 15px;
-  margin-top: 4px;
-}
-
-.no-comment {
-  color: #ccc;
-  margin-top: 10px;
+  transition: all 0.3s ease-in-out;
 }
 
 .comment-item {
   position: relative;
-  padding: 10px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 14px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  background-color: #fafafa;
+  transition: box-shadow 0.2s;
 }
-
-.comment-like-bar {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 8px;
-}
-
-.like-comment-button {
-  font-size: 13px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #409eff;
-}
-
-.icon-thumb {
-  width: 16px;
-  height: 16px;
+.comment-item:hover {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
 }
 
 .comment-user-info {
@@ -543,7 +601,82 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-left: auto;
 }
 
+.comment-content {
+  font-size: 15px;
+  margin-top: 4px;
+}
+
+.comment-like-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.like-comment-button {
+  font-size: 13px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #409eff;
+  transition: color 0.2s;
+}
+.like-comment-button:hover {
+  color: #66b1ff;
+}
+
+/* 评论输入框 */
+.el-textarea__inner {
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+
+/* 删除按钮 */
+.delete-icon-btn {
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+/* 无评论提示 */
+.no-comment {
+  color: #ccc;
+  margin-top: 10px;
+}
+.el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--danger):not(.el-button--warning):not(.is-plain) {
+  border-color: #dcdfe6;
+  color: #909399;
+}
+.el-button:hover {
+  border-color: #409eff;
+  color: #409eff;
+}
+
+.emoji-picker-wrapper button {
+  transition: all 0.2s ease;
+}
+.emoji-picker-wrapper button:hover {
+  background-color: #f0f0f0;
+}
+
+.emoji-picker-wrapper {
+  position: relative;
+}
+
+emoji-picker {
+  position: absolute;
+  z-index: 999;
+  top: 40px;
+  left: 0;
+  width: 320px;
+  max-height: 360px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+}
+
+
 </style>
+

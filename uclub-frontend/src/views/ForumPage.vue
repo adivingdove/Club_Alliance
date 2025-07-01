@@ -38,12 +38,15 @@
           <el-icon><EditPen /></el-icon>
         </div>
 
-        <PostCard
-          v-for="post in posts"
-          :key="post.id"
-          :post="post"
-          @like="handleLike"
-        />
+       <transition-group name="fade" tag="div">
+  <PostCard
+    v-for="post in posts"
+    :key="post.id"
+    :post="post"
+    @like="handleLike"
+  />
+</transition-group>
+
 
         <!-- 分页 -->
         <el-pagination
@@ -163,37 +166,96 @@ watch(route, (newRoute, oldRoute) => {
 </script>
 
 <style scoped>
+/* 主容器 */
 .forum-container {
-  padding: 20px;
+  padding: 24px;
+  background-color: #f5f7fa;
+  border-radius: 10px;
+  min-height: 100vh;
 }
 
+/* 标题 + 发布按钮区域 */
 .forum-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
-}
-
-.filter-card {
   margin-bottom: 20px;
 }
 
+.forum-header h2 {
+  display: flex;
+  align-items: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.forum-header el-icon {
+  margin-left: 8px;
+}
+
+/* 筛选卡片样式 */
+.filter-card {
+  margin-bottom: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* 筛选表单 */
 .filter-form {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 16px;
+  align-items: center;
+  padding: 10px;
 }
 
+.filter-form .el-form-item {
+  margin-bottom: 0;
+}
+
+.filter-form .el-input,
+.filter-form .el-select {
+  width: 200px;
+}
+
+/* 帖子列表标题 */
 .post-list-title {
   display: flex;
   align-items: center;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
-  margin-bottom: 15px;
+  color: #409eff;
+  margin-bottom: 16px;
 }
 
+.post-list-title el-icon {
+  margin-left: 6px;
+}
+
+/* 分页样式 */
 .pagination {
-  margin-top: 20px;
+  margin-top: 30px;
   text-align: center;
+}
+
+/* 侧边栏卡片样式（需配合 ForumSidebar.vue） */
+.el-col > .el-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* 动画过渡（若启用 transition-group） */
+.fade-enter-active, .fade-leave-active {
+  transition: all 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* 按钮组间隔 */
+.el-button + .el-button {
+  margin-left: 10px;
 }
 </style>
