@@ -167,7 +167,7 @@ public class ClubService {
         detailVO.setType(club.getType());
         
         // 获取成员信息
-        List<ClubMember> members = clubMemberRepository.findByClubId(clubId);
+        List<ClubMember> members = clubMemberRepository.findByClubIdAndJoinStatusAndCollect(clubId, ClubMember.JoinStatus.已通过, 0);
         List<ClubDetailVO.ClubMemberVO> memberVOs = members.stream()
                 .map(member -> {
                     ClubDetailVO.ClubMemberVO memberVO = new ClubDetailVO.ClubMemberVO();

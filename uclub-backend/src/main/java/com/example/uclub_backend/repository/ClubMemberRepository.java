@@ -52,5 +52,6 @@ public interface ClubMemberRepository extends JpaRepository<ClubMember, Integer>
     List<ClubMember> findByClubIdInAndRoleNot(@Param("clubIds") List<Integer> clubIds,
                                               @Param("role") ClubMember.MemberRole role);
 
+    List<ClubMember> findByClubIdAndJoinStatusAndCollect(Integer clubId, ClubMember.JoinStatus joinStatus, Integer collect);
 
 }

@@ -55,6 +55,12 @@
               <el-icon><Star /></el-icon>
               <span>我的收藏</span>
             </el-menu-item>
+
+            <el-menu-item index="posts">
+              <el-icon><Document /></el-icon>
+              <span>我的贴子</span>
+            </el-menu-item>
+
             <el-menu-item index="history">
               <el-icon><Clock /></el-icon>
               <span>浏览历史</span>
@@ -62,6 +68,15 @@
             <el-menu-item index="recent">
               <el-icon><Timer /></el-icon>
               <span>最近活动</span>
+            </el-menu-item>
+            
+            <!-- 分隔线 -->
+            <el-divider style="margin: 10px 0;"></el-divider>
+            
+            <!-- 退出登录 -->
+            <el-menu-item index="logout" @click="handleLogout">
+              <el-icon><SwitchButton /></el-icon>
+              <span>退出登录</span>
             </el-menu-item>
           </el-menu>
         </el-card>
@@ -87,9 +102,6 @@
                   </el-button>
                   <el-button type="primary" size="small" @click="showChangeEmail = true">
                     更换邮箱
-                  </el-button>
-                  <el-button type="danger" size="small" @click="handleLogout">
-                    退出登录
                   </el-button>
                 </div>
               </div>
@@ -129,9 +141,9 @@
                       <div class="club-title">{{ club.name }}</div>
                       <div class="club-desc">{{ club.description }}</div>
                       <div class="club-tags">
-                        <el-tag :type="getClubRoleType(club.role)" size="small">
-                          {{ club.role }}
-                        </el-tag>
+                    <el-tag :type="getClubRoleType(club.role)" size="small">
+                      {{ club.role }}
+                    </el-tag>
                       </div>
                     </div>
                   </el-card>
@@ -165,10 +177,11 @@
                 <el-table-column prop="description" label="活动描述"></el-table-column>
                 <el-table-column prop="location" label="活动地点" width="150"></el-table-column>
                 <el-table-column prop="startTime" label="开始时间" width="180"></el-table-column>
-                <el-table-column prop="status" label="状态" width="100">
+                <el-table-column prop="endTime" label="结束时间" width="180"></el-table-column>
+                <el-table-column prop="activityStatus" label="活动状态" width="100">
                   <template #default="scope">
-                    <el-tag :type="getActivityStatusType(scope.row.status)">
-                      {{ scope.row.status }}
+                    <el-tag :type="getActivityStatusType(scope.row.activityStatus)">
+                      {{ scope.row.activityStatus }}
                     </el-tag>
                   </template>
                 </el-table-column>
@@ -208,7 +221,7 @@
                     <div class="club-actions">
                       <el-button type="danger" size="small" @click.stop="removeFromFavorites(club.id)">
                         取消收藏
-                      </el-button>
+                </el-button>
                     </div>
                   </el-card>
                 </el-col>
@@ -227,6 +240,60 @@
           </el-card>
         </div>
 
+        <!-- 我的贴子 -->
+        <div v-if="activeMenu === 'posts'" class="content-section">
+          <el-card>
+            <template #header>
+              <div class="card-header">
+                <span>我的贴子</span>
+              </div>
+            </template>
+            <div v-if="myPosts.length > 0">
+              <div 
+                v-for="post in pagedPosts" 
+                :key="post.id" 
+                class="post-item"
+                @click="goToPost(post.id)"
+              >
+                <div class="post-content">
+                  <div class="post-title">{{ post.title }}</div>
+                  <div class="post-meta">
+                    <span class="club-name">社团: {{ post.clubName }}</span>
+                    <span class="post-time">发布时间: {{ formatDate(post.createdAt) }}</span>
+                  </div>
+                  <div class="post-preview">{{ post.content ? post.content.substring(0, 100) + '...' : '暂无内容' }}</div>
+                  <div class="post-stats">
+                    <span class="likes">👍 {{ post.likeCount }}</span>
+                    <span class="comments">💬 {{ post.commentCount }}</span>
+                    <span class="status" :class="getPostStatusClass(post.status)">
+                      {{ getPostStatusText(post.status) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="post-actions">
+                  <el-button 
+                    type="danger" 
+                    size="small" 
+                    @click.stop="deletePost(post.id)"
+                  >
+                    删除
+                </el-button>
+                </div>
+              </div>
+              <el-pagination
+                v-if="myPosts.length > postsPageSize"
+                :current-page="postsPage"
+                :page-size="postsPageSize"
+                :total="myPosts.length"
+                @current-change="handlePostsPageChange"
+                layout="prev, pager, next"
+                style="text-align: center; margin-top: 20px;"
+              ></el-pagination>
+            </div>
+            <el-empty v-else description="暂无发布的贴子" />
+          </el-card>
+        </div>
+
         <!-- 浏览历史 -->
         <div v-if="activeMenu === 'history'" class="content-section">
           <el-card>
@@ -236,7 +303,7 @@
                 <div class="header-actions">
                   <el-button type="danger" size="small" @click="clearHistory">
                     清空历史
-                  </el-button>
+                </el-button>
                 </div>
               </div>
             </template>
@@ -262,7 +329,7 @@
                     @click.stop="removeHistoryItem(post.id)"
                   >
                     删除
-                  </el-button>
+                </el-button>
                 </div>
               </div>
               <el-pagination
@@ -288,20 +355,20 @@
               </div>
             </template>
             <div v-if="recentActivities.length > 0">
-              <div 
-                v-for="activity in pagedRecentActivities" 
-                :key="activity.id" 
-                class="activity-item"
-              >
-                <div class="activity-icon">
-                  <el-icon><Message /></el-icon>
-                </div>
-                <div class="activity-content">
-                  <h4>{{ activity.title }}</h4>
-                  <p>{{ activity.description }}</p>
-                  <span class="activity-time">{{ formatDate(activity.createdAt) }}</span>
-                </div>
-              </div>
+              <el-table :data="pagedRecentActivities" style="width: 100%">
+                <el-table-column prop="title" label="活动名称" width="200"></el-table-column>
+                <el-table-column prop="description" label="活动描述"></el-table-column>
+                <el-table-column prop="location" label="活动地点" width="150"></el-table-column>
+                <el-table-column prop="startTime" label="开始时间" width="180"></el-table-column>
+                <el-table-column prop="endTime" label="结束时间" width="180"></el-table-column>
+                <el-table-column prop="activityStatus" label="活动状态" width="100">
+                  <template #default="scope">
+                    <el-tag :type="getActivityStatusType(scope.row.activityStatus)">
+                      {{ scope.row.activityStatus }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+              </el-table>
               <el-pagination
                 v-if="recentActivities.length > recentPageSize"
                 :current-page="recentPage"
@@ -419,7 +486,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { User, Lock, SwitchButton, Message, Key, Plus, Star, Clock, Timer } from '@element-plus/icons-vue'
+import { User, Lock, SwitchButton, Message, Key, Plus, Star, Clock, Timer, Document } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { 
@@ -429,8 +496,10 @@ import {
   getMyClubs, 
   getMyActivities, 
   getRecentActivities,
+  getMyPosts,
   uploadAvatar 
 } from '../api/profileApi'
+
 import request from '../utils/request'
 import { 
   getBrowsingHistory, 
@@ -562,6 +631,9 @@ const recentActivities = ref([])
 // 我的收藏数据
 const favoriteClubs = ref([])
 
+// 我的帖子数据
+const myPosts = ref([])
+
 // 分页相关
 const clubsPage = ref(1)
 const clubsPageSize = ref(8)
@@ -571,6 +643,10 @@ const recentPage = ref(1)
 const recentPageSize = ref(8)
 const favoritesPage = ref(1)
 const favoritesPageSize = ref(8)
+const postsPage = ref(1)
+const postsPageSize = ref(5)
+
+
 
 // 浏览历史相关
 const browsingHistory = ref([])
@@ -582,17 +658,38 @@ const pagedClubs = computed(() => {
   const start = (clubsPage.value - 1) * clubsPageSize.value
   return myClubs.value.slice(start, start + clubsPageSize.value)
 })
+
+function getCustomActivityStatus(activity) {
+  if (activity.applyStatus !== '通过') return '';
+  const now = new Date();
+  const start = new Date(activity.startTime);
+  const end = new Date(activity.endTime);
+  if (now < start) return '未开始';
+  if (now >= start && now <= end) return '进行中';
+  if (now > end) return '已结束';
+  return '';
+}
+
 const pagedActivities = computed(() => {
-  const start = (activitiesPage.value - 1) * activitiesPageSize.value
-  return myActivities.value.slice(start, start + activitiesPageSize.value)
-})
+  const filtered = myActivities.value.filter(a => a.applyStatus === '通过');
+  const start = (activitiesPage.value - 1) * activitiesPageSize.value;
+  return filtered.slice(start, start + activitiesPageSize.value).map(a => ({ ...a, activityStatus: getCustomActivityStatus(a) }));
+});
+
 const pagedRecentActivities = computed(() => {
-  const start = (recentPage.value - 1) * recentPageSize.value
-  return recentActivities.value.slice(start, start + recentPageSize.value)
-})
+  const filtered = recentActivities.value.filter(a => a.applyStatus === '通过');
+  const start = (recentPage.value - 1) * recentPageSize.value;
+  return filtered.slice(start, start + recentPageSize.value).map(a => ({ ...a, activityStatus: getCustomActivityStatus(a) }));
+});
+
 const pagedFavoriteClubs = computed(() => {
   const start = (favoritesPage.value - 1) * favoritesPageSize.value
   return favoriteClubs.value.slice(start, start + favoritesPageSize.value)
+})
+
+const pagedPosts = computed(() => {
+  const start = (postsPage.value - 1) * postsPageSize.value
+  return myPosts.value.slice(start, start + postsPageSize.value)
 })
 
 const pagedHistory = computed(() => {
@@ -616,6 +713,11 @@ const openLoginDialog = () => {
 }
 
 const handleMenuSelect = (index) => {
+  // 如果是退出登录，不处理菜单选择
+  if (index === 'logout') {
+    return
+  }
+  
   activeMenu.value = index
   // 根据菜单加载相应数据
   switch (index) {
@@ -628,6 +730,11 @@ const handleMenuSelect = (index) => {
     case 'favorites':
       fetchFavoriteClubs()
       break
+
+    case 'posts':
+      fetchMyPosts()
+      break
+
     case 'history':
       loadBrowsingHistory()
       break
@@ -811,6 +918,12 @@ const getActivityStatusType = (status) => {
       return 'warning'
     case '拒绝':
       return 'danger'
+    case '未开始':
+      return 'info'
+    case '进行中':
+      return 'success'
+    case '已结束':
+      return 'danger'
     default:
       return 'info'
   }
@@ -943,6 +1056,22 @@ const fetchFavoriteClubs = async () => {
   }
 }
 
+// 获取我的帖子
+const fetchMyPosts = async () => {
+  try {
+    const response = await getMyPosts()
+    
+    if (response.data.code === 200) {
+      myPosts.value = response.data.data || []
+    } else {
+      ElMessage.error('获取我的帖子失败')
+    }
+  } catch (error) {
+    console.error('获取我的帖子失败:', error)
+    ElMessage.error('获取我的帖子失败')
+  }
+}
+
 const getFullAvatarUrl = (url) => {
   if (!url) return defaultAvatar
   if (url.startsWith('http')) return url
@@ -1050,6 +1179,11 @@ const handleFavoritesPageChange = (newPage) => {
   fetchFavoriteClubs()
 }
 
+const handlePostsPageChange = (newPage) => {
+  postsPage.value = newPage
+  fetchMyPosts()
+}
+
 const handleLogout = () => {
   localStorage.removeItem('token')
   localStorage.removeItem('user')
@@ -1092,6 +1226,61 @@ const goToPost = (postId) => {
   router.push(`/post/${postId}`)
 }
 
+const getPostStatusText = (status) => {
+  switch (status) {
+    case 'active':
+      return '正常'
+    case 'deleted':
+      return '已删除'
+    case 'hidden':
+      return '已隐藏'
+    case 'violated':
+      return '违规'
+    default:
+      return '未知'
+  }
+}
+
+const getPostStatusClass = (status) => {
+  switch (status) {
+    case 'active':
+      return 'status-active'
+    case 'deleted':
+      return 'status-deleted'
+    case 'hidden':
+      return 'status-hidden'
+    case 'violated':
+      return 'status-violated'
+    default:
+      return 'status-unknown'
+  }
+}
+
+const deletePost = async (postId) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这个帖子吗？', '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    const response = await request.delete(`/api/posts/${postId}`)
+    
+    if (response.data.code === 200) {
+      ElMessage.success('帖子删除成功')
+      // 重新获取帖子列表
+      await fetchMyPosts()
+    } else {
+      ElMessage.error(response.data.message || '删除失败')
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除帖子失败:', error)
+      ElMessage.error('删除失败，请重试')
+    }
+  }
+}
+
 const handleHistoryPageChange = (page) => {
   historyPage.value = page
 }
@@ -1124,6 +1313,8 @@ const handleChangeEmail = async () => {
     ElMessage.error('邮箱更换失败')
   }
 }
+
+
 
 onMounted(() => {
   if (isLoggedIn.value) {
@@ -1207,6 +1398,8 @@ onMounted(() => {
   line-height: 50px;
 }
 
+
+
 .profile-content {
   flex: 1;
   min-width: 0;
@@ -1289,6 +1482,22 @@ onMounted(() => {
   font-size: 12px;
 }
 
+.activity-meta {
+  display: flex;
+  gap: 15px;
+  margin-top: 5px;
+  font-size: 12px;
+  color: #666;
+}
+
+.activity-club {
+  color: #409EFF;
+}
+
+.activity-location {
+  color: #67c23a;
+}
+
 .favorite-col {
   padding-left: 1%;
   padding-right: 1%;
@@ -1332,7 +1541,6 @@ onMounted(() => {
   color: #606266;
   line-height: 1.4;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1467,4 +1675,116 @@ onMounted(() => {
   margin-left: 15px;
   flex-shrink: 0;
 }
+
+/* 帖子相关样式 */
+.post-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.post-item:hover {
+  background-color: #f8f9fa;
+}
+
+.post-item:last-child {
+  border-bottom: none;
+}
+
+.post-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.post-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post-meta {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #666;
+}
+
+.club-name {
+  color: #409EFF;
+}
+
+.post-time {
+  color: #999;
+}
+
+.post-preview {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  margin-bottom: 8px;
+}
+
+.post-stats {
+  display: flex;
+  gap: 15px;
+  font-size: 12px;
+  color: #999;
+}
+
+.likes, .comments {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.status-active {
+  background-color: #f0f9ff;
+  color: #0ea5e9;
+}
+
+.status-deleted {
+  background-color: #fef2f2;
+  color: #ef4444;
+}
+
+.status-hidden {
+  background-color: #fef3c7;
+  color: #f59e0b;
+}
+
+.status-violated {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.status-unknown {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.post-actions {
+  margin-left: 15px;
+  flex-shrink: 0;
+}
+
+
 </style>

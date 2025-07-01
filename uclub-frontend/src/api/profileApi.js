@@ -54,6 +54,15 @@ export const getRecentActivities = () => {
   })
 }
 
+// 获取我的帖子
+export const getMyPosts = () => {
+  return request.get('/api/profile/my-posts', {
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    }
+  })
+}
+
 // 上传头像
 export const uploadAvatar = (file) => {
   const formData = new FormData()
