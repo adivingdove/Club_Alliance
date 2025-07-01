@@ -32,21 +32,21 @@
     <!-- 获取所有社团 -->
     <select id="selectAll" resultMap="ClubResultMap">
         SELECT <include refid="Base_Column_List"/>
-        FROM clubs
+        FROM club
         ORDER BY created_time DESC
     </select>
 
     <!-- 根据ID获取社团 -->
     <select id="selectById" parameterType="long" resultMap="ClubResultMap">
         SELECT <include refid="Base_Column_List"/>
-        FROM clubs
+        FROM club
         WHERE id = #{id}
     </select>
 
     <!-- 根据状态获取社团 -->
     <select id="selectByStatus" parameterType="string" resultMap="ClubResultMap">
         SELECT <include refid="Base_Column_List"/>
-        FROM clubs
+        FROM club
         WHERE status = #{status}
         ORDER BY created_time DESC
     </select>
@@ -54,7 +54,7 @@
     <!-- 根据分类获取社团 -->
     <select id="selectByCategory" parameterType="string" resultMap="ClubResultMap">
         SELECT <include refid="Base_Column_List"/>
-        FROM clubs
+        FROM club
         WHERE category = #{category}
         ORDER BY created_time DESC
     </select>
@@ -62,7 +62,7 @@
     <!-- 搜索社团 -->
     <select id="searchByKeyword" parameterType="string" resultMap="ClubResultMap">
         SELECT <include refid="Base_Column_List"/>
-        FROM clubs
+        FROM club
         WHERE name LIKE CONCAT('%', #{keyword}, '%')
         OR description LIKE CONCAT('%', #{keyword}, '%')
         ORDER BY created_time DESC
@@ -71,14 +71,14 @@
     <!-- 获取可加入的社团（未满员） -->
     <select id="selectAvailableClubs" resultMap="ClubResultMap">
         SELECT <include refid="Base_Column_List"/>
-        FROM clubs
+        FROM club
         WHERE current_members &lt; max_members
         ORDER BY created_time DESC
     </select>
 
     <!-- 插入社团 -->
     <insert id="insert" parameterType="com.example.uclub_backend.entity.Club" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO clubs (
+        INSERT INTO club (
         name, description, category, max_members, current_members,
         president_name, president_phone, president_email, advisor_name, advisor_phone,
         meeting_time, meeting_location, status, created_time, updated_time
@@ -91,7 +91,7 @@
 
     <!-- 更新社团 -->
     <update id="update" parameterType="com.example.uclub_backend.entity.Club">
-        UPDATE clubs
+        UPDATE club
         SET name = #{name},
         description = #{description},
         category = #{category},
@@ -103,26 +103,24 @@
         advisor_phone = #{advisorPhone},
         meeting_time = #{meetingTime},
         meeting_location = #{meetingLocation},
-        status = #{status},
-        updated_time = NOW()
+        status = #{status}
         WHERE id = #{id}
     </update>
 
     <!-- 删除社团 -->
     <delete id="deleteById" parameterType="long">
-        DELETE FROM clubs WHERE id = #{id}
+        DELETE FROM club WHERE id = #{id}
     </delete>
 
     <!-- 检查社团名称是否存在 -->
     <select id="existsByName" parameterType="string" resultType="boolean">
-        SELECT COUNT(*) > 0 FROM clubs WHERE name = #{name}
+        SELECT COUNT(*) > 0 FROM club WHERE name = #{name}
     </select>
 
     <!-- 更新社团成员数量 -->
     <update id="updateMemberCount">
-        UPDATE clubs
-        SET current_members = #{currentMembers},
-        updated_time = NOW()
+        UPDATE club
+        SET current_members = #{currentMembers}
         WHERE id = #{id}
     </update>
 

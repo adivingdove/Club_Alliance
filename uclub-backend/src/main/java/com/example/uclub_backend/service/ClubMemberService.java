@@ -312,9 +312,15 @@ public class ClubMemberService {
 
         ClubMember app = application.get();
 
-        // 验证创建者权限
+        // 新增：允许副社长审批
         Club club = clubRepository.findById(app.getClubId()).orElse(null);
-        if (club == null || !club.getCreatorId().equals(creatorId)) {
+        if (club == null) {
+            throw new RuntimeException("社团不存在");
+        }
+        // 查询当前用户在该社团的成员信息
+        Optional<ClubMember> operator = clubMemberRepository.findByClubIdAndUserId(app.getClubId(), creatorId);
+        if (operator.isEmpty() ||
+            !(operator.get().getRole() == ClubMember.MemberRole.社长 || operator.get().getRole() == ClubMember.MemberRole.副社长)) {
             throw new RuntimeException("无权限处理此申请");
         }
 

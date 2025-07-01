@@ -72,9 +72,9 @@
                   type="primary"
                   size="small"
                   class="join-btn"
-                  @click.stop="joinClub(club)"
+                  @click.stop="goToDetail(club.id)"
                 >
-                  加入社团
+                  查看详情
                 </el-button>
               </div>
             </el-card>
