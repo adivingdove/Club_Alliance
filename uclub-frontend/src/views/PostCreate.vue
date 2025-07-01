@@ -27,10 +27,10 @@
     style="margin-bottom: 6px; font-size: 18px;"
   >😊</el-button>
 
-  <emoji-picker
+  <emoji-picker-element
     v-show="showEmoji"
     @emoji-click="onEmojiClick"
-  ></emoji-picker>
+  ></emoji-picker-element>
 </div>
 
 
