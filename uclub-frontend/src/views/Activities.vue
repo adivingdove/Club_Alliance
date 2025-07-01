@@ -2,8 +2,8 @@
   <div class="activities-container">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h1>社团活动</h1>
-      <p>发现精彩活动，参与社团生活</p>
+      <h1 style="font-family:楷体;font-size:50px;color:red;">社团活动</h1>
+      <p>参与社团活动，发现精彩生活</p>
     </div>
 
     <!-- 搜索和筛选区域 -->
@@ -18,9 +18,19 @@
           @clear="handleSearch"
         />
       </div>
-      
+
+       <!-- Banner -->
+      <div class="banner">
+        <img src="../assets/ABack.jpg" class="banner-img" />
+        <div class="banner-content">
+          <h1>2025 年武汉大学社团活动开始啦</h1>
+          <p>丰富多彩的活动，让你的校院生活丰富多彩！</p>
+ <!--        <el-button type="primary" size="large">了解更多</el-button>-->
+        </div>
+      </div>
+
       <div class="filter-tabs">
-        <el-tabs v-model="activeTab" @tab-click="handleTabChange">
+        <el-tabs v-model="activeTab" class="club-tabs" @tab-click="handleTabChange">
           <el-tab-pane label="全部活动" name="all"></el-tab-pane>
           <el-tab-pane label="即将开始" name="upcoming"></el-tab-pane>
           <el-tab-pane label="我的活动" name="my"></el-tab-pane>
@@ -44,7 +54,7 @@
           :sm="12" 
           :md="8" 
           :lg="6" 
-          v-for="activity in pagedActivities" 
+          v-for="activity in filteredActivities" 
           :key="activity.id"
         >
           <el-card 
@@ -132,7 +142,7 @@
       </el-row>
       
       <!-- 空状态 -->
-      <div v-if="pagedActivities.length === 0" class="empty-state">
+      <div v-if="filteredActivities.length === 0" class="empty-state">
         <el-empty description="暂无活动" />
       </div>
     </div>
@@ -144,7 +154,9 @@
       type="primary"
       circle
       @click="showCreateDialog = true"
+      style="position: fixed; right: 40px; bottom: 40px; z-index: 1000; width: 60px; height: 60px; box-shadow: 0 4px 16px rgba(64,158,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 28px;"
     >
+      <span style="font-size: 32px;">+</span>
       <i class="el-icon-plus"></i>
     </el-button>
 
@@ -388,16 +400,6 @@
         <el-button type="primary" @click="submitEdit">保存修改</el-button>
       </template>
     </el-dialog>
-
-    <el-pagination
-      v-if="filteredActivities.length > recentPageSize"
-      :current-page="recentPage"
-      :page-size="recentPageSize"
-      :total="filteredActivities.length"
-      @current-change="handleRecentPageChange"
-      layout="prev, pager, next"
-      style="text-align: center; margin-top: 20px;"
-    ></el-pagination>
   </div>
 </template>
 
@@ -577,7 +579,7 @@ const fetchActivities = async () => {
     console.log('API响应:', response)
     
     if (response && response.data && response.data.code === 0) {
-      activities.value = Array.isArray(response.data.data) ? response.data.data : []
+      activities.value = response.data.data || []
       console.log('成功获取活动列表，数量:', activities.value.length)
       
       // 检查用户参与状态
@@ -990,24 +992,51 @@ const checkUserParticipation = async () => {
     }
   }
 }
-
-const recentPage = ref(1)
-const recentPageSize = ref(8)
-const handleRecentPageChange = (page) => {
-  recentPage.value = page
-}
-
-const pagedActivities = computed(() => {
-  const start = (recentPage.value - 1) * recentPageSize.value
-  return filteredActivities.value.slice(start, start + recentPageSize.value)
-})
 </script>
 
 <style scoped>
+.banner {
+  position: relative;
+  margin: 32px 0 24px 0;
+  border-radius: 16px;
+  overflow: hidden;
+  height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.7);
+}
+.banner-content {
+  position: absolute;
+  left: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #fff;
+}
+.banner-content h1 {
+  font-size: 32px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+.banner-content p {
+  font-size: 16px;
+  margin-bottom: 18px;
+}
+
+
+
+
 .activities-container {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+ background: #87CEEB;
+
 }
 
 .page-header {
@@ -1156,6 +1185,7 @@ const pagedActivities = computed(() => {
 /* 活动详情样式 */
 .activity-detail {
   padding: 20px 0;
+  background: #87CEEB;
 }
 
 .detail-header {
@@ -1165,11 +1195,13 @@ const pagedActivities = computed(() => {
   margin-bottom: 20px;
   padding-bottom: 15px;
   border-bottom: 1px solid #e4e7ed;
+  background: #87CEEB;
 }
 
 .detail-header h2 {
   margin: 0;
   color: #303133;
+  background: #87CEEB;
 }
 
 .detail-status {
@@ -1177,6 +1209,7 @@ const pagedActivities = computed(() => {
   border-radius: 4px;
   font-size: 14px;
   font-weight: bold;
+  background: #87CEEB;
 }
 
 .detail-description {
@@ -1184,21 +1217,26 @@ const pagedActivities = computed(() => {
   line-height: 1.6;
   color: #606266;
   margin-bottom: 20px;
+  background: #87CEEB;
 }
 
 .detail-info {
   background-color: #f8f9fa;
   padding: 20px;
   border-radius: 8px;
+  background: #87CEEB;
+
 }
 
 .info-row {
   display: flex;
   margin-bottom: 12px;
+  background: #87CEEB;
 }
 
 .info-row:last-child {
   margin-bottom: 0;
+  background: #87CEEB;
 }
 
 .info-row .label {
@@ -1206,15 +1244,18 @@ const pagedActivities = computed(() => {
   color: #303133;
   width: 100px;
   flex-shrink: 0;
+  background: #87CEEB;
 }
 
 .detail-actions {
   margin-top: 20px;
   text-align: center;
+  background: #87CEEB;
 }
 
 .detail-actions .el-button {
   margin: 0 10px;
+  background: #87CEEB;
 }
 
 /* 编辑按钮样式 */
