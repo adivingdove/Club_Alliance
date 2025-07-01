@@ -472,6 +472,17 @@
         <el-form-item label="新邮箱">
           <el-input v-model="changeEmailForm.newEmail" placeholder="请输入新邮箱" />
         </el-form-item>
+        <el-form-item label="新邮箱验证码">
+          <el-input v-model="changeEmailForm.newEmailCode" placeholder="请输入新邮箱验证码" />
+        </el-form-item>
+        <el-form-item label="旧邮箱验证码">
+          <el-input v-model="changeEmailForm.oldEmailCode" placeholder="请输入旧邮箱验证码" />
+        </el-form-item>
+        <el-form-item>
+          <el-button @click="sendBothEmailCodes" :disabled="emailCodeCountdown > 0">
+            {{ emailCodeCountdown > 0 ? emailCodeCountdown + 's' : '发送验证码' }}
+          </el-button>
+        </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -539,7 +550,9 @@ const changePasswordForm = ref({
 const changePasswordLoading = ref(false)
 
 // 更换邮箱表单
-const changeEmailForm = ref({ newEmail: '' })
+const changeEmailForm = ref({ newEmail: '', newEmailCode: '', oldEmailCode: '' })
+const emailCodeCountdown = ref(0)
+let emailCodeTimer = null
 
 // 默认头像
 const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
@@ -1285,13 +1298,45 @@ const handleHistoryPageChange = (page) => {
   historyPage.value = page
 }
 
-const handleChangeEmail = async () => {
+// 同时发送新旧邮箱验证码
+const sendBothEmailCodes = async () => {
   if (!changeEmailForm.value.newEmail) {
     ElMessage.error('请输入新邮箱')
     return
   }
   try {
-    const res = await updateProfile({ email: changeEmailForm.value.newEmail })
+    await request.post('/api/profile/send-both-email-codes', { newEmail: changeEmailForm.value.newEmail })
+    ElMessage.success('验证码已分别发送到新旧邮箱')
+    emailCodeCountdown.value = 60
+    emailCodeTimer = setInterval(() => {
+      emailCodeCountdown.value--
+      if (emailCodeCountdown.value <= 0) clearInterval(emailCodeTimer)
+    }, 1000)
+  } catch (e) {
+    ElMessage.error('发送验证码失败')
+  }
+}
+
+// 修改 handleChangeEmail 方法，提交所有字段
+const handleChangeEmail = async () => {
+  if (!changeEmailForm.value.newEmail) {
+    ElMessage.error('请输入新邮箱')
+    return
+  }
+  if (!changeEmailForm.value.newEmailCode) {
+    ElMessage.error('请输入新邮箱验证码')
+    return
+  }
+  if (!changeEmailForm.value.oldEmailCode) {
+    ElMessage.error('请输入旧邮箱验证码')
+    return
+  }
+  try {
+    const res = await request.put('/api/profile/change-email', {
+      newEmail: changeEmailForm.value.newEmail,
+      newEmailCode: changeEmailForm.value.newEmailCode,
+      oldEmailCode: changeEmailForm.value.oldEmailCode
+    })
     if (res.data.code === 200) {
       ElMessage.success('邮箱更换成功')
       showChangeEmail.value = false
@@ -1313,8 +1358,6 @@ const handleChangeEmail = async () => {
     ElMessage.error('邮箱更换失败')
   }
 }
-
-
 
 onMounted(() => {
   if (isLoggedIn.value) {

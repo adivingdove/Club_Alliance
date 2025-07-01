@@ -13,6 +13,7 @@ import com.example.uclub_backend.repository.ClubMemberRepository;
 import com.example.uclub_backend.repository.ClubActivityRepository;
 import com.example.uclub_backend.repository.ActivityParticipantRepository;
 import com.example.uclub_backend.forum.repository.PostRepository;
+import com.example.uclub_backend.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -52,6 +53,13 @@ public class ProfileController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EmailService emailService;
+
+    // 验证码缓存（建议生产用Redis，这里用Map演示）
+    private Map<String, String> oldEmailCodeMap = new HashMap<>();
+    private Map<String, String> newEmailCodeMap = new HashMap<>();
 
     // 头像上传接口
     @PostMapping("/upload/avatar")
@@ -688,6 +696,49 @@ public class ProfileController {
             e.printStackTrace();
             response.put("code", 500);
             response.put("message", "获取我的帖子失败：" + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    // 同时发送新旧邮箱验证码
+    @PostMapping("/send-both-email-codes")
+    public ResponseEntity<Map<String, Object>> sendBothEmailCodes(@RequestBody Map<String, String> data, @RequestHeader("Authorization") String token) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            String userAccount = tokenManager.validateTokenAndGetUsername(token.replace("Bearer ", ""));
+            if (userAccount == null) {
+                response.put("code", 401);
+                response.put("message", "未授权访问");
+                return ResponseEntity.status(401).body(response);
+            }
+            Optional<User> userOpt = userRepository.findByAccount(userAccount);
+            if (!userOpt.isPresent()) {
+                response.put("code", 404);
+                response.put("message", "用户不存在");
+                return ResponseEntity.status(404).body(response);
+            }
+            User user = userOpt.get();
+            String newEmail = data.get("newEmail");
+            if (newEmail == null || newEmail.trim().isEmpty()) {
+                response.put("code", 400);
+                response.put("message", "新邮箱不能为空");
+                return ResponseEntity.badRequest().body(response);
+            }
+            // 生成验证码
+            String oldCode = String.valueOf((int)((Math.random()*9+1)*100000));
+            String newCode = String.valueOf((int)((Math.random()*9+1)*100000));
+            oldEmailCodeMap.put(user.getEmail(), oldCode);
+            newEmailCodeMap.put(newEmail, newCode);
+            // 发送邮件
+            emailService.sendSimpleMail(user.getEmail(), "旧邮箱验证码", "您的旧邮箱验证码是: " + oldCode + "，3分钟内有效。");
+            emailService.sendSimpleMail(newEmail, "新邮箱验证码", "您的新邮箱验证码是: " + newCode + "，3分钟内有效。");
+            response.put("code", 200);
+            response.put("message", "验证码已分别发送到新旧邮箱");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("code", 500);
+            response.put("message", "发送验证码失败: " + e.getMessage());
             return ResponseEntity.status(500).body(response);
         }
     }
