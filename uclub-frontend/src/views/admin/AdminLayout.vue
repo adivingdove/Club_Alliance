@@ -1,6 +1,11 @@
 <template>
   <div class="admin-layout">
     <aside class="sidebar" :class="{ collapsed }">
+      <!-- 头像栏区域 -->
+      <div class="sidebar-avatar-area">
+        <el-avatar :size="64" :src="userAvatar" />
+        <div class="admin-name">{{ adminName || '管理员' }}</div>
+      </div>
       <!-- 菜单内容 -->
       <el-menu
         :collapse="collapsed"
@@ -130,11 +135,15 @@ import {
   Calendar,
   Warning,
   Ticket,
-  Setting,
-  SwitchButton
+  Setting
 } from '@element-plus/icons-vue'
 
 const collapsed = ref(false)
+// 头像和管理员名变量（如无实际数据可用占位符）
+const userAvatar = ref('https://img1.baidu.com/it/u=1234567890,1234567890&fm=253&fmt=auto&app=138&f=JPEG?w=200&h=200')
+const adminName = ref('管理员')
+
+
 </script>
 
 <style scoped>
@@ -254,28 +263,5 @@ const collapsed = ref(false)
   font-weight: bold;
 }
 
-.profile-actions {
-  margin-top: 16px;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.action-btn {
-  color: #fff;
-  padding: 6px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-.action-btn:hover {
-  background: #223040;
-}
-/* 鼠标指针为pointer */
-.sidebar-avatar-area .profile-actions .action-btn,
-.sidebar-avatar-area .profile-actions .action-btn * {
-  cursor: pointer !important;
-}
+
 </style>

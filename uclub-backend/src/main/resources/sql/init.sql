@@ -1,7 +1,7 @@
 -- 创建数据库
-CREATE DATABASE IF NOT EXISTS club_db DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS uclub DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-USE club_db;
+USE uclub;
 
 -- 创建用户表
 CREATE TABLE IF NOT EXISTS `user` (
