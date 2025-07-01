@@ -88,4 +88,11 @@
         SELECT COUNT(*) > 0 FROM club WHERE name = #{name}
     </select>
 
+    <update id="updateMemberCount">
+        UPDATE club
+        SET current_members = #{currentMembers}
+        WHERE id = #{id}
+    </update>
+
+
 </mapper>
