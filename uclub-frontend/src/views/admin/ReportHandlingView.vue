@@ -1,6 +1,6 @@
 <template>
   <div class="report-manage-page">
-    <el-card>
+    <el-card style="width: 100%">
       <div class="toolbar">
         <el-select v-model="statusFilter" placeholder="举报状态" @change="fetchReports">
           <el-option label="全部" value="" />
@@ -9,12 +9,14 @@
         </el-select>
       </div>
 
-      <el-table :data="reports" style="width: 100%">
-        <el-table-column prop="id" label="ID" width="60"/>
-        <el-table-column prop="postId" label="帖子ID"/>
-        <el-table-column prop="reason" label="举报原因"/>
-        <el-table-column prop="status" label="状态"/>
-        <el-table-column label="举报时间":formatter="(row) => formatTime(row.createdAt)"/>
+      <el-table :data="reports" style="width: 100%" v-if="reports.length > 0">
+        <el-table-column prop="id" label="ID" width="70" />
+        <el-table-column prop="reporterId" label="举报人ID" width="100" />
+        <el-table-column prop="targetType" label="目标类型" width="100" />
+        <el-table-column prop="targetId" label="目标ID" width="100" />
+        <el-table-column prop="reason" label="举报原因" min-width="200" />
+        <el-table-column prop="status" label="状态" width="100" />
+        <el-table-column label="举报时间" :formatter="(row) => formatTime(row.createdAt)" width="180" />
         <el-table-column label="操作" width="200">
           <template #default="scope">
             <el-button type="primary" size="small" @click="viewDetail(scope.row)">详情</el-button>
@@ -30,6 +32,11 @@
         <div><strong>举报人ID：</strong>{{ selectedReport.reporterId }}</div>
         <div><strong>目标类型：</strong>{{ selectedReport.targetType }}</div>
         <div><strong>目标ID：</strong>{{ selectedReport.targetId }}</div>
+        <div><strong>目标链接：</strong>
+          <a v-if="selectedReport.targetType === '帖子'" :href="`/post/${selectedReport.targetId}`" target="_blank">查看帖子</a>
+          <a v-else-if="selectedReport.targetType === '评论'" :href="`/comment/${selectedReport.targetId}`" target="_blank">查看评论</a>
+          <span v-else>无链接</span>
+        </div>
         <div><strong>举报原因：</strong>{{ selectedReport.reason }}</div>
         <div><strong>状态：</strong>{{ selectedReport.status }}</div>
         <div><strong>创建时间：</strong>{{ formatTime(selectedReport.createdAt) }}</div>

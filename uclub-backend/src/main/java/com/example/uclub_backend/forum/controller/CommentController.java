@@ -94,4 +94,20 @@ public List<Map<String, Object>> getComments(@PathVariable Long postId, @Request
         res.put("message", liked ? "点赞成功" : "取消点赞");
         return ResponseEntity.ok(res);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getCommentDetail(@PathVariable Long id) {
+        Comment comment = commentService.findById(id);
+        if (comment == null) {
+            return ResponseEntity.status(404).body(Map.of("message", "评论不存在"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "id", comment.getId(),
+                "content", comment.getContent(),
+                "postId", comment.getPostId(),
+                "userId", comment.getUserId(),
+                "createdAt", comment.getCreatedAt()
+        ));
+    }
 }
