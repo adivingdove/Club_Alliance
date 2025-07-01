@@ -1,11 +1,6 @@
 <template>
   <div class="admin-layout">
     <aside class="sidebar" :class="{ collapsed }">
-      <!-- 头像栏区域 -->
-      <div class="sidebar-avatar-area">
-        <el-avatar :size="64" :src="userAvatar" />
-        <div class="admin-name">{{ adminName || '管理员' }}</div>
-      </div>
       <!-- 菜单内容 -->
       <el-menu
         :collapse="collapsed"

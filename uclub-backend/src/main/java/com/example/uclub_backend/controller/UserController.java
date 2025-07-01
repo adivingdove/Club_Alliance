@@ -6,6 +6,7 @@ import com.example.uclub_backend.TokenManager;
 import com.example.uclub_backend.service.EmailService;
 import com.example.uclub_backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -263,14 +264,19 @@ public class UserController {
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String nickname,
             @RequestParam(required = false) User.UserRole role,
-            @RequestParam(required = false) User.UserStatus status
-    ) {
-        List<User> list = userService.getUsersByQuery(email,nickname ,role ,status);
+            @RequestParam(required = false) User.UserStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<User> userPage = userService.getUsersByQuery(email, nickname, role, status, page, size);
+
         Map<String, Object> resp = new HashMap<>();
         resp.put("code", 200);
-        resp.put("data", list);
+        resp.put("data", userPage.getContent());
+        resp.put("total", userPage.getTotalElements());
+        resp.put("page", userPage.getNumber());
+        resp.put("size", userPage.getSize());
         return resp;
     }
-
 
 }
