@@ -167,7 +167,7 @@ public class ClubService {
         detailVO.setType(club.getType());
         
         // 获取成员信息
-        List<ClubMember> members = clubMemberRepository.findByClubIdAndJoinStatusAndCollect(clubId, ClubMember.JoinStatus.已通过, 0);
+        List<ClubMember> members = clubMemberRepository.findByClubIdAndJoinStatus(clubId, ClubMember.JoinStatus.已通过);
         List<ClubDetailVO.ClubMemberVO> memberVOs = members.stream()
                 .map(member -> {
                     ClubDetailVO.ClubMemberVO memberVO = new ClubDetailVO.ClubMemberVO();
@@ -250,4 +250,8 @@ public class ClubService {
         Club club = clubMapper.selectById(clubId);
         return club != null ? club.getName() : "未知社团";
     }
-} 
+
+    public List<Club> getHistoryClubs() {
+        return clubRepository.findByStatusNot(Club.ClubStatus.待审核);
+    }
+}

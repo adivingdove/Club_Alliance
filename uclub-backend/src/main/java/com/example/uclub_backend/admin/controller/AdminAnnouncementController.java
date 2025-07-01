@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin/system-announcements")
+@RequestMapping("/api/admin/system-announcements")
 public class AdminAnnouncementController {
 
     private final AdminAnnouncementService service;

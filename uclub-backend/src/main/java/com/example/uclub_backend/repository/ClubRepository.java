@@ -36,5 +36,8 @@ public interface ClubRepository extends JpaRepository<Club, Integer> {
 
     List<Club> findByNameContaining(String keyword);
 
+    // 历史记录查询
+    List<Club> findByStatusIn(List<Club.ClubStatus> statuses);
+    List<Club> findByStatusNot(Club.ClubStatus status);
 
 }
