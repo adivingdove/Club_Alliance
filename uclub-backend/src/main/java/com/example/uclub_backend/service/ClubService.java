@@ -78,6 +78,9 @@ public class ClubService {
             throw new RuntimeException("社团名称已存在");
         }
         
+        // 新增：新建社团时 currentMembers 设为1
+        club.setCurrentMembers(1);
+        
         // 保存社团
         Club savedClub = clubRepository.save(club);
         

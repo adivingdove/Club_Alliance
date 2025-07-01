@@ -80,10 +80,13 @@
                     更换头像
                   </el-button>
                   <el-button type="primary" size="small" @click="editUserInfo">
-                    编辑信息
+                    更换昵称
                   </el-button>
                   <el-button type="primary" size="small" @click="showChangePassword = true">
                     修改密码
+                  </el-button>
+                  <el-button type="primary" size="small" @click="showChangeEmail = true">
+                    更换邮箱
                   </el-button>
                   <el-button type="danger" size="small" @click="handleLogout">
                     退出登录
@@ -352,32 +355,12 @@
     <!-- 编辑用户信息对话框 -->
     <el-dialog 
       v-model="showEditDialog" 
-      title="编辑个人信息" 
+      title="更换昵称" 
       width="500px"
     >
       <el-form :model="editForm" label-width="100px">
-        <el-form-item label="账号">
-          <el-input v-model="editForm.account" disabled />
-        </el-form-item>
-        <el-form-item label="邮箱">
-          <el-input v-model="editForm.email" disabled />
-        </el-form-item>
-        <el-form-item label="昵称">
-          <el-input v-model="editForm.nickname" placeholder="请输入昵称" />
-        </el-form-item>
-        <el-form-item label="角色">
-          <el-select v-model="editForm.role" disabled>
-            <el-option label="普通用户" value="普通用户" />
-            <el-option label="社团管理员" value="社团管理员" />
-            <el-option label="系统管理员" value="系统管理员" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="editForm.status" disabled>
-            <el-option label="正常" value="正常" />
-            <el-option label="禁言" value="禁言" />
-            <el-option label="封禁" value="封禁" />
-          </el-select>
+        <el-form-item label="新昵称">
+          <el-input v-model="editForm.nickname" placeholder="请输入新昵称" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -415,6 +398,21 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 更换邮箱对话框 -->
+    <el-dialog v-model="showChangeEmail" title="更换绑定邮箱" width="400px">
+      <el-form :model="changeEmailForm" label-width="100px">
+        <el-form-item label="新邮箱">
+          <el-input v-model="changeEmailForm.newEmail" placeholder="请输入新邮箱" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showChangeEmail = false">取消</el-button>
+          <el-button type="primary" @click="handleChangeEmail">确认更换</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -449,6 +447,7 @@ const isLoggedIn = computed(() => store.getters.isLoggedIn)
 const showAvatarUpload = ref(false)
 const showEditDialog = ref(false)
 const showChangePassword = ref(false)
+const showChangeEmail = ref(false)
 const avatarUrl = ref('')
 const activeMenu = ref('profile')
 
@@ -469,6 +468,9 @@ const changePasswordForm = ref({
 })
 
 const changePasswordLoading = ref(false)
+
+// 更换邮箱表单
+const changeEmailForm = ref({ newEmail: '' })
 
 // 默认头像
 const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
@@ -562,18 +564,18 @@ const favoriteClubs = ref([])
 
 // 分页相关
 const clubsPage = ref(1)
-const clubsPageSize = ref(6)
+const clubsPageSize = ref(8)
 const activitiesPage = ref(1)
-const activitiesPageSize = ref(6)
+const activitiesPageSize = ref(8)
 const recentPage = ref(1)
-const recentPageSize = ref(6)
+const recentPageSize = ref(8)
 const favoritesPage = ref(1)
-const favoritesPageSize = ref(6)
+const favoritesPageSize = ref(8)
 
 // 浏览历史相关
 const browsingHistory = ref([])
 const historyPage = ref(1)
-const historyPageSize = ref(10)
+const historyPageSize = ref(5)
 
 // 计算当前页数据
 const pagedClubs = computed(() => {
@@ -1092,6 +1094,35 @@ const goToPost = (postId) => {
 
 const handleHistoryPageChange = (page) => {
   historyPage.value = page
+}
+
+const handleChangeEmail = async () => {
+  if (!changeEmailForm.value.newEmail) {
+    ElMessage.error('请输入新邮箱')
+    return
+  }
+  try {
+    const res = await updateProfile({ email: changeEmailForm.value.newEmail })
+    if (res.data.code === 200) {
+      ElMessage.success('邮箱更换成功')
+      showChangeEmail.value = false
+      // 刷新用户信息
+      try {
+        const profileRes = await getProfileInfo()
+        if (profileRes.data.code === 200) {
+          const updatedUser = profileRes.data.data
+          localStorage.setItem('user', JSON.stringify(updatedUser))
+          store.dispatch('login', updatedUser)
+        }
+      } catch (error) {
+        console.error('重新获取用户信息失败:', error)
+      }
+    } else {
+      ElMessage.error(res.data.message || '邮箱更换失败')
+    }
+  } catch (e) {
+    ElMessage.error('邮箱更换失败')
+  }
 }
 
 onMounted(() => {

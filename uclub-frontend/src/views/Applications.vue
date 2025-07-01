@@ -1,6 +1,5 @@
 <template>
   <div class="applications-container">
-    <el-button type="primary" @click="createTestApplications" style="margin-bottom: 20px;">生成测试申请</el-button>
     <el-row :gutter="24">
       <el-col :span="24">
         <h2 class="page-title">申请信息</h2>
@@ -73,7 +72,7 @@ import { ref, onMounted } from 'vue'
 import request from '../utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
-const pendingApplications = ref([])
+const pendingApplications = ref([]) 
 const processedApplications = ref([])
 
 // 获取申请信息
@@ -145,24 +144,6 @@ const handleApplication = async (application, action) => {
   }
 }
 
-// 生成测试申请
-const createTestApplications = async () => {
-  const testData = [
-    { userId: 12, applicant: '测试用户A', reason: '我想加入篮球社' },
-    { userId: 12, applicant: '测试用户B', reason: '热爱篮球，想参与活动' },
-    { userId: 12, applicant: '测试用户C', reason: '希望锻炼身体' }
-  ]
-  try {
-    await Promise.all(testData.map(data =>
-      request.post('/api/clubs/9/apply', data)
-    ))
-    ElMessage.success('测试申请已生成')
-    await fetchApplications()
-  } catch (e) {
-    console.error(e)
-    ElMessage.error('生成测试申请失败')
-  }
-}
 
 onMounted(() => {
   fetchApplications()

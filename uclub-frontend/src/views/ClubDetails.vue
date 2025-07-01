@@ -407,6 +407,18 @@ const getImageUrl = (url) => {
   }
   return url
 }
+
+const setMemberRole = async (member, role) => {
+  try {
+    const clubId = club.value.id
+    const creatorId = user.value.id
+    await request.put(`/api/clubs/${clubId}/members/${member.id}/role`, { creatorId, role })
+    ElMessage.success('角色设置成功')
+    await fetchClub(clubId) // 刷新成员列表
+  } catch (e) {
+    ElMessage.error('角色设置失败')
+  }
+}
 </script>
 
 <template>
@@ -474,7 +486,18 @@ const getImageUrl = (url) => {
           <el-card class="member-card">
             <img :src="member.avatar || '/logo.png'" class="member-avatar" />
             <div class="member-name">{{ member.name }}</div>
-            <div class="member-role">{{ member.role }}</div>
+            <div class="member-role">
+              <template v-if="isPresident && member.role !== '社长'">
+                <el-select v-model="member.role" size="small" @change="role => setMemberRole(member, role)">
+                  <el-option label="成员" value="成员" />
+                  <el-option label="干事" value="干事" />
+                  <el-option label="副社长" value="副社长" />
+                </el-select>
+              </template>
+              <template v-else>
+                {{ member.role }}
+              </template>
+            </div>
           </el-card>
         </el-col>
       </el-row>

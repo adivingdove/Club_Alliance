@@ -5,8 +5,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@MapperScan("com.example.uclub_backend.forum.mapper")
-@MapperScan("com.example.uclub_backend.mapper")
+
+@MapperScan({"com.example.uclub_backend.mapper", "com.example.uclub_backend.forum.mapper"})
+
 public class UclubBackendApplication {
 
 	public static void main(String[] args) {
