@@ -1,5 +1,6 @@
 package com.example.uclub_backend.controller;
 
+import com.example.uclub_backend.entity.Club;
 import com.example.uclub_backend.entity.ClubActivity;
 import com.example.uclub_backend.entity.ActivityParticipant;
 import com.example.uclub_backend.service.ClubActivityService;
@@ -412,4 +413,12 @@ public class ActivityController {
             return Result.error("获取参与人数失败: " + e.getMessage());
         }
     }
+
+    // 获取所有“历史记录”类型的活动（非待审核）
+    @GetMapping("/history")
+    public Result<List<ClubActivity>> getHistoryActivities() {
+        List<ClubActivity> list = clubActivityService.getHistoryActivities();
+        return Result.success(list);
+    }
+
 } 

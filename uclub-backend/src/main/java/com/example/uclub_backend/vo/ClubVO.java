@@ -8,7 +8,7 @@ public class ClubVO {
     private Long id;
     private String name;
     private String description;
-    private String category;
+    private String tags;
     private Integer maxMembers;
     private Integer currentMembers;
     private String presidentName;

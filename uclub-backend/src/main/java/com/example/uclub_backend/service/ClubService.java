@@ -5,6 +5,7 @@ import com.example.uclub_backend.entity.ClubMember;
 import com.example.uclub_backend.entity.User;
 import com.example.uclub_backend.forum.repository.PostRepository;
 import com.example.uclub_backend.entity.ClubActivity;
+import com.example.uclub_backend.mapper.ClubMapper;
 import com.example.uclub_backend.repository.ClubRepository;
 import com.example.uclub_backend.repository.UserRepository;
 import com.example.uclub_backend.repository.ClubMemberRepository;
@@ -35,6 +36,9 @@ public class ClubService {
     
     @Autowired
     private ClubMemberRepository clubMemberRepository;
+
+    @Autowired
+    private ClubMapper clubMapper;
     
     @Autowired
     private ClubActivityRepository clubActivityRepository;
@@ -238,4 +242,9 @@ public class ClubService {
 
     return clubRepository.findAllById(clubIds);
 }
+
+    public String getClubNameById(Long clubId) {
+        Club club = clubMapper.selectById(clubId);
+        return club != null ? club.getName() : "未知社团";
+    }
 } 

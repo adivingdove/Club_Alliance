@@ -1,6 +1,7 @@
 package com.example.uclub_backend.service;
 
 import com.example.uclub_backend.entity.ClubActivity;
+import com.example.uclub_backend.mapper.ClubActivityMapper;
 import com.example.uclub_backend.repository.ClubActivityRepository;
 import com.example.uclub_backend.repository.ClubRepository;
 import com.example.uclub_backend.repository.UserRepository;
@@ -22,11 +23,21 @@ public class ClubActivityService {
     
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ClubActivityMapper clubActivityMapper;
     
     public List<ClubActivity> getAllActivities() {
         return clubActivityRepository.findAll();
     }
-    
+
+    public List<ClubActivity> getHistoryActivities() {
+        return clubActivityMapper.findByApplyStatusNot("待审核");
+    }
+
+    public void updateApplyStatus(Long id, String status) {
+        clubActivityMapper.updateApplyStatus(id, status, LocalDateTime.now());
+    }
     public List<ClubActivity> getActivitiesByClubId(Integer clubId) {
         return clubActivityRepository.findByClubId(clubId);
     }
@@ -133,4 +144,6 @@ public class ClubActivityService {
                           ", 标题: " + savedActivity.getTitle() + 
                           ", 新状态: " + savedActivity.getApplyStatus());
     }
+
+
 } 

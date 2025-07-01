@@ -2,10 +2,12 @@ package com.example.uclub_backend.service;
 
 import com.example.uclub_backend.TokenManager;
 import com.example.uclub_backend.entity.User;
+import com.example.uclub_backend.mapper.UserMapper;
 import com.example.uclub_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import com.example.uclub_backend.*;
 
 import java.util.*;
 
@@ -21,6 +23,10 @@ public class UserService {
     private EmailService mailService;
     private  String storeCode="";
     private  String storeCode_="";
+
+    @Autowired
+    private UserMapper userMapper;
+
     // 用户登录
     public Map<String, Object> login(Map<String, String> loginData) {
         Map<String, Object> response = new HashMap<>();
@@ -260,4 +266,10 @@ public class UserService {
         return userRepository.findById(id)
                 .orElse(null);
     }
+
+    public String getUserNameById(Integer userId) {
+        User user = userMapper.selectById(userId);
+        return user != null ? user.getNickname() : "未知用户";
+    }
+
 }
