@@ -31,6 +31,8 @@ import ActivityReviewView from '../views/admin/ActivityReviewView.vue'
 import ReportHandlingView from '../views/admin/ReportHandlingView.vue'
 import PostAdminView from '../views/admin/PostAdminView.vue'
 
+import AiChat from '../views/AiChat.vue'
+
 const routes = [
   { path: '/', name: 'Home', component: Home },
 
@@ -46,6 +48,8 @@ const routes = [
 
   // 新增页面
   { path: '/club/:id', name: 'ClubDetails', component: ClubDetails },
+  // AI问答页面
+  { path: '/ai-chat', name: 'AiChat', component: AiChat },
   // 后台管理入口（保留多子路由结构）
   {
     path: '/admin',

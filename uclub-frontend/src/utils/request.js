@@ -4,7 +4,7 @@ import { ElMessage } from 'element-plus'
 
 const request = axios.create({
   baseURL: 'http://localhost:8080', // 后端服务地址
-  timeout: 10000, // 请求超时时间
+  timeout: 120000, // 请求超时时间，2分钟
   headers: {
     'Content-Type': 'application/json'
   }
@@ -13,7 +13,7 @@ const request = axios.create({
 // 创建不需要token认证的请求实例
 const publicRequest = axios.create({
   baseURL: 'http://localhost:8080', // 后端服务地址
-  timeout: 10000, // 请求超时时间
+  timeout: 120000, // 请求超时时间，2分钟
   headers: {
     'Content-Type': 'application/json'
   }

@@ -9,6 +9,7 @@
       <li><router-link to="/activities" class="nav-link" active-class="active-link">社团活动</router-link></li>
       <!-- 追加的导航项（保持样式一致） -->
       <li><router-link to="/applications" class="nav-link" active-class="active-link">申请信息</router-link></li>
+      <li><router-link to="/ai-chat" class="nav-link" active-class="active-link">专业咨询</router-link></li>
     </ul>
 
     <!-- 右侧操作 -->
