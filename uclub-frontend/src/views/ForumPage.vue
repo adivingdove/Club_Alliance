@@ -38,14 +38,16 @@
           <el-icon><EditPen /></el-icon>
         </div>
 
-       <transition-group name="fade" tag="div">
+<transition-group name="fade" tag="div">
   <PostCard
     v-for="post in posts"
     :key="post.id"
+    v-motion="motionOptions"
     :post="post"
     @like="handleLike"
   />
 </transition-group>
+
 
 
         <!-- 分页 -->
@@ -76,6 +78,13 @@ import { Edit, EditPen } from '@element-plus/icons-vue'
 import PostCard from '../components/PostCard.vue'
 import ForumSidebar from '../components/ForumSidebar.vue'
 import { fetchPostList } from '../api/forum'
+import { useMotion } from '@vueuse/motion'
+
+const motionOptions = {
+  initial: { opacity: 0, y: 30, scale: 0.95 },
+  enter: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', bounce: 0.2, duration: 0.6 } },
+  leave: { opacity: 0, y: -10, duration: 0.3 },
+}
 
 const router = useRouter()
 const route = useRoute()

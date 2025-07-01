@@ -4,7 +4,7 @@ import store from './store'
 import router from './router'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
-
+import { MotionPlugin } from '@vueuse/motion'
 const app = createApp(App)
 
 // 初始化应用状态
@@ -18,6 +18,6 @@ app.use(ElementPlus)
 
 // 使用 Vue Router
 app.use(router)
-
+app.use(MotionPlugin)
 // 挂载应用
 app.mount('#app')
