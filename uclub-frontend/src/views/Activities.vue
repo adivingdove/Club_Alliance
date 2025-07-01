@@ -388,6 +388,16 @@
         <el-button type="primary" @click="submitEdit">保存修改</el-button>
       </template>
     </el-dialog>
+
+    <el-pagination
+      v-if="recentActivities.length > recentPageSize"
+      :current-page="recentPage"
+      :page-size="recentPageSize"
+      :total="recentActivities.length"
+      @current-change="handleRecentPageChange"
+      layout="prev, pager, next"
+      style="text-align: center; margin-top: 20px;"
+    ></el-pagination>
   </div>
 </template>
 
