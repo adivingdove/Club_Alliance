@@ -20,4 +20,10 @@ public interface ClubActivityMapper {
     void updateApplyStatus(@Param("id") Long id,
                            @Param("status") String status,
                            @Param("updatedAt") LocalDateTime updatedAt);
+
+    @Select("SELECT * FROM club_activity WHERE club_id = #{clubId} AND end_time < NOW() ORDER BY end_time DESC")
+    List<ClubActivity> selectHistoryByClubId(@Param("clubId") Integer clubId);
+
+    @Select("SELECT * FROM club_activity WHERE id = #{id}")
+    ClubActivity selectById(@Param("id") Integer id);
 }

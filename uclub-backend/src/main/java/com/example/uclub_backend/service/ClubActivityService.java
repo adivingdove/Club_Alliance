@@ -146,4 +146,11 @@ public class ClubActivityService {
     }
 
 
+    public List<ClubActivity> getHistoryByClubId(Integer clubId) {
+        return clubActivityMapper.selectHistoryByClubId(clubId);
+    }
+
+      public ClubActivity getById(Integer activityId) {
+        return clubActivityMapper.selectById(activityId);
+    }
 } 

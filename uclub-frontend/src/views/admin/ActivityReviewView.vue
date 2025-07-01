@@ -17,6 +17,7 @@
               <template #default="scope">
                 <el-button type="success" size="small" @click="audit(scope.row.id, '通过')">通过</el-button>
                 <el-button type="danger" size="small" @click="audit(scope.row.id, '拒绝')">拒绝</el-button>
+                <el-button type="primary" size="small" @click="checkDetail(scope.row.id, '查看')">查看详情</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -30,11 +31,33 @@
             <el-table-column prop="applyStatus" label="状态" />
             <el-table-column label="开始时间" :formatter="(row) => formatTime(row.startTime)" />
             <el-table-column label="结束时间" :formatter="(row) => formatTime(row.endTime)" />
-            <el-table-column label="审核时间" :formatter="(row) => formatTime(row.updatedAt)" />
+            <el-table-column label="申请时间" :formatter="(row) => formatTime(row.createdAt)" />
+            <el-table-column label="操作" width="200">
+              <template #default="scope">
+                <el-button type="primary" size="small" @click="checkDetail(scope.row.id, '查看')">查看详情</el-button>
+              </template>
+            </el-table-column>
           </el-table>
         </el-tab-pane>
       </el-tabs>
     </el-card>
+
+    <el-dialog title="活动详情" v-model="showDetailDialog" width="600px" :before-close="() => (showDetailDialog = false)">
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="活动ID">{{ selectedActivity.id }}</el-descriptions-item>
+        <el-descriptions-item label="标题">{{ selectedActivity.title }}</el-descriptions-item>
+        <el-descriptions-item label="社团ID">{{ selectedActivity.clubId }}</el-descriptions-item>
+        <el-descriptions-item label="状态">{{ selectedActivity.applyStatus }}</el-descriptions-item>
+        <el-descriptions-item label="开始时间">{{ formatTime(selectedActivity.startTime) }}</el-descriptions-item>
+        <el-descriptions-item label="结束时间">{{ formatTime(selectedActivity.endTime) }}</el-descriptions-item>
+        <el-descriptions-item label="申请时间">{{ formatTime(selectedActivity.createdAt) }}</el-descriptions-item>
+        <el-descriptions-item label="详细描述">{{ selectedActivity.description || '无' }}</el-descriptions-item>
+      </el-descriptions>
+  <template #footer>
+    <el-button @click="showDetailDialog = false">关闭</el-button>
+  </template>
+</el-dialog>
+
   </div>
 </template>
 
@@ -49,6 +72,9 @@ const loading = ref(false)
 
 const pendingActivities = ref([])
 const historyActivities = ref([])
+
+const showDetailDialog = ref(false)
+const selectedActivity = ref({})
 
 const fetchPendingActivities = async () => {
   loading.value = true
@@ -98,6 +124,18 @@ const audit = async (activityId, status) => {
     }
   }
 }
+
+const checkDetail = async (id, mode) => {
+  try {
+    const response = await axios.get(`/activities/${id}`)
+    selectedActivity.value = response.data
+    showDetailDialog.value = true
+  } catch (error) {
+    console.error('获取活动详情失败', error)
+    ElMessage.error('获取活动详情失败')
+  }
+}
+
 
 const handleTabChange = (tab) => {
   if (tab.props.name === 'pending') {

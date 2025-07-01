@@ -82,7 +82,6 @@ import 'emoji-picker-element'
 
 const store = useStore()
 const userId = computed(() => store.getters.currentUser?.id || null)
-
 const router = useRouter()
 
 

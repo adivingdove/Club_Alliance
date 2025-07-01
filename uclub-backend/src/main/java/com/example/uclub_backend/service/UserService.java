@@ -224,12 +224,12 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    public List<User> getUsersByQuery(String email, String nickname, String role, String status) {
+    public List<User> getUsersByQuery(String email, String nickname, User.UserRole role,User.UserStatus status) {
         return userRepository.queryUsers(
                 (email == null || email.isEmpty()) ? null : email,
                 (nickname == null || nickname.isEmpty())? null :nickname,
-                (role == null || role.isEmpty()) ? null : role,
-                (status == null || status.isEmpty()) ? null : status
+                (role == null || role.describeConstable().isEmpty()) ? null : role,
+                (status == null || status.describeConstable().isEmpty()) ? null : status
         );
     }
 
@@ -262,6 +262,7 @@ public class UserService {
                 && requiredRole.equals(user.getRole())
                 && requiredStatus.equals(user.getStatus());
     }
+
     public User getUserById(Integer id) {
         return userRepository.findById(id)
                 .orElse(null);
