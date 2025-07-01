@@ -6,34 +6,24 @@
     <resultMap id="ClubResultMap" type="com.example.uclub_backend.entity.Club">
         <id column="id" property="id"/>
         <result column="name" property="name"/>
+        <result column="logo_url" property="logoUrl"/>
+        <result column="tags" property="tags"/>
+        <result column="creator_id" property="creatorId"/>
         <result column="description" property="description"/>
-        <result column="category" property="category"/>
-        <result column="max_members" property="maxMembers"/>
-        <result column="current_members" property="currentMembers"/>
-        <result column="president_name" property="presidentName"/>
-        <result column="president_phone" property="presidentPhone"/>
-        <result column="president_email" property="presidentEmail"/>
-        <result column="advisor_name" property="advisorName"/>
-        <result column="advisor_phone" property="advisorPhone"/>
-        <result column="meeting_time" property="meetingTime"/>
-        <result column="meeting_location" property="meetingLocation"/>
-        <result column="created_time" property="createdTime"/>
-        <result column="updated_time" property="updatedTime"/>
         <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
     </resultMap>
 
     <!-- 基础字段 -->
     <sql id="Base_Column_List">
-        id, name, description, category, max_members, current_members,
-        president_name, president_phone, president_email, advisor_name, advisor_phone,
-        meeting_time, meeting_location, created_time, updated_time, status
+        id, name, logo_url, tags, creator_id, description, status, created_at
     </sql>
 
     <!-- 获取所有社团 -->
     <select id="selectAll" resultMap="ClubResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM club
-        ORDER BY created_time DESC
+        ORDER BY created_at DESC
     </select>
 
     <!-- 根据ID获取社团 -->
@@ -48,15 +38,15 @@
         SELECT <include refid="Base_Column_List"/>
         FROM club
         WHERE status = #{status}
-        ORDER BY created_time DESC
+        ORDER BY created_at DESC
     </select>
 
-    <!-- 根据分类获取社团 -->
-    <select id="selectByCategory" parameterType="string" resultMap="ClubResultMap">
+    <!-- 根据标签获取社团 -->
+    <select id="selectByTags" parameterType="string" resultMap="ClubResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM club
-        WHERE category = #{category}
-        ORDER BY created_time DESC
+        WHERE tags = #{tags}
+        ORDER BY created_at DESC
     </select>
 
     <!-- 搜索社团 -->
@@ -65,27 +55,15 @@
         FROM club
         WHERE name LIKE CONCAT('%', #{keyword}, '%')
         OR description LIKE CONCAT('%', #{keyword}, '%')
-        ORDER BY created_time DESC
-    </select>
-
-    <!-- 获取可加入的社团（未满员） -->
-    <select id="selectAvailableClubs" resultMap="ClubResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM club
-        WHERE current_members &lt; max_members
-        ORDER BY created_time DESC
+        ORDER BY created_at DESC
     </select>
 
     <!-- 插入社团 -->
     <insert id="insert" parameterType="com.example.uclub_backend.entity.Club" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO club (
-        name, description, category, max_members, current_members,
-        president_name, president_phone, president_email, advisor_name, advisor_phone,
-        meeting_time, meeting_location, status, created_time, updated_time
+        name, logo_url, tags, creator_id, description, status, created_at
         ) VALUES (
-        #{name}, #{description}, #{category}, #{maxMembers}, #{currentMembers},
-        #{presidentName}, #{presidentPhone}, #{presidentEmail}, #{advisorName}, #{advisorPhone},
-        #{meetingTime}, #{meetingLocation}, #{status}, NOW(), NOW()
+        #{name}, #{logoUrl}, #{tags}, #{creatorId}, #{description}, #{status}, NOW()
         )
     </insert>
 
@@ -93,16 +71,9 @@
     <update id="update" parameterType="com.example.uclub_backend.entity.Club">
         UPDATE club
         SET name = #{name},
+        logo_url = #{logoUrl},
+        tags = #{tags},
         description = #{description},
-        category = #{category},
-        max_members = #{maxMembers},
-        president_name = #{presidentName},
-        president_phone = #{presidentPhone},
-        president_email = #{presidentEmail},
-        advisor_name = #{advisorName},
-        advisor_phone = #{advisorPhone},
-        meeting_time = #{meetingTime},
-        meeting_location = #{meetingLocation},
         status = #{status}
         WHERE id = #{id}
     </update>
@@ -116,12 +87,5 @@
     <select id="existsByName" parameterType="string" resultType="boolean">
         SELECT COUNT(*) > 0 FROM club WHERE name = #{name}
     </select>
-
-    <!-- 更新社团成员数量 -->
-    <update id="updateMemberCount">
-        UPDATE club
-        SET current_members = #{currentMembers}
-        WHERE id = #{id}
-    </update>
 
 </mapper>

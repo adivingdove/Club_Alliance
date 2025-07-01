@@ -262,8 +262,8 @@ public class UserController {
     public Map<String, Object> queryUsers(
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String nickname,
-            @RequestParam(required = false) String role,
-            @RequestParam(required = false) String status
+            @RequestParam(required = false) User.UserRole role,
+            @RequestParam(required = false) User.UserStatus status
     ) {
         List<User> list = userService.getUsersByQuery(email,nickname ,role ,status);
         Map<String, Object> resp = new HashMap<>();

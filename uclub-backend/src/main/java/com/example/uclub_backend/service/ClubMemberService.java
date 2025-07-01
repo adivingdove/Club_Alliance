@@ -487,4 +487,9 @@ public class ClubMemberService {
     }
 
 
+    public List<ClubMember> getAdmins() {
+        return clubMapper.findAdmins();
+    }
+
+
 }

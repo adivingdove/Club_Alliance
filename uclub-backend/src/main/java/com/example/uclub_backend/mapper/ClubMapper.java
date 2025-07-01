@@ -1,8 +1,11 @@
 package com.example.uclub_backend.mapper;
 
 import com.example.uclub_backend.entity.Club;
+import com.example.uclub_backend.entity.ClubMember;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+
 import java.util.List;
 
 @Mapper
@@ -26,7 +29,7 @@ public interface ClubMapper {
     /**
      * 根据分类获取社团
      */
-    List<Club> selectByCategory(@Param("category") String category);
+    List<Club> selectByTags(@Param("tags") String tags);
 
     /**
      * 搜索社团
@@ -62,4 +65,7 @@ public interface ClubMapper {
      * 更新社团成员数量
      */
     int updateMemberCount(@Param("id") Long id, @Param("currentMembers") Integer currentMembers);
+
+    @Select("SELECT * FROM club_member WHERE role != '成员'")
+    List<ClubMember> findAdmins();
 }

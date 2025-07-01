@@ -2,10 +2,12 @@ package com.example.uclub_backend.service;
 
 import com.example.uclub_backend.TokenManager;
 import com.example.uclub_backend.entity.User;
+import com.example.uclub_backend.mapper.UserMapper;
 import com.example.uclub_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import com.example.uclub_backend.*;
 
 import java.util.*;
 
@@ -21,6 +23,10 @@ public class UserService {
     private EmailService mailService;
     private  String storeCode="";
     private  String storeCode_="";
+
+    @Autowired
+    private UserMapper userMapper;
+
     // 用户登录
     public Map<String, Object> login(Map<String, String> loginData) {
         Map<String, Object> response = new HashMap<>();
@@ -218,12 +224,12 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    public List<User> getUsersByQuery(String email, String nickname, String role, String status) {
+    public List<User> getUsersByQuery(String email, String nickname, User.UserRole role,User.UserStatus status) {
         return userRepository.queryUsers(
                 (email == null || email.isEmpty()) ? null : email,
                 (nickname == null || nickname.isEmpty())? null :nickname,
-                (role == null || role.isEmpty()) ? null : role,
-                (status == null || status.isEmpty()) ? null : status
+                (role == null || role.describeConstable().isEmpty()) ? null : role,
+                (status == null || status.describeConstable().isEmpty()) ? null : status
         );
     }
 
@@ -256,8 +262,15 @@ public class UserService {
                 && requiredRole.equals(user.getRole())
                 && requiredStatus.equals(user.getStatus());
     }
+
     public User getUserById(Integer id) {
         return userRepository.findById(id)
                 .orElse(null);
     }
+
+    public String getUserNameById(Integer userId) {
+        User user = userMapper.selectById(userId);
+        return user != null ? user.getNickname() : "未知用户";
+    }
+
 }
