@@ -1,21 +1,6 @@
 <template>
   <div class="admin-layout">
     <aside class="sidebar" :class="{ collapsed }">
-      <!-- 头像栏区域 -->
-      <div class="sidebar-avatar-area">
-        <el-avatar :size="64" :src="userAvatar" />
-        <div class="admin-name">{{ adminName || '管理员' }}</div>
-        <div class="profile-actions">
-          <div class="action-btn" @click="goToProfile">
-            <el-icon><User /></el-icon>
-            <span>个人中心</span>
-          </div>
-          <div class="action-btn" @click="logout">
-            <el-icon><SwitchButton /></el-icon>
-            <span>退出登录</span>
-          </div>
-        </div>
-      </div>
       <!-- 菜单内容 -->
       <el-menu
         :collapse="collapsed"
@@ -150,17 +135,6 @@ import {
 } from '@element-plus/icons-vue'
 
 const collapsed = ref(false)
-// 头像和管理员名变量（如无实际数据可用占位符）
-const userAvatar = ref('https://img1.baidu.com/it/u=1234567890,1234567890&fm=253&fmt=auto&app=138&f=JPEG?w=200&h=200')
-const adminName = ref('管理员')
-
-const goToProfile = () => {
-  // 跳转到个人中心页面
-  // 例如：router.push('/admin/profile')
-}
-const logout = () => {
-  // 退出登录逻辑
-}
 </script>
 
 <style scoped>
