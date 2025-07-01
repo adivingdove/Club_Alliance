@@ -184,7 +184,63 @@ async queryUsers() {
 </script>
 
 <style scoped>
+.user-query {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #fafafa;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+}
+
 .user-query-form {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+}
+
+.el-form-item {
+  margin-bottom: 16px;
+}
+
+.el-button {
+  min-width: 80px;
+}
+
+.el-button + .el-button {
+  margin-left: 12px;
+}
+
+.el-table {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.1);
+}
+
+.el-table th,
+.el-table td {
+  padding: 12px 16px !important;
+  font-size: 14px;
+  color: #333;
+  vertical-align: middle;
+}
+
+.el-table .el-button[type="text"] {
+  color: #409EFF;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.el-table .el-button[type="text"]:hover {
+  color: #66b1ff;
+}
+
+.el-dialog__footer {
+  text-align: right;
+}
+
+.el-dialog__footer .el-button + .el-button {
+  margin-left: 10px;
 }
 </style>
+

@@ -120,11 +120,12 @@ async function submitAnnouncement() {
     content: content.value,
     type: '系统',
     clubId: null,
-    creatorId: 1 // 示例，实际应从登录状态获取
+    creatorId: 1 
   }
 
+
   try {
-    const res = await fetch('http://localhost:8080/api/admin/announcements/system', {
+    const res = await fetch('http://localhost:8080/api/admin/system-announcements', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -142,7 +143,7 @@ async function submitAnnouncement() {
 
 async function loadHistory() {
   try {
-    const raw = await fetch('http://localhost:8080/api/admin/announcements/system')
+    const raw = await fetch('http://localhost:8080/api/admin/system-announcements')
     const result = await raw.json()
     const data = Array.isArray(result) ? result : result.data || result.body || []
 

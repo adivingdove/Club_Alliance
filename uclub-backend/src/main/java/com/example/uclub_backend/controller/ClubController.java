@@ -361,5 +361,16 @@ public class ClubController {
         }
     }
 
+    // 历史申请记录
+    @GetMapping("/history")
+    public Result<List<Club>> getHistoryClubs() {
+        try {
+            List<Club> historyClubs = clubService.getHistoryClubs();
+            return Result.success(historyClubs);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
 
 } 

@@ -50,6 +50,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/activities/search").permitAll()
                         .requestMatchers("/api/activities/club/{clubId}/approved").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/api/admin/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

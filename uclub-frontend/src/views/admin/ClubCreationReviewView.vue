@@ -4,18 +4,33 @@
       <div class="header">
         <h2>社团创建审核</h2>
       </div>
-      <el-table :data="pendingClubs" v-loading="loading" border stripe>
-        <el-table-column prop="id" label="ID" width="60" />
-        <el-table-column prop="name" label="社团名称" />
-        <el-table-column prop="creatorId" label="创建者ID" />
-        <el-table-column prop="description" label="社团简介" />
-        <el-table-column label="操作" width="180">
-          <template #default="scope">
-            <el-button type="success" size="small" @click="audit(scope.row.id, 'approve')">通过</el-button>
-            <el-button type="danger" size="small" @click="audit(scope.row.id, 'reject')">拒绝</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <el-tabs v-model="activeTab" @tab-click="handleTabChange">
+        <el-tab-pane label="待审核社团" name="pending">
+          <el-table :data="pendingClubs" v-loading="loading" border stripe>
+            <el-table-column prop="id" label="ID" width="60" />
+            <el-table-column prop="name" label="社团名称" />
+            <el-table-column prop="creatorId" label="创建者ID" />
+            <el-table-column prop="description" label="社团简介" />
+            <el-table-column label="操作" width="180">
+              <template #default="scope">
+                <el-button type="success" size="small" @click="audit(scope.row.id, 'approve')">通过</el-button>
+                <el-button type="danger" size="small" @click="audit(scope.row.id, 'reject')">拒绝</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+
+        <el-tab-pane label="历史申请记录" name="history">
+          <el-table :data="historyClubs" v-loading="loading" border stripe>
+            <el-table-column prop="id" label="ID" width="60" />
+            <el-table-column prop="name" label="社团名称" />
+            <el-table-column prop="creatorId" label="创建者ID" />
+            <el-table-column prop="description" label="社团简介" />
+            <el-table-column prop="status" label="审核状态" />
+            <el-table-column prop="createdAt" label="申请时间" :formatter="formatTime" />
+          </el-table>
+        </el-tab-pane>
+      </el-tabs>
     </el-card>
   </div>
 </template>
@@ -24,17 +39,33 @@
 import { ref, onMounted } from 'vue'
 import axios from '@/utils/axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import dayjs from 'dayjs'
+
+const activeTab = ref('pending')
+const loading = ref(false)
 
 const pendingClubs = ref([])
-const loading = ref(false)
+const historyClubs = ref([])
 
 const fetchPendingClubs = async () => {
   loading.value = true
   try {
-    const res = await axios.get('/clubs/pending')
+    const res = await axios.get('/clubs/pending') 
     pendingClubs.value = res.data
   } catch (err) {
     ElMessage.error('获取待审核社团失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+const fetchHistoryClubs = async () => {
+  loading.value = true
+  try {
+    const res = await axios.get('/clubs/history') 
+    historyClubs.value = res.data
+  } catch (err) {
+    ElMessage.error('获取历史申请失败')
   } finally {
     loading.value = false
   }
@@ -55,6 +86,25 @@ const audit = async (clubId, action) => {
     fetchPendingClubs()
   } catch (err) {
     if (err !== 'cancel') ElMessage.error(`${actionText}失败`)
+  }
+}
+
+const formatTime = (row, column, cellValue) => {
+  if (!cellValue) return '-';
+
+  // 把6位小数秒截成3位小数秒，dayjs能解析
+  const truncated = cellValue.replace(/(\.\d{3})\d+/, '$1');
+
+  return dayjs(truncated).format('YYYY-MM-DD HH:mm:ss');
+}
+
+
+
+const handleTabChange = (tab) => {
+  if (tab.props.name === 'pending') {
+    fetchPendingClubs()
+  } else if (tab.props.name === 'history') {
+    fetchHistoryClubs()
   }
 }
 
