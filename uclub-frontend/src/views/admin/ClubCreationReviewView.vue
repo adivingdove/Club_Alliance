@@ -7,9 +7,8 @@
       <el-tabs v-model="activeTab" @tab-click="handleTabChange">
         <el-tab-pane label="待审核社团" name="pending">
           <el-table :data="pendingClubs" v-loading="loading" border stripe>
-            <el-table-column prop="id" label="ID" width="60" />
             <el-table-column prop="name" label="社团名称" />
-            <el-table-column prop="creatorId" label="创建者ID" />
+            <el-table-column prop="creatorNickname" label="创建者昵称" />
             <el-table-column prop="description" label="社团简介" />
             <el-table-column label="操作" width="180">
               <template #default="scope">
@@ -22,9 +21,8 @@
 
         <el-tab-pane label="历史申请记录" name="history">
           <el-table :data="historyClubs" v-loading="loading" border stripe>
-            <el-table-column prop="id" label="ID" width="60" />
             <el-table-column prop="name" label="社团名称" />
-            <el-table-column prop="creatorId" label="创建者ID" />
+            <el-table-column prop="creatorNickname" label="创建者昵称" />
             <el-table-column prop="description" label="社团简介" />
             <el-table-column prop="status" label="审核状态" />
             <el-table-column prop="createdAt" label="申请时间" :formatter="formatTime" />
@@ -50,7 +48,7 @@ const historyClubs = ref([])
 const fetchPendingClubs = async () => {
   loading.value = true
   try {
-    const res = await axios.get('/clubs/pending') 
+    const res = await axios.get('/clubs/applications') 
     pendingClubs.value = res.data
   } catch (err) {
     ElMessage.error('获取待审核社团失败')

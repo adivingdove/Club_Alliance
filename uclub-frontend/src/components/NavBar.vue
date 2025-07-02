@@ -16,7 +16,7 @@
     <div class="nav-right">
       <!-- 登录按钮/头像 -->
       <div class="login-button-container-in-header">
-        <div v-if="!isLoggedIn" class="login-button" @click="showLoginDialog = true">
+        <div v-if="!isLoggedIn" class="login-button" @click.stop="showLoginDialog = true">
           <el-icon><User /></el-icon>
         </div>
         <div v-else class="user-avatar" ref="avatarRef" @click="openUserMenu">
@@ -37,11 +37,10 @@
       </div>
 
       <!-- 后台管理按钮 -->
-      <button @click="handleAdminClick" class="admin-btn">后台管理</button>
+      <button @click.stop="handleAdminClick" class="admin-btn">后台管理</button>
     </div>
 
     <!-- 弹窗组件 -->
-    <LoginFloatingWindow v-model:visible="showLoginModal" />
     <VerifyPasswordDialog v-model:show="showVerifyPasswordDialog" />
     
     <!-- 登录/注册对话框 -->
@@ -204,12 +203,6 @@
         </div>
       </template>
     </el-dialog>
-
-    <VerifyPasswordDialog
-    :show="showVerifyDialog"
-    @verified="goToAdmin"
-    @cancel="showVerifyDialog = false"
-  />
   </nav>
 </template>
 
@@ -217,8 +210,6 @@
 <script setup>
 import { ref, onUnmounted, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import LoginFloatingWindow from '../views/LoginFloatingWindow.vue'; 
-import VerifyPasswordDialog from '../views/admin/VerifyPasswordDialog.vue';
 
 // new
 import { reactive, computed } from 'vue'
@@ -237,9 +228,8 @@ import { useStore } from 'vuex'
 const query = ref('');
 const router = useRouter();
 
-const showLoginModal = ref(false); // 用户登录弹窗
+const showLoginDialog = ref(false); // 用户登录弹窗
 const showManageLogin = ref(false);      // 后台管理登录弹窗
-const showVerifyDialog = ref(false);
 
 
 // new 
@@ -348,9 +338,18 @@ const loginRules = {
 const loginFormRef = ref()
 const forgotPasswordFormRef = ref()
 const registerFormRef = ref()
+const Role ={
+  MEMBER: '普通成员',
+  ADMIN: '系统管理员'
+}
 
-function handleAdminClick(){
-  showVerifyDialog.value = true
+function handleAdminClick() {
+  const role = store.state.user.role
+  if (role === Role.ADMIN) {
+    router.push('/admin/club-list');
+  } else {
+    ElMessage.warning('您没有权限访问后台管理页面');
+  }
 }
 
 function goToAdmin(){
@@ -522,6 +521,7 @@ const logout = () => {
   setTimeout(() => {
     window.location.reload()
   }, 1)
+  router.push('/') // 跳转到首页
 }
 
 // 页面加载时检查登录状态
@@ -692,6 +692,8 @@ const handleClickOutside = (e) => {
 .nav-right {
   display: flex;
   align-items: center;
+  gap: 20px;
+  margin-left:auto;
 }
 
 .nav-right input {

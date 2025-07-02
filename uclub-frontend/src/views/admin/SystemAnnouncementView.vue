@@ -52,7 +52,6 @@
     <!-- 历史公告列表 -->
     <div v-else>
       <el-table :data="historyList" style="width: 100%; margin-top: 20px">
-        <el-table-column prop="id" label="ID" width="60" />
         <el-table-column prop="title" label="标题" />
         <el-table-column label="发布时间">
           <template #default="{ row }">

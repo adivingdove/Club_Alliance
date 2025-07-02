@@ -332,6 +332,7 @@ public class ClubController {
         }
     }
 
+    // 分页获取社团列表
     @GetMapping("/page")
 public Page<ClubResponse> getClubsPage(@RequestParam int page, @RequestParam int size) {
     Page<Club> clubsPage = clubService.getClubsPage(page, size, null);
@@ -383,16 +384,54 @@ public Page<ClubResponse> getClubsPage(@RequestParam int page, @RequestParam int
         }
     }
 
-    // 历史申请记录
-    @GetMapping("/history")
-    public Result<List<Club>> getHistoryClubs() {
+    // 后台获取申请记录
+    @GetMapping("/admin/applications")
+    public Result<List<ClubResponse>> getClubApplications() {
         try {
-            List<Club> historyClubs = clubService.getHistoryClubs();
-            return Result.success(historyClubs);
+            List<Club> pendingClubs = clubService.getPendingClubs();
+            List<Integer> creatorIds = pendingClubs.stream()
+                    .map(Club::getCreatorId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            Map<Integer, String> nicknameMap = userService.getUserNamesByIds(creatorIds);
+            List<ClubResponse> responses = pendingClubs.stream().map(club -> {
+                ClubResponse response = new ClubResponse();
+                response.setName(club.getName());
+                response.setCreatorNickname(nicknameMap.getOrDefault(club.getCreatorId(), "Unknown"));
+                response.setStatus(club.getStatus());
+                return response;
+            }).collect(Collectors.toList());
+            return Result.success(responses);
         } catch (Exception e) {
-            return Result.error(e.getMessage());
+            return Result.error("获取申请记录失败：" + e.getMessage());
         }
     }
+    
+    // 历史申请记录
+    @GetMapping("/history")
+    public Result<List<ClubResponse>> getHistoryClubs() {
+        try {
+            List<Club> historyClubs = clubService.getHistoryClubs();
+            List<Integer> creatorIds = historyClubs.stream()
+                    .map(Club::getCreatorId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            Map<Integer, String> nicknameMap = userService.getUserNamesByIds(creatorIds);
+            List<ClubResponse> responses = historyClubs.stream().map(club -> {
+                ClubResponse response = new ClubResponse();
+                response.setName(club.getName());
+                response.setCreatorNickname(nicknameMap.getOrDefault(club.getCreatorId(), "Unknown"));
+                response.setStatus(club.getStatus());
+                response.setDescription(club.getDescription());
+                response.setCreatedAt(club.getCreatedAt());
+                return response;
+            }).collect(Collectors.toList());       
+            return Result.success(responses);  
+        } catch (Exception e) {
+            return Result.error("获取历史社团失败：" + e.getMessage());
+        }
+    }
+
 
     @DeleteMapping("/{clubId}/members/{userId}")
     public Result<Void> quitClub(@PathVariable Integer clubId, @PathVariable Integer userId) {
@@ -430,5 +469,7 @@ public Page<ClubResponse> getClubsPage(@RequestParam int page, @RequestParam int
             return Result.error(e.getMessage());
         }
     }
+
+
 
 } 

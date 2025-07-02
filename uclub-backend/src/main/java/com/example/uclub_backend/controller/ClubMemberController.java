@@ -25,29 +25,20 @@ public class ClubMemberController {
 
     @Autowired
     private ClubService clubService;
-
-//    @GetMapping("/admins")
-//    public Result<List<ClubMember>> searchAdmins(
-//            @RequestParam(required = false) String clubName) {
-//        List<ClubMember> admins;
-//        if (clubName == null || clubName.isEmpty()) {
-//            admins = clubMemberService.getAllAdmins();
-//        } else {
-//            admins = clubMemberService.getAdminsByClubName(clubName);
-//        }
-//        return Result.success(admins);
-//    }
-
-
-
-    // 撤销管理员身份（角色改为成员）
-    @PutMapping("/{memberId}/revoke")
-    public Result<?> revokeAdmin(@PathVariable Integer memberId) {
+    
+    // 修改身份
+    @PutMapping("/{memberId}/change-role")
+    public Result<?> changeMemberRole(
+        @PathVariable Integer memberId,
+        @RequestParam String newRole 
+    ) {
         try {
-            clubMemberService.revokeAdminRole(memberId);
-            return Result.success("撤销管理员身份成功");
+            clubMemberService.changeMemberRole(memberId, newRole);
+            return Result.success("角色已更改为：" + newRole);
+        } catch (IllegalArgumentException e) {
+            return Result.fail(400, "无效的角色名称");
         } catch (Exception e) {
-            return Result.fail(e.getMessage());
+            return Result.fail(500, e.getMessage());
         }
     }
 

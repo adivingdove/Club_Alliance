@@ -2,6 +2,7 @@ package com.example.uclub_backend.service;
 
 import com.example.uclub_backend.entity.Club;
 import com.example.uclub_backend.entity.ClubMember;
+import com.example.uclub_backend.entity.ClubMember.MemberRole;
 import com.example.uclub_backend.entity.User;
 import com.example.uclub_backend.repository.ClubMemberRepository;
 import com.example.uclub_backend.repository.ClubRepository;
@@ -518,4 +519,18 @@ public class ClubMemberService {
         }
     }
 
+    public void changeMemberRole(Integer memberId, String newRoleStr) {
+        ClubMember member = clubMemberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("成员不存在"));
+
+        MemberRole newRole;
+        try {
+            newRole = MemberRole.valueOf(newRoleStr);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("无效的角色名称");
+        }
+
+        member.setRole(newRole);
+        clubMemberRepository.save(member);
+    }
 }

@@ -40,4 +40,11 @@ public class Result<T> {
         result.setMessage(message);
         return result;
     }
+
+   public static <T> Result<T> fail(Integer code, String message) {
+        Result<T> result = new Result<>();
+        result.setCode(code);
+        result.setMessage(message);
+        return result;
+    }
 }
