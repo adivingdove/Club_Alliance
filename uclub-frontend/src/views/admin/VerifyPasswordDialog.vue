@@ -1,8 +1,8 @@
 <template>
   <el-dialog title="身份验证" v-model="visible" width="30%">
-    <el-form :model="form" label-width="75px">
-      <el-form-item label="管理员邮箱">
-        <el-input v-model="form.email" placeholder="请输入邮箱" />
+    <el-form :model="form" label-width="85px">
+      <el-form-item label="管理员账号">
+        <el-input v-model="form.account" placeholder="请输入账号" />
       </el-form-item>
       <el-form-item label="登录密码">
         <el-input type="password" v-model="form.password" placeholder="请输入密码" />
@@ -24,12 +24,12 @@ export default {
   props: {
     show: Boolean
   },
-  emits: ['verified', 'cancel'],
+  emits: ['update:show', 'verified', 'cancel'],
   data() {
     return {
       visible: false,
       form: {
-        email: '',
+        account: '',
         password: ''
       }
     };
@@ -39,23 +39,26 @@ export default {
       this.visible = val;
     },
     visible(val) {
+      this.$emit('update:show', val); // ✅ 通知父组件更新show
       if (!val) this.$emit('cancel');
     }
   },
   methods: {
     async verifyPassword() {
       try {
-        const res = await axios.post('http://localhost:8080/api/auth/verify-password', {
-          email: this.form.email,
+        const res = await axios.post('http://localhost:8080/api/auth/verify-admin', {
+          account: this.form.account,
           password: this.form.password
         });
 
-        if (res.data === true) {
-          this.$message.success("验证成功");
+        if (res.data.code === 200) {
+          this.$message.success("验证成功，欢迎系统管理员");
+          localStorage.setItem("token", res.data.token);
+          localStorage.setItem("userInfo", JSON.stringify(res.data.data));
+          this.$emit('verified');  // ✅ 通知父组件
           this.visible = false;
-          this.$emit('verified');
         } else {
-          this.$message.error("验证失败，请检查邮箱和密码");
+          this.$message.error(res.data.message || "验证失败");
         }
       } catch (err) {
         console.error(err);

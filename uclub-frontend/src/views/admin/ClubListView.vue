@@ -14,9 +14,8 @@
       </div>
 
       <el-table :data="clubList" style="width: 100%" border>
-        <el-table-column prop="id" label="ID" width="60" />
         <el-table-column prop="name" label="社团名称" />
-        <el-table-column prop="creatorId" label="创建者ID" width="100" />
+        <el-table-column prop="creatorNickname" label="创建者昵称" width="100" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusTagType(row.status)">
@@ -51,7 +50,7 @@
         <p><strong>名称：</strong>{{ clubDetail.name }}</p>
         <p><strong>描述：</strong>{{ clubDetail.description }}</p>
         <p><strong>标签：</strong>{{ clubDetail.tags }}</p>
-        <p><strong>创建者ID：</strong>{{ clubDetail.creatorId }}</p>
+        <p><strong>创建者昵称：</strong>{{ clubDetail.creatorNickname }}</p>
         <p><strong>状态：</strong>{{ statusMap[clubDetail.status] || clubDetail.status }}</p>
         <p><strong>类型：</strong>{{ clubDetail.type }}</p>
         <p><strong>创建时间：</strong>{{ clubDetail.createdAt }}</p>
@@ -95,28 +94,22 @@ const fetchClubs = async () => {
     const res = await axios.get('/clubs/page', {
       params: {
         page: currentPage.value - 1,
-        pageSize: pageSize.value,
+        size: pageSize.value,
         keyword: searchKeyword.value.trim() || null
       }
     })
-    if (res.code === 0 && res.data) {
-      clubList.value = res.data.content || []
-      total.value = res.data.totalElements || 0
-    } else {
-      clubList.value = []
-      total.value = 0
-      ElMessage.error(res.message || '加载社团失败')
-    }
+
+    clubList.value = res.content || []
+    total.value = res.totalElements || 0
+    pageSize.value = res.size || 10
+    currentPage.value = res.number + 1 
+
   } catch (error) {
     ElMessage.error('加载社团失败')
     clubList.value = []
     total.value = 0
   }
 }
-
-
-
-
 
 // 页码变化
 const handlePageChange = (page) => {

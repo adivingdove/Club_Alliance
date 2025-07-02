@@ -19,10 +19,8 @@
 
       <el-table :data="adminList" border stripe style="width: 100%" v-loading="loading">
         <el-table-column prop="id" label="ID" width="60" />
-        <el-table-column prop="userId" label="用户ID" width="80" />
         <el-table-column prop="userName" label="用户名" width="120"/>
-        <el-table-column prop="clubId" label="社团ID" width="80" />
-        <el-table-column prop="clubName" label="社团名称" width="120 "/>
+        <el-table-column prop="clubName" label="社团名称" width="200 "/>
         <el-table-column prop="role" label="角色" />
         <el-table-column label="操作" width="150">
           <template #default="{ row }">

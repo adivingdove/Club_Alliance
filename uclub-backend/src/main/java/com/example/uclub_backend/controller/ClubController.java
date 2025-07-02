@@ -3,15 +3,21 @@ package com.example.uclub_backend.controller;
 import com.example.uclub_backend.entity.Club;
 import com.example.uclub_backend.entity.ClubMember;
 import com.example.uclub_backend.service.ClubService;
+import com.example.uclub_backend.service.UserService;
 import com.example.uclub_backend.service.ClubMemberService;
 import com.example.uclub_backend.vo.Result;
 import com.example.uclub_backend.vo.ApplicationVO;
 import com.example.uclub_backend.vo.ClubDetailVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import com.example.uclub_backend.vo.ClubResponse;
 import java.util.Optional;
 
 @RestController
@@ -23,6 +29,9 @@ public class ClubController {
     
     @Autowired
     private ClubMemberService clubMemberService;
+
+    @Autowired
+    private UserService userService;
     
     @GetMapping
     public Result<List<Club>> getAllClubs() {
@@ -324,17 +333,29 @@ public class ClubController {
     }
 
     @GetMapping("/page")
-    public Result<Page<Club>> getClubsPage(
-            @RequestParam(defaultValue = "0") int page,  //默认值改成 0
-            @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(required = false) String keyword) {
-        try {
-            Page<Club> clubsPage = clubService.getClubsPage(page, pageSize, keyword);
-            return Result.success(clubsPage);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
-        }
-    }
+public Page<ClubResponse> getClubsPage(@RequestParam int page, @RequestParam int size) {
+    Page<Club> clubsPage = clubService.getClubsPage(page, size, null);
+
+    List<Club> clubs = clubsPage.getContent();
+    List<Integer> creatorIds = clubs.stream()
+                                   .map(Club::getCreatorId)
+                                   .distinct()
+                                   .collect(Collectors.toList());
+
+    Map<Integer, String> nicknameMap = userService.getUserNamesByIds(creatorIds);
+
+    List<ClubResponse> responses = clubs.stream().map(club -> {
+        ClubResponse response = new ClubResponse();
+        response.setId(club.getId());
+        response.setName(club.getName());
+        response.setCreatorId(club.getCreatorId());
+        response.setCreatorNickname(nicknameMap.getOrDefault(club.getCreatorId(), "Unknown"));
+        response.setStatus(club.getStatus()); 
+        return response;
+    }).collect(Collectors.toList());
+
+    return new PageImpl<>(responses, clubsPage.getPageable(), clubsPage.getTotalElements());
+}
 
     @GetMapping("/hot")
   public Result<List<Club>> getHotClubs() {
