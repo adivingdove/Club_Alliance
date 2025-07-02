@@ -13,7 +13,6 @@
               style="width: 300px;"
             />
             <el-button type="primary" @click="fetchClubs">搜索</el-button>
-            <el-button type="success" @click="openCreateDialog">新建社团</el-button>
           </div>
 
           <el-table :data="clubList" style="width: 100%" border>
@@ -35,7 +34,12 @@
                 <el-button size="small" @click="viewDetail(row.id)">详情</el-button>
                 <el-button size="small" type="primary" @click="openEditDialog(row)">编辑</el-button>
                 <el-button size="small" type="warning" @click="manageMembers(row)">成员管理</el-button>
-                <el-button size="small" type="danger" @click="deleteClub(row.id)">解散社团</el-button>
+                <el-button
+                  v-if="getMyRole(row) === '社长'"
+                  size="small"
+                  type="danger"
+                  @click="deleteClub(row.id)"
+                >解散社团</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -161,7 +165,7 @@
         <el-table-column prop="name" label="姓名" />
         <el-table-column prop="role" label="角色">
           <template #default="{ row }">
-            <el-select v-model="row.role" size="small" @change="role => setMemberRole(row, role)" :disabled="row.role === '社长'">
+            <el-select v-model="row.role" size="small" @change="role => setMemberRole(row, role)" :disabled="getMyRole(currentClub) !== '社长' || row.role === '社长'">
               <el-option label="成员" value="成员" />
               <el-option label="干事" value="干事" />
               <el-option label="副社长" value="副社长" />
@@ -172,7 +176,11 @@
         <el-table-column label="操作">
           <template #default="{ row }">
             <el-button v-if="row.role !== '社长'" size="small" type="danger" @click="kickMember(row)">踢出</el-button>
-            <el-button v-if="row.role !== '社长'" size="small" @click="transferPresident(row)">转让社长</el-button>
+            <el-button
+              v-if="row.role !== '社长' && getMyRole(currentClub) === '社长'"
+              size="small"
+              @click="transferPresident(row)"
+            >转让社长</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -535,10 +543,6 @@ const viewDetail = async (clubId) => {
   } catch (error) {
     ElMessage.error('获取详情失败')
   }
-}
-
-const openCreateDialog = () => {
-  ElMessage.info('新建社团功能待实现')
 }
 
 const editClub = (row) => {
@@ -977,6 +981,13 @@ const getImageUrl = (url) => {
     return 'http://localhost:8080' + url
   }
   return url
+}
+
+const user = JSON.parse(localStorage.getItem('user') || '{}')
+const getMyRole = (club) => {
+  if (!club || !club.members || !user.id) return null
+  const me = club.members.find(m => Number(m.userId) === Number(user.id))
+  return me ? me.role : null
 }
 
 onMounted(() => {
