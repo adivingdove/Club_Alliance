@@ -480,6 +480,14 @@ const canManageClub = computed(() => {
 })
 
 console.log(club.value.members, user.value)
+
+const showAnnouncementDrawer = ref(false)
+
+watch(showAnnouncementDrawer, (val) => {
+  if (val) {
+    document.body.style.overflow = ''
+  }
+})
 </script>
 
 <template>
@@ -668,6 +676,41 @@ console.log(club.value.members, user.value)
         <el-button type="primary" @click="handleEditSubmit">保存</el-button>
       </template>
     </el-dialog>
+
+    <!-- 公告侧边栏按钮 -->
+    <el-button
+      class="announcement-drawer-btn"
+      type="warning"
+      @click="showAnnouncementDrawer = true"
+      style="position: fixed; top: 180px; right: 0; z-index: 2000;"
+    >
+      社团公告
+    </el-button>
+    <!-- 公告抽屉 -->
+    <el-drawer
+      v-model="showAnnouncementDrawer"
+      title="社团公告"
+      direction="rtl"
+      size="400px"
+      :lock-scroll="false"
+    >
+      <div v-if="club.announcements && club.announcements.length">
+        <el-timeline>
+          <el-timeline-item
+            v-for="a in club.announcements"
+            :key="a.id"
+            :timestamp="a.createdAt ? new Date(a.createdAt).toLocaleString('zh-CN') : ''"
+            placement="top"
+          >
+            <h4>{{ a.title }}</h4>
+            <div style="white-space: pre-line;">{{ a.content }}</div>
+          </el-timeline-item>
+        </el-timeline>
+      </div>
+      <div v-else>
+        <el-empty description="暂无公告" />
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -752,5 +795,10 @@ console.log(club.value.members, user.value)
 }
 .manage-features li:last-child {
   border-bottom: none;
+}
+.announcement-drawer-btn {
+  border-radius: 8px 0 0 8px;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 </style>
