@@ -11,6 +11,7 @@ public class Report {
     private String reason;
     private ReportStatus status;   // 枚举
     private Timestamp createdAt;
+
 }
 
 

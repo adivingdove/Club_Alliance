@@ -71,4 +71,9 @@ public class CommentService {
             .orElseThrow(() -> new RuntimeException("评论不存在: id = " + id));
     }
 
+    // 获取评论用户ID
+    public Integer getUserId(Integer commentId) {
+        return commentRepository.getUserId(commentId);
+    }
+
 }

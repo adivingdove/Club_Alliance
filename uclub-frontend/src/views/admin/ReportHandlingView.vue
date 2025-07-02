@@ -10,10 +10,9 @@
       </div>
 
       <el-table :data="reports" style="width: 100%" v-if="reports.length > 0">
-        <el-table-column prop="id" label="ID" width="70" />
-        <el-table-column prop="reporterId" label="举报人ID" width="100" />
+        <el-table-column prop="reporterNickname" label="举报人昵称" width="120" />
+        <el-table-column prop="reportedUserNickname" label="被举报人昵称" width="120"/>
         <el-table-column prop="targetType" label="目标类型" width="100" />
-        <el-table-column prop="targetId" label="目标ID" width="100" />
         <el-table-column prop="reason" label="举报原因" min-width="200" />
         <el-table-column prop="status" label="状态" width="100" />
         <el-table-column label="举报时间" :formatter="(row) => formatTime(row.createdAt)" width="180" />
@@ -32,9 +31,10 @@
         <div><strong>举报人ID：</strong>{{ selectedReport.reporterId }}</div>
         <div><strong>目标类型：</strong>{{ selectedReport.targetType }}</div>
         <div><strong>目标ID：</strong>{{ selectedReport.targetId }}</div>
+        <div><strong>帖子ID：</strong>{{selectedReport.postId}}</div>
         <div><strong>目标链接：</strong>
           <a v-if="selectedReport.targetType === '帖子'" :href="`/post/${selectedReport.targetId}`" target="_blank">查看帖子</a>
-          <a v-else-if="selectedReport.targetType === '评论'" :href="`/comment/${selectedReport.targetId}`" target="_blank">查看评论</a>
+          <a v-else-if="selectedReport.targetType === '评论'" :href="`/post/${selectedReport.postId}#comment/${selectedReport.targetId}`" target="_blank">查看评论</a>
           <span v-else>无链接</span>
         </div>
         <div><strong>举报原因：</strong>{{ selectedReport.reason }}</div>
@@ -64,7 +64,7 @@ const formatTime = (time) => {
 }
 
 const fetchReports = async () => {
-  const { data } = await axios.get('/report/list', {
+  const { data } = await axios.get('/report/admin/list', {
     params: { status: statusFilter.value }
   })
   reports.value = data

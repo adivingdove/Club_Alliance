@@ -1,18 +1,39 @@
 package com.example.uclub_backend.forum.controller;
+import com.example.uclub_backend.forum.entity.Comment;
 import com.example.uclub_backend.forum.entity.Report;
 import com.example.uclub_backend.forum.entity.ReportStatus;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.example.uclub_backend.forum.mapper.ReportMapper;
+import com.example.uclub_backend.forum.vo.ReportVO;
+import com.example.uclub_backend.service.UserService;
+import com.example.uclub_backend.forum.service.*;
+
+import com.example.uclub_backend.forum.entity.TargetType;
+import org.springframework.beans.BeanUtils;
+
+
 @RestController
 @RequestMapping("/api/report")
 public class ReportController {
 
     @Autowired
     private ReportMapper reportMapper;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private PostService postService;
+
+    @Autowired
+    private CommentService commentService;
 
     @PostMapping
     public ResponseEntity<?> report(@RequestBody Report report) {
@@ -76,4 +97,64 @@ public class ReportController {
         }
     }
 
+    @GetMapping("/admin/list")
+    public ResponseEntity<?> getAdminReportList(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword) {
+        try {
+            int offset = (page - 1) * size;
+            List<Report> reports = reportMapper.selectReports(status, keyword, offset, size);
+            int total = reportMapper.countReports(status, keyword);
+
+            List<ReportVO> voList = reports.stream().map(report -> {
+                ReportVO vo = new ReportVO();
+                BeanUtils.copyProperties(report, vo);
+
+                vo.setReporterNickname(userService.getUserNameById(report.getReporterId()));
+
+                Integer reportedUserId = getReportedUserIdByTarget(report.getTargetType(), report.getTargetId());
+                vo.setReportedUserId(reportedUserId);
+
+                if (reportedUserId != null) {
+                    vo.setReportedUserNickname(userService.getUserNameById(reportedUserId));
+                }
+
+                // 如果举报对象是评论，补充 postId 字段
+                vo.setPostId(report.getTargetType() == TargetType.评论
+                        ? commentService.getCommentById(report.getTargetId().longValue()).getPostId().intValue()
+                        : report.getTargetId());
+
+                return vo;
+            }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(Map.of("data", voList, "total", total));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "查询失败", "detail", e.getMessage()));
+        }
+    }
+
+    // 根据目标类型获取被举报人ID（可扩展）
+    private Integer getReportedUserIdByTarget(TargetType type, Integer targetId) {
+        if(type == null) return null; // 防止传入null导致NullPointerException
+        switch (type) {
+            case 帖子:
+                return postService.getUserId(targetId);
+            case 评论:
+                return commentService.getUserId(targetId);
+            case 用户:
+                return targetId;
+            case 活动:
+                // 待实现活动举报逻辑
+                return null;
+            case 公告:
+                // 待实现公告举报逻辑
+                return null;
+            default:
+                // 可记录日志或抛出异常
+                return null;
+        }
+    }
 }
+
