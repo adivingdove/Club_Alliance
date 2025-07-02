@@ -50,6 +50,9 @@ const routes = [
   { path: '/profile', name: 'Profile', component: Profile },
   { path: '/search', name: 'Search', component: Search },
 
+ // { path: '/applications', name: 'Applications', component: Applications },
+  {path: '/chatroom',component: () => import('@/views/ChatRoom.vue')},
+
   // 新增页面
   { path: '/club/:id', name: 'ClubDetails', component: ClubDetails },
 

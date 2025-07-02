@@ -3,11 +3,13 @@
     <el-card class="card">
       <div class="card-title">热门社团</div>
       <el-tag
-        v-for="club in hotClubs"
-        :key="club"
-        type="success"
-        class="tag"
-      >
+    v-for="club in hotClubs"
+    :key="club.id"
+    type="success"
+    class="tag"
+    @click="goToClub(club.id)"
+    style="cursor: pointer"
+  >
        {{ club.name }}
       </el-tag>
     </el-card>
@@ -44,6 +46,9 @@ async function fetchHotPosts() {
   } catch (err) {
     console.error('获取热门帖子失败:', err)
   }
+}
+function goToClub(id) {
+  router.push(`/club/${id}`)
 }
 
 function goToPost(id) {
@@ -101,4 +106,8 @@ onMounted(() => {
   color: #f56c6c;
   margin-right: 5px;
 }
+.tag:hover {
+  background-color: #e1f3d8;
+}
+
 </style>
