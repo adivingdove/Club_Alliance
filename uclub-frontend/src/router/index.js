@@ -11,6 +11,7 @@ import Search from '../views/Search.vue'
 import ClubDetails from '../views/ClubDetails.vue'
 import AiChat from '../views/AiChat.vue'
 import ClubManage from '../views/ClubManage.vue'
+import ActivitiesAnnouncementView from '../views/ActivitiesAnnouncementView.vue'
 
 
 
@@ -29,12 +30,12 @@ import ClubListView from '../views/admin/ClubListView.vue'
 import ClubAdminView from '../views/admin/ClubAdminView.vue'
 import UserQueryView from '../views/admin/UserQueryView.vue'
 import SystemAnnouncementView from '../views/admin/SystemAnnouncementView.vue'
-import ActivitiesAnnouncementView from '../views/admin/ActivitesAnnouncementView.vue'
 import ClubAnnouncementReviewView from '../views/admin/ClubAnnouncementReviewView.vue'
 import ClubCreationReviewView from '../views/admin/ClubCreationReviewView.vue'
 import ActivityReviewView from '../views/admin/ActivityReviewView.vue'
 import ReportHandlingView from '../views/admin/ReportHandlingView.vue'
 import PostAdminView from '../views/admin/PostAdminView.vue'
+import CommentAdminView from '../views/admin/CommentAdminView.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -66,12 +67,12 @@ const routes = [
       { path: 'club-admin', component: ClubAdminView },
       { path: 'user-query', component: UserQueryView },
       { path: 'system-announcement', component: SystemAnnouncementView },
-      { path: 'activities-announcement', component: ActivitiesAnnouncementView },
       { path: 'club-announcement-review', component: ClubAnnouncementReviewView },
       { path: 'club-creation-review', component: ClubCreationReviewView },
       { path: 'activity-review', component: ActivityReviewView },
       { path: 'report-handling', component: ReportHandlingView },
-      { path: 'post-admin', component: PostAdminView}
+      { path: 'post-admin', component: PostAdminView},
+      { path: 'comment-admin', component: CommentAdminView }
     ]
   }
 ]

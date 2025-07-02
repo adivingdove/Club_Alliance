@@ -159,6 +159,9 @@
           </el-card>
         </div>
       </el-tab-pane>
+      <el-tab-pane label="社团公告" name="announcements">
+        <ActivitiesAnnouncementView />
+      </el-tab-pane>
     </el-tabs>
 
     <!-- 详情弹窗 -->
@@ -463,6 +466,7 @@
 </template>
 
 <script setup>
+import ActivitiesAnnouncementView from '@/views/ActivitiesAnnouncementView.vue'
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from '@/utils/axios'
@@ -473,6 +477,7 @@ import {
   updateActivity,
   getActivitiesByCreatorId
 } from '@/api/activityApi'
+
 
 const clubList = ref([])
 const searchKeyword = ref('')
