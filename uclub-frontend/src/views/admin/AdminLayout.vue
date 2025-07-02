@@ -21,17 +21,6 @@
           </el-menu-item>
         </el-sub-menu>
 
-        <el-sub-menu index="2">
-          <template #title>
-            <el-icon><Lock /></el-icon>
-            <span v-if="!collapsed">权限管理</span>
-          </template>
-          <el-menu-item index="/admin/club-admin">
-            <el-icon><UserFilled /></el-icon>
-            <span v-if="!collapsed">社团管理员管理</span>
-          </el-menu-item>
-        </el-sub-menu>
-
         <el-sub-menu index="3">
           <template #title>
             <el-icon><User /></el-icon>
