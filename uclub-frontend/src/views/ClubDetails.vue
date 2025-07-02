@@ -30,7 +30,10 @@ const user = computed(() => {
   }
 })
 
-const isPresident = computed(() => user.value.id && club.value.creatorId === user.value.id)
+// 统一安全获取当前用户id
+const safeUserId = computed(() => (user.value && typeof user.value.id !== 'undefined' && user.value.id !== null) ? Number(user.value.id) : null)
+
+const isPresident = computed(() => safeUserId.value && Number(club.value.creatorId) === safeUserId.value)
 
 // 检查收藏状态
 const checkFavoriteStatus = async (clubId) => {
@@ -133,6 +136,9 @@ const fetchClub = async (id) => {
             m.avatar = DEFAULT_IMG
           }
         })
+        // 按角色排序：社长 > 副社长 > 干事 > 成员
+        const roleOrder = { '社长': 1, '副社长': 2, '干事': 3, '成员': 4 }
+        data.members.sort((a, b) => (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99))
       } else {
         data.members = []
       }
@@ -411,7 +417,7 @@ const getImageUrl = (url) => {
 const setMemberRole = async (member, role) => {
   try {
     const clubId = club.value.id
-    const creatorId = user.value.id
+    const creatorId = safeUserId.value
     await request.put(`/api/clubs/${clubId}/members/${member.id}/role`, { creatorId, role })
     ElMessage.success('角色设置成功')
     await fetchClub(clubId) // 刷新成员列表
@@ -419,6 +425,50 @@ const setMemberRole = async (member, role) => {
     ElMessage.error('角色设置失败')
   }
 }
+
+const transferPresident = async (member) => {
+  try {
+    const clubId = club.value.id
+    const creatorId = safeUserId.value
+    // 调用后端接口，转让社长
+    await request.put(`/api/clubs/${clubId}/transfer-president`, {
+      fromUserId: creatorId,
+      toUserId: member.userId
+    })
+    ElMessage.success('社长已转让')
+    await fetchClub(clubId) // 刷新成员列表
+  } catch (e) {
+    ElMessage.error('转让失败')
+  }
+}
+
+// 计算属性：当前用户是否可以退出社团（不是社长且在成员列表中）
+const canQuitClub = computed(() => {
+  const userId = safeUserId.value
+  if (!userId || !club.value.members) return false
+  const me = club.value.members.find(m => Number(m.userId) === userId)
+  return me && me.role !== '社长'
+})
+
+// 退出社团方法
+const quitClub = async () => {
+  try {
+    const userId = safeUserId.value
+    const clubId = club.value.id
+    if (!userId || !clubId) return
+    const res = await request.delete(`/api/clubs/${clubId}/members/${userId}`)
+    if (res.data.code === 0) {
+      ElMessage.success('已退出社团')
+      await fetchClub(clubId)
+    } else {
+      ElMessage.error(res.data.message || '退出失败')
+    }
+  } catch (e) {
+    ElMessage.error('退出失败，请重试')
+  }
+}
+
+console.log(club.value.members, user.value)
 </script>
 
 <template>
@@ -442,6 +492,14 @@ const setMemberRole = async (member, role) => {
           </el-button>
           <el-button v-if="isPresident" type="primary" plain @click="openEditDialog" style="margin-left: 12px;">
             编辑社团信息
+          </el-button>
+          <el-button
+            v-if="canQuitClub"
+            type="danger"
+            plain
+            @click="quitClub"
+          >
+            退出社团
           </el-button>
         </div>
       </div>
@@ -482,22 +540,11 @@ const setMemberRole = async (member, role) => {
     <div class="section">
       <h2>成员列表</h2>
       <el-row :gutter="16">
-        <el-col :span="4" v-for="member in club.members" :key="member.id">
+        <el-col :span="4" v-for="member in club.members" :key="member.userId">
           <el-card class="member-card">
             <img :src="member.avatar || '/logo.png'" class="member-avatar" />
             <div class="member-name">{{ member.name }}</div>
-            <div class="member-role">
-              <template v-if="isPresident && member.role !== '社长'">
-                <el-select v-model="member.role" size="small" @change="role => setMemberRole(member, role)">
-                  <el-option label="成员" value="成员" />
-                  <el-option label="干事" value="干事" />
-                  <el-option label="副社长" value="副社长" />
-                </el-select>
-              </template>
-              <template v-else>
-                {{ member.role }}
-              </template>
-            </div>
+            <div class="member-role">{{ member.role }}</div>
           </el-card>
         </el-col>
       </el-row>

@@ -299,7 +299,7 @@ const submitCreateClub = () => {
           tags: ''
         })
         if (res.data.code === 0) {
-          ElMessage.success('社团创建成功')
+          ElMessage.success('社团创建成功，等待审核')
           showCreateDialog.value = false
           fetchClubs()
         } else {

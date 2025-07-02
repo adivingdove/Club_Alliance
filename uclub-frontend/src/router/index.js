@@ -32,6 +32,7 @@ import ReportHandlingView from '../views/admin/ReportHandlingView.vue'
 import PostAdminView from '../views/admin/PostAdminView.vue'
 
 import AiChat from '../views/AiChat.vue'
+import ClubManage from '../views/ClubManage.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -66,7 +67,8 @@ const routes = [
       { path: 'report-handling', component: ReportHandlingView },
       { path: 'post-admin', component: PostAdminView}
     ]
-  }
+  },
+  { path: '/club-manage', name: 'ClubManage', component: ClubManage },
 ]
 
 const router = createRouter({

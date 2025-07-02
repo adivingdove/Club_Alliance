@@ -491,5 +491,31 @@ public class ClubMemberService {
         return clubMapper.findAdmins();
     }
 
+    @Transactional
+    public void transferPresident(Integer clubId, Integer fromUserId, Integer toUserId) {
+        // 校验fromUserId是当前社长
+        Optional<ClubMember> fromMemberOpt = clubMemberRepository.findByClubIdAndUserId(clubId, fromUserId);
+        Optional<ClubMember> toMemberOpt = clubMemberRepository.findByClubIdAndUserId(clubId, toUserId);
+        if (fromMemberOpt.isEmpty() || toMemberOpt.isEmpty()) {
+            throw new RuntimeException("成员不存在");
+        }
+        ClubMember fromMember = fromMemberOpt.get();
+        ClubMember toMember = toMemberOpt.get();
+        if (fromMember.getRole() != ClubMember.MemberRole.社长) {
+            throw new RuntimeException("只有社长才能转让社长职位");
+        }
+        // 转让
+        fromMember.setRole(ClubMember.MemberRole.成员);
+        toMember.setRole(ClubMember.MemberRole.社长);
+        clubMemberRepository.save(fromMember);
+        clubMemberRepository.save(toMember);
+        // 更新club表creatorId字段
+        Optional<Club> clubOpt = clubRepository.findById(clubId);
+        if (clubOpt.isPresent()) {
+            Club club = clubOpt.get();
+            club.setCreatorId(toUserId);
+            clubRepository.save(club);
+        }
+    }
 
 }
