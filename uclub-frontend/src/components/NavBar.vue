@@ -234,12 +234,11 @@ const router = useRouter();
 
 const showLoginModal = ref(false); // 用户登录弹窗
 const showManageLogin = ref(false);      // 后台管理登录弹窗
-
+const showLoginDialog = ref(false)
 
 // new 
 const store = useStore()
 const isLoggedIn = computed(() => store.getters.isLoggedIn)
-const showLoginDialog = ref(false)
 const showUserMenu = ref(false)
 const showForgotPasswordDialog = ref(false)
 const isRegister = ref(false)
@@ -367,7 +366,8 @@ const handleSubmit = async () => {
         email: registerForm.email,
         password: registerForm.password,
         nickname: registerForm.nickname,
-        emailCode: registerForm.emailCode
+        emailCode: registerForm.emailCode,
+        headUrl: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
       })
       if (res.data.code === 200) {
         ElMessage.success('注册成功，请登录')
@@ -391,6 +391,19 @@ const handleSubmit = async () => {
         showLoginDialog.value = false
         loginForm.account = ''
         loginForm.password = ''
+        // 立即清除可能显示旧信息的组件状态
+        showUserMenu.value = false
+        
+        // 触发全局事件，通知其他组件更新用户信息
+        window.dispatchEvent(new CustomEvent('userLoginSuccess', { 
+          detail: res.data.data 
+        }))
+        
+        // 清空页面内容并刷新
+        document.body.innerHTML = ''
+        setTimeout(() => {
+          window.location.reload()
+        }, 1)
       } else {
         ElMessage.error(res.data.message || '登录失败')
       }
@@ -488,6 +501,12 @@ const logout = () => {
   store.dispatch('logout')
   showUserMenu.value = false
   ElMessage.success('已退出登录')
+  
+  // 清空页面内容并刷新
+  document.body.innerHTML = ''
+  setTimeout(() => {
+    window.location.reload()
+  }, 1)
 }
 
 // 页面加载时检查登录状态
@@ -763,7 +782,8 @@ const handleClickOutside = (e) => {
 }
 
 .login-btn:hover {
-  background-color: #1e40af;
+  background-color: #409EFF;
+  color: white;
 }
 
 /* 弹窗遮罩 */
