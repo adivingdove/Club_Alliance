@@ -44,3 +44,23 @@ export function logout() {
 export function testDatabase() {
     return request.get('/mysql-test')
 }
+
+// 社团成员管理相关API
+export function getClubMembers(clubId) {
+  return request.get(`/api/club/${clubId}/members`)
+}
+export function updateMemberRole(clubId, memberId, role) {
+  return request.put(`/api/club/${clubId}/member/${memberId}/role`, { role })
+}
+export function removeClubMember(clubId, memberId) {
+  return request.delete(`/api/club/${clubId}/member/${memberId}`)
+}
+export function getClubApplications(clubId) {
+  return request.get(`/api/club/${clubId}/applications`)
+}
+export function approveApplication(clubId, applicationId) {
+  return request.post(`/api/club/${clubId}/application/${applicationId}/approve`)
+}
+export function rejectApplication(clubId, applicationId) {
+  return request.post(`/api/club/${clubId}/application/${applicationId}/reject`)
+}
