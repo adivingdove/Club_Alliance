@@ -109,6 +109,7 @@ public class ClubService {
         clubToUpdate.setTags(club.getTags());
         clubToUpdate.setDescription(club.getDescription());
         clubToUpdate.setStatus(club.getStatus());
+        clubToUpdate.setCurrentMembers(club.getCurrentMembers());
         
         return clubRepository.save(clubToUpdate);
     }

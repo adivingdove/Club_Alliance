@@ -8,7 +8,6 @@ import Search from '../views/Search.vue'
 
 // 新增页面
 import ClubDetails from '../views/ClubDetails.vue'
-import Applications from '../views/Applications.vue'
 
 // 新增论坛模块页面
 import ForumPage from '../views/ForumPage.vue'
@@ -45,7 +44,6 @@ const routes = [
   { path: '/activities', name: 'Activities', component: Activities },
   { path: '/profile', name: 'Profile', component: Profile },
   { path: '/search', name: 'Search', component: Search },
-  { path: '/applications', name: 'Applications', component: Applications },
 
   // 新增页面
   { path: '/club/:id', name: 'ClubDetails', component: ClubDetails },
