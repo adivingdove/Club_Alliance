@@ -32,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         
         System.out.println("JWT Filter - Request URI: " + requestURI);
-        System.out.println("JWT Filter - Authorization Header: " + (authHeader != null ? authHeader.substring(0, Math.min(20, authHeader.length())) + "..." : "null"));
+        System.out.println("JWT Filter - Authorization Header: " + (authHeader != null ? authHeader : "null"));
         
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
@@ -43,13 +43,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                    System.out.println("JWT Filter - UserDetails loaded: " + (userDetails != null ? "success" : "failed"));
+                    System.out.println("JWT Filter - UserDetails: " + (userDetails != null ? userDetails.toString() : "null"));
                     
                     if (userDetails != null) {
                         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());
                         SecurityContextHolder.getContext().setAuthentication(authentication);
-                        System.out.println("JWT Filter - Authentication set successfully");
+                        System.out.println("JWT Filter - Authentication set successfully: " + authentication);
                     }
                 } else {
                     System.out.println("JWT Filter - Username is null or authentication already exists");
