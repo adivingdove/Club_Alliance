@@ -18,6 +18,11 @@
 
           <el-table :data="clubList" style="width: 100%" border>
             <el-table-column prop="name" label="社团名称" />
+            <el-table-column label="发布公告" width="120">
+              <template #default="{ row }">
+                <el-button size="small" type="success" @click="openAnnouncementDialog(row)">发布公告</el-button>
+              </template>
+            </el-table-column>
             <el-table-column prop="status" label="状态" width="100">
               <template #default="{ row }">
                 <el-tag :type="getStatusTagType(row.status)">
@@ -354,6 +359,24 @@
       <template #footer>
         <el-button @click="showEditActivityDialog = false">取消</el-button>
         <el-button type="primary" @click="submitEditActivity">保存修改</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="showAnnouncementDialog" title="发布社团公告" width="500px">
+      <el-input
+        v-model="announcementTitle"
+        placeholder="请输入公告标题"
+        style="margin-bottom: 12px"
+      />
+      <el-input
+        v-model="announcementContent"
+        type="textarea"
+        :rows="6"
+        placeholder="请输入公告内容"
+      />
+      <template #footer>
+        <el-button @click="showAnnouncementDialog = false">取消</el-button>
+        <el-button type="primary" @click="submitAnnouncement">发布</el-button>
       </template>
     </el-dialog>
   </div>
@@ -753,6 +776,52 @@ const formatDateTime = (dateStr) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   return date.toLocaleString('zh-CN')
+}
+
+const showAnnouncementDialog = ref(false)
+const announcementTitle = ref('')
+const announcementContent = ref('')
+const currentAnnouncementClub = ref(null)
+
+const openAnnouncementDialog = (club) => {
+  currentAnnouncementClub.value = club
+  announcementTitle.value = ''
+  announcementContent.value = ''
+  showAnnouncementDialog.value = true
+}
+
+const submitAnnouncement = async () => {
+  if (!announcementTitle.value.trim()) {
+    ElMessage.error('公告标题不能为空')
+    return
+  }
+  if (!announcementContent.value.trim()) {
+    ElMessage.error('公告内容不能为空')
+    return
+  }
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    if (!user.id) {
+      ElMessage.error('请先登录')
+      return
+    }
+    const res = await axios.post('announcements', {
+      clubId: currentAnnouncementClub.value.id,
+      title: announcementTitle.value,
+      content: announcementContent.value,
+      type: '社团',
+      creatorId: user.id
+    })
+    if (res.data?.code === 0) {
+      ElMessage.success('公告发布成功')
+      showAnnouncementDialog.value = false
+      fetchClubs()
+    } else {
+      ElMessage.error(res.data?.message || '公告发布失败')
+    }
+  } catch (e) {
+    ElMessage.error('公告发布失败')
+  }
 }
 
 onMounted(() => {
