@@ -33,7 +33,7 @@
             <el-table-column label="操作" width="320">
               <template #default="{ row }">
                 <el-button size="small" @click="viewDetail(row.id)">详情</el-button>
-                <el-button size="small" type="primary" @click="editClub(row)">编辑</el-button>
+                <el-button size="small" type="primary" @click="openEditDialog(row)">编辑</el-button>
                 <el-button size="small" type="warning" @click="manageMembers(row)">成员管理</el-button>
                 <el-button size="small" type="danger" @click="deleteClub(row.id)">解散社团</el-button>
               </template>
@@ -149,7 +149,7 @@
       <div v-if="clubDetail">
         <p><strong>名称：</strong>{{ clubDetail.name }}</p>
         <p><strong>描述：</strong>{{ clubDetail.description }}</p>
-        <p><strong>标签：</strong>{{ clubDetail.tags }}</p>
+        <p><strong>标签：</strong>{{ typeMap[clubDetail.type] || clubDetail.type }}</p>
         <p><strong>状态：</strong>{{ statusMap[clubDetail.status] || clubDetail.status }}</p>
         <p><strong>类型：</strong>{{ clubDetail.type }}</p>
         <p><strong>创建时间：</strong>{{ clubDetail.createdAt }}</p>
@@ -171,7 +171,8 @@
         </el-table-column>
         <el-table-column label="操作">
           <template #default="{ row }">
-            <el-button v-if="row.role !== '社长'" size="small" type="danger" @click="transferPresident(row)">转让社长</el-button>
+            <el-button v-if="row.role !== '社长'" size="small" type="danger" @click="kickMember(row)">踢出</el-button>
+            <el-button v-if="row.role !== '社长'" size="small" @click="transferPresident(row)">转让社长</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -379,11 +380,43 @@
         <el-button type="primary" @click="submitAnnouncement">发布</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="showEditDialog" title="编辑社团信息" width="400px" :close-on-click-modal="false">
+      <el-form :model="editForm" :rules="editRules" ref="editFormRef" label-width="90px">
+        <el-form-item label="社团名称" prop="name">
+          <el-input v-model="editForm.name" />
+        </el-form-item>
+        <el-form-item label="简介" prop="description">
+          <el-input v-model="editForm.description" type="textarea" />
+        </el-form-item>
+        <el-form-item label="主页图片" prop="logoUrl">
+          <el-input v-model="editForm.logoUrl" placeholder="图片URL或上传" style="width: 70%; margin-right: 8px;" />
+          <el-upload
+            action="http://localhost:8080/api/upload"
+            :headers="uploadHeaders"
+            :show-file-list="false"
+            :on-success="handleEditLogoUploadSuccess"
+            :on-error="handleEditLogoUploadError"
+            :before-upload="handleBeforeEditLogoUpload"
+          >
+            <el-button type="primary" size="small">上传图片</el-button>
+          </el-upload>
+          <div v-if="editForm.logoUrl" style="margin-top: 10px;">
+            <img :src="getImageUrl(editForm.logoUrl)" style="max-width: 200px; max-height: 150px; border-radius: 8px; border: 1px solid #ddd;" alt="图片预览" />
+            <p style="margin-top: 5px; font-size: 12px; color: #666;">图片预览</p>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showEditDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleEditSubmit">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from '@/utils/axios'
 import request from '../utils/request'
@@ -452,6 +485,14 @@ const statusMap = {
   正常: '正常',
   待审核: '待审核',
   已封禁: '已封禁',
+}
+
+const typeMap = {
+  1: '学术科技',
+  2: '文化艺术',
+  3: '体育竞技',
+  4: '公益实践',
+  5: '创新创业'
 }
 
 const getStatusTagType = (status) => {
@@ -805,23 +846,137 @@ const submitAnnouncement = async () => {
       ElMessage.error('请先登录')
       return
     }
-    const res = await axios.post('announcements', {
+    const res = await axios.post('/announcements', {
       clubId: currentAnnouncementClub.value.id,
       title: announcementTitle.value,
       content: announcementContent.value,
       type: '社团',
       creatorId: user.id
     })
-    if (res.data?.code === 0) {
+    if (res.code === 0) {
       ElMessage.success('公告发布成功')
       showAnnouncementDialog.value = false
       fetchClubs()
     } else {
-      ElMessage.error(res.data?.message || '公告发布失败')
+      ElMessage.error(res.message || '公告发布失败')
     }
   } catch (e) {
     ElMessage.error('公告发布失败')
+    console.log('catch错误：', e)
   }
+}
+
+const kickMember = async (member) => {
+  try {
+    await ElMessageBox.confirm(`确定要将【${member.name}】踢出社团吗？`, '踢出确认', { type: 'warning' })
+    await axios.delete(`/clubs/${currentClubId}/members/${member.userId}`)
+    ElMessage.success('成员已踢出')
+    manageMembers({ id: currentClubId }) // 刷新成员列表
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error('踢出失败')
+    }
+  }
+}
+
+const showEditDialog = ref(false)
+const editForm = ref({
+  id: null,
+  name: '',
+  description: '',
+  logoUrl: ''
+})
+const editRules = {
+  name: [{ required: true, message: '请输入社团名称', trigger: 'blur' }],
+  description: [{ required: true, message: '请输入简介', trigger: 'blur' }],
+}
+const editFormRef = ref()
+
+const openEditDialog = (club) => {
+  editForm.value = {
+    id: club.id,
+    name: club.name || '',
+    description: club.description || '',
+    logoUrl: club.logoUrl || ''
+  }
+  showEditDialog.value = true
+}
+
+const uploadHeaders = computed(() => {
+  const token = localStorage.getItem('token')
+  return {
+    'Authorization': token ? `Bearer ${token}` : '',
+    'X-Requested-With': 'XMLHttpRequest'
+  }
+})
+
+const handleEditLogoUploadSuccess = (response) => {
+  let url = response.url
+  if (!url && response.data && response.data.url) {
+    url = response.data.url
+  }
+  if (response.code === 0 && url) {
+    editForm.value.logoUrl = url
+    ElMessage.success('图片上传成功')
+  } else {
+    ElMessage.error('图片上传失败')
+  }
+}
+
+const handleEditLogoUploadError = (err) => {
+  console.error('图片上传失败:', err);
+  ElMessage.error('图片上传失败，请重试');
+};
+
+const handleBeforeEditLogoUpload = (file) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    ElMessage.error('请先登录后再上传图片');
+    return false;
+  }
+  const isJPG = file.type === 'image/jpeg' || file.type === 'image/png';
+  const isLt5M = file.size / 1024 / 1024 < 5;
+  if (!isJPG) {
+    ElMessage.error('上传图片必须是 JPG 或 PNG 格式');
+    return false;
+  }
+  if (!isLt5M) {
+    ElMessage.error('上传图片大小不能超过 5MB');
+    return false;
+  }
+  return true;
+};
+
+const handleEditSubmit = () => {
+  editFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        const clubId = editForm.value.id
+        const payload = {
+          name: editForm.value.name,
+          description: editForm.value.description,
+          logoUrl: editForm.value.logoUrl
+        }
+        const res = await axios.put(`/clubs/${clubId}`, payload)
+        if (res.code === 0) {
+          ElMessage.success('社团信息更新成功')
+          showEditDialog.value = false
+          fetchClubs()
+        } else {
+          ElMessage.error(res.message || '更新失败')
+        }
+      } catch (e) {
+        ElMessage.error('更新失败，请重试')
+      }
+    }
+  })
+}
+
+const getImageUrl = (url) => {
+  if (url && url.startsWith('/uploads/')) {
+    return 'http://localhost:8080' + url
+  }
+  return url
 }
 
 onMounted(() => {
