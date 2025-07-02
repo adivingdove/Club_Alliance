@@ -32,14 +32,9 @@
             <el-table-column label="操作" width="320">
               <template #default="{ row }">
                 <el-button size="small" @click="viewDetail(row.id)">详情</el-button>
-                <el-button size="small" type="primary" @click="openEditDialog(row)">编辑</el-button>
+                <el-button v-if="row.myRole === '社长'" size="small" type="primary" @click="openEditDialog(row)">编辑</el-button>
                 <el-button size="small" type="warning" @click="manageMembers(row)">成员管理</el-button>
-                <el-button
-                  v-if="getMyRole(row) === '社长'"
-                  size="small"
-                  type="danger"
-                  @click="deleteClub(row.id)"
-                >解散社团</el-button>
+                <el-button v-if="row.myRole === '社长'" size="small" type="danger" @click="deleteClub(row.id)">解散社团</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -165,22 +160,19 @@
         <el-table-column prop="name" label="姓名" />
         <el-table-column prop="role" label="角色">
           <template #default="{ row }">
-            <el-select v-model="row.role" size="small" @change="role => setMemberRole(row, role)" :disabled="getMyRole(currentClub) !== '社长' || row.role === '社长'">
+            <el-select v-if="clubList.find(c => c.id === currentClubId && c.myRole === '社长')" v-model="row.role" size="small" @change="role => setMemberRole(row, role)" :disabled="row.role === '社长'">
               <el-option label="成员" value="成员" />
               <el-option label="干事" value="干事" />
               <el-option label="副社长" value="副社长" />
               <el-option v-if="row.role === '社长'" label="社长" value="社长" />
             </el-select>
+            <span v-else>{{ row.role }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作">
           <template #default="{ row }">
-            <el-button v-if="row.role !== '社长'" size="small" type="danger" @click="kickMember(row)">踢出</el-button>
-            <el-button
-              v-if="row.role !== '社长' && getMyRole(currentClub) === '社长'"
-              size="small"
-              @click="transferPresident(row)"
-            >转让社长</el-button>
+            <el-button v-if="row.role !== '社长' && row.userId !== JSON.parse(localStorage.getItem('user') || '{}').id" size="small" type="danger" @click="kickMember(row)">踢出</el-button>
+            <el-button v-if="row.role !== '社长' && clubList.find(c => c.id === currentClubId && c.myRole === '社长')" size="small" @click="transferPresident(row)">转让社长</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -519,12 +511,32 @@ const fetchClubs = async () => {
       ElMessage.error('请先登录')
       return
     }
-    const res = await axios.get(`/clubs/creator/${user.id}`)
+    // 获取用户加入的所有社团
+    const res = await axios.get(`/clubs/joined`, { params: { userId: user.id } })
     let data = res.data || []
+
+    // 并发获取自己在每个社团的成员信息
+    const rolePromises = data.map(async club => {
+      try {
+        const detailRes = await axios.get(`/clubs/${club.id}/detail`)
+        const members = detailRes.data && detailRes.data.members ? detailRes.data.members : []
+        const myMember = members.find(m => String(m.userId) === String(user.id))
+        if (myMember && ['干事', '副社长', '社长'].includes(myMember.role)) {
+          return { ...club, myRole: myMember.role }
+        }
+        return null
+      } catch (e) {
+        return null
+      }
+    })
+    const clubsWithRole = (await Promise.all(rolePromises)).filter(Boolean)
+
+    // 搜索过滤
     if (searchKeyword.value.trim()) {
-      data = data.filter(club => club.name.includes(searchKeyword.value.trim()))
+      clubList.value = clubsWithRole.filter(club => club.name.includes(searchKeyword.value.trim()))
+    } else {
+      clubList.value = clubsWithRole
     }
-    clubList.value = data
   } catch (error) {
     ElMessage.error('加载社团失败')
     clubList.value = []
@@ -606,24 +618,27 @@ const fetchApplications = async () => {
       ElMessage.error('请先登录')
       return
     }
-    const response = await request.get('/api/clubs/applications', {
-      params: { creatorId: user.id }
-    })
-    if (response.data.code === 0) {
-      const data = response.data.data || {}
-      pendingApplications.value = (data.pending || []).filter(app =>
-        String(app.userId) !== String(user.id) &&
-        app.memberRole !== '社长' &&
-        app.status === '待审核'
-      )
-      processedApplications.value = (data.processed || []).filter(app =>
-        String(app.userId) !== String(user.id) &&
-        app.memberRole !== '社长' &&
-        app.status !== '待审核'
-      )
-    } else {
-      ElMessage.error('获取申请信息失败')
+    let allPending = []
+    let allProcessed = []
+    // 遍历所有管理的社团（副社长/社长）
+    for (const club of clubList.value) {
+      if (club.myRole === '副社长' || club.myRole === '社长') {
+        try {
+          const response = await request.get('/api/clubs/applications', {
+            params: { creatorId: user.id, clubId: club.id }
+          })
+          if (response.data.code === 0) {
+            const data = response.data.data || {}
+            allPending = allPending.concat((data.pending || []).filter(app => app.status === '待审核'))
+            allProcessed = allProcessed.concat((data.processed || []).filter(app => app.status !== '待审核'))
+          }
+        } catch (e) {
+          // 某个社团失败不影响整体
+        }
+      }
     }
+    pendingApplications.value = allPending
+    processedApplications.value = allProcessed
   } catch (e) {
     ElMessage.error('获取申请信息失败')
   }
@@ -983,12 +998,6 @@ const getImageUrl = (url) => {
   return url
 }
 
-const user = JSON.parse(localStorage.getItem('user') || '{}')
-const getMyRole = (club) => {
-  if (!club || !club.members || !user.id) return null
-  const me = club.members.find(m => Number(m.userId) === Number(user.id))
-  return me ? me.role : null
-}
 
 onMounted(() => {
   fetchClubs()

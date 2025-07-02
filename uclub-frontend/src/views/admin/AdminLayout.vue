@@ -1,7 +1,6 @@
 <template>
   <div class="admin-layout">
     <aside class="sidebar" :class="{ collapsed }">
-      <!-- 菜单内容 -->
       <el-menu
         :collapse="collapsed"
         router
@@ -53,6 +52,12 @@
             <el-icon><Edit /></el-icon>
             <span v-if="!collapsed">系统公告发布</span>
           </el-menu-item>
+
+          <el-menu-item index="/admin/activities-announcement">
+            <el-icon><Edit /></el-icon>
+            <span v-if="!collapsed">社团活动公告发布</span>
+          </el-menu-item>
+
           <el-menu-item index="/admin/club-announcement-review">
             <el-icon><Document /></el-icon>
             <span v-if="!collapsed">社团公告审核</span>
@@ -134,8 +139,6 @@ import {
 } from '@element-plus/icons-vue'
 
 const collapsed = ref(false)
-
-
 </script>
 
 <style scoped>
@@ -221,39 +224,5 @@ const collapsed = ref(false)
   overflow-y: auto;
   background: white;
 }
-
-/* 只针对侧边栏下所有可点击元素及其子元素，保证鼠标指针为手型 */
-.sidebar .el-menu-item,
-.sidebar .el-menu-item *,
-.sidebar .el-sub-menu__title,
-.sidebar .el-sub-menu__title *,
-.sidebar .el-icon,
-.sidebar .el-icon * {
-  cursor: pointer !important;
-}
-
-/* 保证折叠按钮及其所有子元素为手型指针 */
-.collapse-btn, .collapse-btn * {
-  cursor: pointer !important;
-}
-
-.sidebar-avatar-area {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: #2d3a4b;
-  padding: 24px 0 12px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border-bottom: 1px solid #223040;
-}
-.admin-name {
-  color: #fff;
-  font-size: 16px;
-  margin-top: 10px;
-  font-weight: bold;
-}
-
 
 </style>
