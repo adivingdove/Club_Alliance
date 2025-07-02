@@ -295,4 +295,14 @@ public class UserService {
         return userRepository.findAll(spec, pageable);
     }
 
+
+    // 批量查询昵称
+    public Map<Integer,String> getUserNamesByIds(List<Integer> userIds) {
+        List<User> users = userRepository.findAllById(userIds);
+        Map<Integer,String> nicknames = new HashMap<>();
+        for (User user : users) {
+            nicknames.put(user.getId(), user.getNickname());
+        }
+        return nicknames;
+    }
 }

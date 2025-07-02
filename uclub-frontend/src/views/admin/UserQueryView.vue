@@ -64,16 +64,9 @@
   </el-form>
   <template #footer>
     <el-button @click="statusDialogVisible = false">取消</el-button>
-    <el-button type="primary" @click="showVerifyDialog = true">下一步</el-button>
+    <el-button type="primary" @click="updateUserStatus">确认修改</el-button>
   </template>
 </el-dialog>
-
-
-<verify-password-dialog
-  :show="showVerifyDialog"
-  @verified="onPasswordVerified"
-  @cancel="showVerifyDialog = false"
-/>
 
   </div>
 </template>
@@ -106,7 +99,6 @@ export default {
     showVerifyDialog: false,
     adminEmail: localStorage.getItem('adminEmail') || '',
     dialogVisible: false,
-    showVerifyDialog: false,
     pendingStatusChangeUserId: null,
     newStatus: '',
     // 分页相关
@@ -121,15 +113,37 @@ export default {
       if (!cellValue) return ''
       return dayjs(cellValue).format('YYYY-MM-DD HH:mm:ss')
     },
-     isPasswordRecentlyVerified() {
-    const lastVerify = localStorage.getItem('lastPasswordVerifyTime');
-    if (!lastVerify) return false;
+    
 
-    const now = Date.now();
-    const diff = now - parseInt(lastVerify); // 毫秒差
+  async updateUserStatus() {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      this.$message.error('无权限操作，请重新登录');
+      return;
+    }
 
-    return diff < 10 * 60 * 1000; // 10分钟以内有效
-  },
+    const res = await axios.put(
+      `http://localhost:8080/api/user/${this.selectedUserId}/status`,
+      { status: this.selectedStatus },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    if (res.data.code === 200) {
+      this.$message.success('状态修改成功');
+      this.queryUsers(this.currentPage);
+    } else {
+      this.$message.error(res.data.message || '状态修改失败');
+    }
+  } catch (err) {
+    console.error(err);
+    this.$message.error('请求出错');
+  }
+},
 
   handleQueryClick() {
     this.currentPage = 1;
@@ -167,8 +181,9 @@ export default {
 
   openStatusDialog(user) {
     this.selectedUserId = user.id;
+    this.selectedStatus = user.status;
     this.statusDialogVisible = true;
-  },
+},
   resetQueryForm() {
     this.formData = {
       email: '',
@@ -179,6 +194,8 @@ export default {
     this.queryUsers(1);
   },
 },
+
+
   mounted() {
   this.queryUsers(this.currentPage);
 }

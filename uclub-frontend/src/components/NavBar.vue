@@ -37,12 +37,12 @@
       </div>
 
       <!-- 后台管理按钮 -->
-      <button @click="$router.push('/admin/club-list')" class="admin-btn">后台管理</button>
+      <button @click="handleAdminClick" class="admin-btn">后台管理</button>
     </div>
 
     <!-- 弹窗组件 -->
     <LoginFloatingWindow v-model:visible="showLoginModal" />
-    <ManageFloatingWindow v-model:visible="showManageLogin" />
+    <VerifyPasswordDialog v-model:show="showVerifyPasswordDialog" />
     
     <!-- 登录/注册对话框 -->
        <el-dialog
@@ -204,6 +204,12 @@
         </div>
       </template>
     </el-dialog>
+
+    <VerifyPasswordDialog
+    :show="showVerifyDialog"
+    @verified="goToAdmin"
+    @cancel="showVerifyDialog = false"
+  />
   </nav>
 </template>
 
@@ -212,7 +218,7 @@
 import { ref, onUnmounted, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import LoginFloatingWindow from '../views/LoginFloatingWindow.vue'; 
-import ManageFloatingWindow from '../views/ManageFloatingWindow.vue';
+import VerifyPasswordDialog from '../views/admin/VerifyPasswordDialog.vue';
 
 // new
 import { reactive, computed } from 'vue'
@@ -233,6 +239,7 @@ const router = useRouter();
 
 const showLoginModal = ref(false); // 用户登录弹窗
 const showManageLogin = ref(false);      // 后台管理登录弹窗
+const showVerifyDialog = ref(false);
 
 
 // new 
@@ -342,6 +349,15 @@ const loginRules = {
 const loginFormRef = ref()
 const forgotPasswordFormRef = ref()
 const registerFormRef = ref()
+
+function handleAdminClick(){
+  showVerifyDialog.value = true
+}
+
+function goToAdmin(){
+  showVerifyDialog.value = false
+  router.push('/admin/club-list')
+}
 
 // 切换登录/注册模式
 const toggleMode = () => {

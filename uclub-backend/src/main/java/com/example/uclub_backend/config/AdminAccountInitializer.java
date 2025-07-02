@@ -33,7 +33,7 @@ public class AdminAccountInitializer implements CommandLineRunner {
             admin.setCreatedAt(LocalDateTime.now());
             userRepository.save(admin);
 
-            System.out.println("✅ 已自动创建系统管理员账号：admin / admin123");
+            System.out.println("已自动创建系统管理员账号：admin / admin123");
         }
     }
 }

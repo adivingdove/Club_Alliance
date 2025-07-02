@@ -5,6 +5,7 @@ import com.example.uclub_backend.repository.UserRepository;
 import com.example.uclub_backend.TokenManager;
 import com.example.uclub_backend.service.EmailService;
 import com.example.uclub_backend.service.UserService;
+import com.example.uclub_backend.vo.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -278,5 +279,40 @@ public class UserController {
         resp.put("size", userPage.getSize());
         return resp;
     }
+
+    @PutMapping("/{id}/status")
+    public Map<String, Object> updateUserStatus(@PathVariable Integer id, @RequestBody Map<String, String> payload) {
+        Map<String, Object> response = new HashMap<>();
+
+        String newStatus = payload.get("status");
+        if (newStatus == null) {
+            response.put("code", 400);
+            response.put("message", "缺少 status 字段");
+            return response;
+        }
+
+        Optional<User> userOpt = userRepository.findById(id);
+        if (!userOpt.isPresent()) {
+            response.put("code", 404);
+            response.put("message", "用户不存在");
+            return response;
+        }
+
+        User user = userOpt.get();
+
+        try {
+            user.setStatus(User.UserStatus.valueOf(newStatus));
+            userRepository.save(user);
+            response.put("code", 200);
+            response.put("message", "状态更新成功");
+        } catch (IllegalArgumentException e) {
+            response.put("code", 400);
+            response.put("message", "状态值非法");
+        }
+
+        return response;
+    }
+
+
 
 }
