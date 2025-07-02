@@ -54,6 +54,7 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/ai/ask").permitAll()
                         .requestMatchers("/api/admin/**").permitAll()
+                        .requestMatchers("/api/report/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/announcements").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/clubs/*/members/*").authenticated()
                         .anyRequest().authenticated()

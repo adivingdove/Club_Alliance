@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.Map;
 
 import com.example.uclub_backend.service.AnnouncementService;
 import com.example.uclub_backend.entity.Announcement;
@@ -274,5 +275,13 @@ public class ClubService {
 
     public List<Club> getHistoryClubs() {
         return clubRepository.findByStatusNot(Club.ClubStatus.待审核);
+    }
+
+    // ClubService.java
+
+    public Map<Integer, String> getClubNamesByIds(List<Integer> clubIds) {
+        List<Club> clubs = clubRepository.findAllById(clubIds);
+        return clubs.stream()
+            .collect(Collectors.toMap(Club::getId, Club::getName));
     }
 }

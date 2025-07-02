@@ -488,6 +488,62 @@ watch(showAnnouncementDrawer, (val) => {
     document.body.style.overflow = ''
   }
 })
+const manageTab = ref('members')
+const applications = ref([])
+
+const fetchApplications = async () => {
+  if (!club.value.id || !user.value.id) return
+  const res = await request.get(`/api/clubs/applications`, { params: { creatorId: user.value.id } })
+  if (res.data.code === 0) {
+    // 只保留当前社团的申请
+    const all = res.data.data
+    const clubApplications = all[club.value.id] || []
+    applications.value = clubApplications
+  } else {
+    applications.value = []
+  }
+}
+
+const removeMember = async (member) => {
+  try {
+    const clubId = club.value.id
+    await request.delete(`/api/clubs/${clubId}/members/${member.userId}`)
+    ElMessage.success('成员已移除')
+    await fetchClub(clubId)
+  } catch (e) {
+    ElMessage.error('移除失败')
+  }
+}
+
+const approveApplication = async (app) => {
+  try {
+    const clubId = club.value.id
+    await request.post(`/api/clubs/${clubId}/applications/${app.id}/approve`)
+    ElMessage.success('已同意')
+    fetchApplications()
+    fetchClub(clubId)
+  } catch (e) {
+    ElMessage.error('操作失败')
+  }
+}
+const rejectApplication = async (app) => {
+  try {
+    const clubId = club.value.id
+    await request.post(`/api/clubs/${clubId}/applications/${app.id}/reject`)
+    ElMessage.success('已拒绝')
+    fetchApplications()
+  } catch (e) {
+    ElMessage.error('操作失败')
+  }
+}
+
+watch(
+  () => [activeTab.value, club.value.id],
+  ([tab, id]) => {
+    if (tab === 'manage' && id) fetchApplications()
+  },
+  { immediate: false }
+)
 </script>
 
 <template>
@@ -612,19 +668,43 @@ watch(showAnnouncementDrawer, (val) => {
 
         <!-- 社团管理 -->
         <div v-if="activeTab === 'manage'" class="tab-content">
-          <div class="manage-placeholder">
-            <el-empty description="社团管理功能正在开发中..." />
-            <p class="manage-notice">敬请期待社团管理员的专属管理功能</p>
-            <div class="manage-features">
-              <h3>即将推出的功能：</h3>
-              <ul>
-                <li>成员权限管理</li>
-                <li>活动审核管理</li>
-                <li>社团公告发布</li>
-                <li>数据统计分析</li>
-              </ul>
-            </div>
-          </div>
+          <el-tabs v-model="manageTab" style="margin-bottom: 20px;">
+            <el-tab-pane label="成员管理" name="members">
+              <el-table :data="club.members" style="width: 100%">
+                <el-table-column prop="name" label="昵称" />
+                <el-table-column prop="role" label="角色">
+                  <template #default="{ row }">
+                    <el-select v-model="row.role" @change="setMemberRole(row, row.role)" :disabled="row.role === '社长'">
+                      <el-option label="成员" value="成员" />
+                      <el-option label="干事" value="干事" />
+                      <el-option label="副社长" value="副社长" />
+                      <el-option label="社长" value="社长" />
+                    </el-select>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="joinedAt" label="加入时间" />
+                <el-table-column label="操作">
+                  <template #default="{ row }">
+                    <el-button v-if="row.role !== '社长'" type="danger" size="small" @click="removeMember(row)">移除</el-button>
+                    <el-button v-if="isPresident && row.role !== '社长'" type="primary" size="small" @click="transferPresident(row)">转让社长</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </el-tab-pane>
+            <el-tab-pane label="申请管理" name="applications">
+              <el-table :data="applications" style="width: 100%">
+                <el-table-column prop="nickname" label="申请人" />
+                <el-table-column prop="applyTime" label="申请时间" />
+                <el-table-column prop="reason" label="理由" />
+                <el-table-column label="操作">
+                  <template #default="{ row }">
+                    <el-button type="success" size="small" @click="approveApplication(row)">同意</el-button>
+                    <el-button type="danger" size="small" @click="rejectApplication(row)">拒绝</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </el-tab-pane>
+          </el-tabs>
         </div>
       </el-card>
     </div>

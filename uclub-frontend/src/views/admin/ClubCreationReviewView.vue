@@ -48,7 +48,7 @@ const historyClubs = ref([])
 const fetchPendingClubs = async () => {
   loading.value = true
   try {
-    const res = await axios.get('/clubs/applications') 
+    const res = await axios.get('/clubs/admin/applications') 
     pendingClubs.value = res.data
   } catch (err) {
     ElMessage.error('获取待审核社团失败')

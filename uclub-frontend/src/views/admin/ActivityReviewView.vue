@@ -7,13 +7,12 @@
       <el-tabs v-model="activeTab" @tab-click="handleTabChange">
         <el-tab-pane label="待审核活动" name="pending">
           <el-table :data="pendingActivities" v-loading="loading" border stripe>
-            <el-table-column prop="id" label="活动ID" width="80" />
             <el-table-column prop="title" label="标题" />
-            <el-table-column prop="clubId" label="所属社团ID" />
-            <el-table-column prop="applyStatus" label="状态" />
+            <el-table-column prop="clubName" label="所属社团" />
+            <el-table-column prop="applyStatus" label="状态" width="100" />
             <el-table-column label="开始时间" :formatter="(row) => formatTime(row.startTime)" />
             <el-table-column label="结束时间" :formatter="(row) => formatTime(row.endTime)" />
-            <el-table-column label="操作" width="200">
+            <el-table-column label="操作" width="250">
               <template #default="scope">
                 <el-button type="success" size="small" @click="audit(scope.row.id, '通过')">通过</el-button>
                 <el-button type="danger" size="small" @click="audit(scope.row.id, '拒绝')">拒绝</el-button>
@@ -25,10 +24,9 @@
 
         <el-tab-pane label="历史申请记录" name="history">
           <el-table :data="historyActivities" v-loading="loading" border stripe>
-            <el-table-column prop="id" label="活动ID" width="80" />
             <el-table-column prop="title" label="标题" />
-            <el-table-column prop="clubId" label="所属社团ID" />
-            <el-table-column prop="applyStatus" label="状态" />
+            <el-table-column prop="clubName" label="所属社团" />
+            <el-table-column prop="applyStatus" label="状态" width="100" />
             <el-table-column label="开始时间" :formatter="(row) => formatTime(row.startTime)" />
             <el-table-column label="结束时间" :formatter="(row) => formatTime(row.endTime)" />
             <el-table-column label="申请时间" :formatter="(row) => formatTime(row.createdAt)" />
@@ -44,9 +42,7 @@
 
     <el-dialog title="活动详情" v-model="showDetailDialog" width="600px" :before-close="() => (showDetailDialog = false)">
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="活动ID">{{ selectedActivity.id }}</el-descriptions-item>
         <el-descriptions-item label="标题">{{ selectedActivity.title }}</el-descriptions-item>
-        <el-descriptions-item label="社团ID">{{ selectedActivity.clubId }}</el-descriptions-item>
         <el-descriptions-item label="状态">{{ selectedActivity.applyStatus }}</el-descriptions-item>
         <el-descriptions-item label="开始时间">{{ formatTime(selectedActivity.startTime) }}</el-descriptions-item>
         <el-descriptions-item label="结束时间">{{ formatTime(selectedActivity.endTime) }}</el-descriptions-item>
@@ -79,7 +75,7 @@ const selectedActivity = ref({})
 const fetchPendingActivities = async () => {
   loading.value = true
   try {
-    const res = await axios.get('/activities/pending')
+    const res = await axios.get('/activities/admin/pending')
     pendingActivities.value = res.data
   } catch (err) {
     ElMessage.error('获取待审核活动失败')
@@ -91,7 +87,7 @@ const fetchPendingActivities = async () => {
 const fetchHistoryActivities = async () => {
   loading.value = true
   try {
-    const res = await axios.get('/activities/history')  // 替换为你的历史记录接口
+    const res = await axios.get('/activities/history')  
     historyActivities.value = res.data
   } catch (err) {
     ElMessage.error('获取历史申请失败')
