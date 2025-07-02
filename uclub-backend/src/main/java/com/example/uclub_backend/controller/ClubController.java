@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.example.uclub_backend.vo.ClubResponse;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/clubs")
@@ -393,7 +394,41 @@ public Page<ClubResponse> getClubsPage(@RequestParam int page, @RequestParam int
         }
     }
 
-    
+    @DeleteMapping("/{clubId}/members/{userId}")
+    public Result<Void> quitClub(@PathVariable Integer clubId, @PathVariable Integer userId) {
+        try {
+            Optional<ClubMember> memberOpt = clubMemberService.getMemberByClubIdAndUserId(clubId, userId);
+            if (memberOpt.isEmpty()) {
+                return Result.error("成员不存在");
+            }
+            clubMemberService.removeMember(memberOpt.get().getId());
+            // 自动减少current_members
+            Optional<Club> clubOpt = clubService.getClubById(clubId);
+            if (clubOpt.isPresent()) {
+                Club club = clubOpt.get();
+                int cur = club.getCurrentMembers() != null ? club.getCurrentMembers() : 1;
+                club.setCurrentMembers(Math.max(0, cur - 1));
+                clubService.updateClub(clubId, club);
+            }
+            return Result.success();
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
 
+    @PutMapping("/{clubId}/transfer-president")
+    public Result<Void> transferPresident(@PathVariable Integer clubId, @RequestBody Map<String, Object> request) {
+        try {
+            Integer fromUserId = (Integer) request.get("fromUserId");
+            Integer toUserId = (Integer) request.get("toUserId");
+            if (fromUserId == null || toUserId == null) {
+                return Result.error("参数不能为空");
+            }
+            clubMemberService.transferPresident(clubId, fromUserId, toUserId);
+            return Result.success();
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
 
 } 

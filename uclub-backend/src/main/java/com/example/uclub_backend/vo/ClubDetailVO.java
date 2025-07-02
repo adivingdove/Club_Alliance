@@ -17,6 +17,7 @@ public class ClubDetailVO {
     private Integer type;
     private List<ClubMemberVO> members;
     private List<ClubActivityVO> activities;
+    private List<AnnouncementVO> announcements;
 
     @Data
     public static class ClubMemberVO {
@@ -40,5 +41,15 @@ public class ClubDetailVO {
         private Integer maxParticipants;
         private String status;
         private String img;
+    }
+
+    @Data
+    public static class AnnouncementVO {
+        private Integer id;
+        private String title;
+        private String content;
+        private String type;
+        private Integer creatorId;
+        private LocalDateTime createdAt;
     }
 }

@@ -25,6 +25,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.example.uclub_backend.service.AnnouncementService;
+import com.example.uclub_backend.entity.Announcement;
+
 @Service
 public class ClubService {
     
@@ -42,6 +45,9 @@ public class ClubService {
     
     @Autowired
     private ClubActivityRepository clubActivityRepository;
+    
+    @Autowired
+    private AnnouncementService announcementService;
     
     public List<Club> getAllClubs() {
         return clubRepository.findAll();
@@ -109,6 +115,7 @@ public class ClubService {
         clubToUpdate.setTags(club.getTags());
         clubToUpdate.setDescription(club.getDescription());
         clubToUpdate.setStatus(club.getStatus());
+        clubToUpdate.setCurrentMembers(club.getCurrentMembers());
         
         return clubRepository.save(clubToUpdate);
     }
@@ -213,6 +220,20 @@ public class ClubService {
                 .collect(Collectors.toList());
         
         detailVO.setActivities(activityVOs);
+        
+        // 新增：获取社团公告信息
+        List<Announcement> announcements = announcementService.getAnnouncementsByClubId(clubId);
+        List<ClubDetailVO.AnnouncementVO> announcementVOs = announcements.stream().map(a -> {
+            ClubDetailVO.AnnouncementVO vo = new ClubDetailVO.AnnouncementVO();
+            vo.setId(a.getId());
+            vo.setTitle(a.getTitle());
+            vo.setContent(a.getContent());
+            vo.setType(a.getType().name());
+            vo.setCreatorId(a.getCreatorId());
+            vo.setCreatedAt(a.getCreatedAt());
+            return vo;
+        }).collect(Collectors.toList());
+        detailVO.setAnnouncements(announcementVOs);
         
         return detailVO;
     }

@@ -8,7 +8,6 @@ import Search from '../views/Search.vue'
 
 // 新增页面
 import ClubDetails from '../views/ClubDetails.vue'
-import Applications from '../views/Applications.vue'
 
 // 新增论坛模块页面
 import ForumPage from '../views/ForumPage.vue'
@@ -32,6 +31,7 @@ import ReportHandlingView from '../views/admin/ReportHandlingView.vue'
 import PostAdminView from '../views/admin/PostAdminView.vue'
 
 import AiChat from '../views/AiChat.vue'
+import ClubManage from '../views/ClubManage.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -44,7 +44,6 @@ const routes = [
   { path: '/activities', name: 'Activities', component: Activities },
   { path: '/profile', name: 'Profile', component: Profile },
   { path: '/search', name: 'Search', component: Search },
-  { path: '/applications', name: 'Applications', component: Applications },
 
   // 新增页面
   { path: '/club/:id', name: 'ClubDetails', component: ClubDetails },
@@ -66,7 +65,8 @@ const routes = [
       { path: 'report-handling', component: ReportHandlingView },
       { path: 'post-admin', component: PostAdminView}
     ]
-  }
+  },
+  { path: '/club-manage', name: 'ClubManage', component: ClubManage },
 ]
 
 const router = createRouter({

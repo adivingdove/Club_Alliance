@@ -82,7 +82,12 @@ public class UserController {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         user.setNickname(nickname);
-        user.setHeadUrl(headUrl);
+        // 设置默认头像，如果headUrl为空或null
+        if (headUrl == null || headUrl.trim().isEmpty()) {
+            user.setHeadUrl("https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png");
+        } else {
+            user.setHeadUrl(headUrl);
+        }
         user.setCreatedAt(LocalDateTime.now());
         userRepository.save(user);
         // 注册成功后移除验证码

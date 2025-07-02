@@ -141,10 +141,19 @@
                       <div class="club-title">{{ club.name }}</div>
                       <div class="club-desc">{{ club.description }}</div>
                       <div class="club-tags">
-                    <el-tag :type="getClubRoleType(club.role)" size="small">
-                      {{ club.role }}
-                    </el-tag>
+                        <el-tag :type="getClubRoleType(club.role)" size="small">
+                          {{ club.role }}
+                        </el-tag>
                       </div>
+                    </div>
+                    <div class="club-actions" v-if="canQuitClub(club)">
+                      <el-button 
+                        type="danger" 
+                        size="small" 
+                        @click.stop="quitClub(club.id)"
+                      >
+                        退出社团
+                      </el-button>
                     </div>
                   </el-card>
                 </el-col>
@@ -495,7 +504,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { User, Lock, SwitchButton, Message, Key, Plus, Star, Clock, Timer, Document } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
@@ -523,7 +532,16 @@ const router = useRouter()
 const store = useStore()
 
 // 响应式数据
-const isLoggedIn = computed(() => store.getters.isLoggedIn)
+const isLoggedIn = computed(() => {
+  // 检查store中的登录状态
+  const storeLoggedIn = store.getters.isLoggedIn
+  // 检查localStorage中的token
+  const token = localStorage.getItem('token')
+  const user = localStorage.getItem('user')
+  
+  // 如果store显示已登录，或者localStorage中有有效数据，则认为已登录
+  return storeLoggedIn || (token && user)
+})
 const showAvatarUpload = ref(false)
 const showEditDialog = ref(false)
 const showChangePassword = ref(false)
@@ -1359,10 +1377,89 @@ const handleChangeEmail = async () => {
   }
 }
 
+// 判断是否可以退出社团（不是社长）
+const canQuitClub = (club) => {
+  return club.role !== '社长'
+}
+
+// 退出社团方法
+const quitClub = async (clubId) => {
+  try {
+    // 确认对话框
+    await ElMessageBox.confirm(
+      '确定要退出该社团吗？退出后将无法访问社团内容。',
+      '退出社团',
+      {
+        confirmButtonText: '确定退出',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    if (!user.id) {
+      ElMessage.error('请先登录')
+      return
+    }
+    
+    const res = await request.delete(`/api/clubs/${clubId}/members/${user.id}`)
+    if (res.data.code === 0) {
+      ElMessage.success('已退出社团')
+      // 重新获取我的社团列表
+      await fetchMyClubs()
+    } else {
+      ElMessage.error(res.data.message || '退出失败')
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('退出失败，请重试')
+      console.error('退出社团错误:', error)
+    }
+  }
+}
+
 onMounted(() => {
+  // 检查登录状态
+  const token = localStorage.getItem('token')
+  const userStr = localStorage.getItem('user')
+  
+  if (token && userStr) {
+    try {
+      const user = JSON.parse(userStr)
+      // 如果store中没有用户信息，则从localStorage恢复
+      if (!store.getters.currentUser) {
+        store.dispatch('login', user)
+      }
+    } catch (error) {
+      console.error('解析用户信息失败:', error)
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+    }
+  }
+  
   if (isLoggedIn.value) {
     fetchRecentActivities()
   }
+  
+  // 监听用户登录成功事件，立即更新用户信息显示
+  window.addEventListener('userLoginSuccess', (event) => {
+    const newUserInfo = event.detail
+    // 立即更新store中的用户信息
+    store.dispatch('login', newUserInfo)
+    // 如果当前在个人中心页面，重新获取用户相关数据
+    if (activeMenu.value === 'clubs') {
+      fetchMyClubs()
+    } else if (activeMenu.value === 'activities') {
+      fetchMyActivities()
+    } else if (activeMenu.value === 'recent') {
+      fetchRecentActivities()
+    }
+  })
+})
+
+// 组件卸载时移除事件监听
+onUnmounted(() => {
+  window.removeEventListener('userLoginSuccess', () => {})
 })
 </script>
 
