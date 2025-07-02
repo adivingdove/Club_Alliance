@@ -9,6 +9,9 @@ const club = ref({})
 const isFavorited = ref(false)
 const applicationStatus = ref(null)
 
+// 添加切换按钮状态
+const activeTab = ref('activities') // 默认显示活动
+
 const DEFAULT_IMG = '/logo.png'
 
 const showApplyDialog = ref(false)
@@ -505,49 +508,108 @@ console.log(club.value.members, user.value)
       </div>
     </div>
 
-    <!-- 活动列表 -->
-    <div class="section">
-      <h2>社团活动</h2>
-      <el-row :gutter="24">
-        <el-col :span="8" v-for="activity in club.activities" :key="activity.id">
-          <el-card class="activity-card">
-            <img :src="activity.img || '/logo.png'" class="activity-img" />
-            <div class="activity-info">
-              <div class="activity-title">{{ activity.title }}</div>
-              <div class="activity-description">{{ activity.description }}</div>
-              <div class="activity-meta">
-                <span>📅 {{ activity.date }}</span>
-                <span>📍 {{ activity.place }}</span>
-              </div>
-              <div class="activity-meta">
-                <span>👥 {{ activity.people }}{{ activity.maxParticipants ? '/' + activity.maxParticipants : '' }}人参与</span>
-                <span class="activity-status" :class="getActivityStatusClass(activity.applyStatus)">
-                  {{ getActivityStatusText(activity.applyStatus) }}
-                </span>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
-      
-      <!-- 空状态 -->
-      <div v-if="club.activities && club.activities.length === 0" class="empty-state">
-        <el-empty description="暂无活动" />
-      </div>
-    </div>
+    <!-- 切换按钮 -->
+    <div class="tab-section">
+      <el-card class="tab-card">
+        <div class="tab-header">
+          <el-button 
+            :type="activeTab === 'activities' ? 'primary' : 'default'"
+            @click="activeTab = 'activities'"
+            size="large"
+          >
+            社团活动
+          </el-button>
+          <el-button 
+            :type="activeTab === 'members' ? 'primary' : 'default'"
+            @click="activeTab = 'members'"
+            size="large"
+          >
+            成员列表
+          </el-button>
+          <el-button 
+            :type="activeTab === 'chat' ? 'primary' : 'default'"
+            @click="activeTab = 'chat'"
+            size="large"
+          >
+            社团聊天室
+          </el-button>
+          <el-button 
+            :type="activeTab === 'manage' ? 'primary' : 'default'"
+            @click="activeTab = 'manage'"
+            size="large"
+          >
+            社团管理
+          </el-button>
+        </div>
+        
+        <!-- 活动列表 -->
+        <div v-if="activeTab === 'activities'" class="tab-content">
+          <el-row :gutter="24">
+            <el-col :span="8" v-for="activity in club.activities" :key="activity.id">
+              <el-card class="activity-card">
+                <img :src="activity.img || '/logo.png'" class="activity-img" />
+                <div class="activity-info">
+                  <div class="activity-title">{{ activity.title }}</div>
+                  <div class="activity-description">{{ activity.description }}</div>
+                  <div class="activity-meta">
+                    <span>📅 {{ activity.date }}</span>
+                    <span>📍 {{ activity.place }}</span>
+                  </div>
+                  <div class="activity-meta">
+                    <span>👥 {{ activity.people }}{{ activity.maxParticipants ? '/' + activity.maxParticipants : '' }}人参与</span>
+                    <span class="activity-status" :class="getActivityStatusClass(activity.applyStatus)">
+                      {{ getActivityStatusText(activity.applyStatus) }}
+                    </span>
+                  </div>
+                </div>
+              </el-card>
+            </el-col>
+          </el-row>
+          
+          <!-- 空状态 -->
+          <div v-if="club.activities && club.activities.length === 0" class="empty-state">
+            <el-empty description="暂无活动" />
+          </div>
+        </div>
 
-    <!-- 成员列表 -->
-    <div class="section">
-      <h2>成员列表</h2>
-      <el-row :gutter="16">
-        <el-col :span="4" v-for="member in club.members" :key="member.userId">
-          <el-card class="member-card">
-            <img :src="member.avatar || '/logo.png'" class="member-avatar" />
-            <div class="member-name">{{ member.name }}</div>
-            <div class="member-role">{{ member.role }}</div>
-          </el-card>
-        </el-col>
-      </el-row>
+        <!-- 成员列表 -->
+        <div v-if="activeTab === 'members'" class="tab-content">
+          <el-row :gutter="16">
+            <el-col :span="4" v-for="member in club.members" :key="member.userId">
+              <el-card class="member-card">
+                <img :src="member.avatar || '/logo.png'" class="member-avatar" />
+                <div class="member-name">{{ member.name }}</div>
+                <div class="member-role">{{ member.role }}</div>
+              </el-card>
+            </el-col>
+          </el-row>
+        </div>
+
+        <!-- 社团聊天室 -->
+        <div v-if="activeTab === 'chat'" class="tab-content">
+          <div class="chat-placeholder">
+            <el-empty description="聊天室功能正在开发中..." />
+            <p class="chat-notice">敬请期待社团成员之间的实时交流功能</p>
+          </div>
+        </div>
+
+        <!-- 社团管理 -->
+        <div v-if="activeTab === 'manage'" class="tab-content">
+          <div class="manage-placeholder">
+            <el-empty description="社团管理功能正在开发中..." />
+            <p class="manage-notice">敬请期待社团管理员的专属管理功能</p>
+            <div class="manage-features">
+              <h3>即将推出的功能：</h3>
+              <ul>
+                <li>成员权限管理</li>
+                <li>活动审核管理</li>
+                <li>社团公告发布</li>
+                <li>数据统计分析</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </el-card>
     </div>
 
     <!-- 申请加入弹窗表单 -->
@@ -609,6 +671,25 @@ console.log(club.value.members, user.value)
 .banner-content p { font-size: 16px; margin-bottom: 18px; }
 .banner-btns .el-button { margin-right: 12px; }
 .section { margin-bottom: 32px; }
+.tab-section { margin-bottom: 32px; }
+.tab-card { border-radius: 16px; }
+.tab-header { 
+  display: flex; 
+  justify-content: center; 
+  padding: 20px 0; 
+  border-bottom: 1px solid #f0f0f0; 
+  margin-bottom: 24px; 
+}
+
+.tab-header .el-button {
+  font-size: 20px;
+  font-weight: bold;
+  padding: 15px 30px;
+  height: auto;
+  min-height: 50px;
+  margin: 0 10px;
+}
+.tab-content { padding: 0 20px 20px; }
 .activity-card { border-radius: 10px; overflow: hidden; transition: transform 0.3s ease; }
 .activity-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 .activity-img { width: 100%; height: 120px; object-fit: cover; }
@@ -624,4 +705,43 @@ console.log(club.value.members, user.value)
 .activity-status-approved { background-color: #67c23a; color: #fff; }
 .activity-status-rejected { background-color: #f56c6c; color: #fff; }
 .empty-state { text-align: center; padding: 40px 0; }
+.chat-placeholder { text-align: center; padding: 60px 0; }
+.chat-notice { 
+  margin-top: 20px; 
+  color: #909399; 
+  font-size: 16px; 
+  line-height: 1.6; 
+}
+.manage-placeholder { text-align: center; padding: 40px 0; }
+.manage-notice { 
+  margin-top: 20px; 
+  color: #909399; 
+  font-size: 16px; 
+  line-height: 1.6; 
+}
+.manage-features {
+  margin-top: 30px;
+  text-align: left;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.manage-features h3 {
+  color: #303133;
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+.manage-features ul {
+  list-style: none;
+  padding: 0;
+}
+.manage-features li {
+  padding: 8px 0;
+  color: #606266;
+  font-size: 14px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.manage-features li:last-child {
+  border-bottom: none;
+}
 </style>
