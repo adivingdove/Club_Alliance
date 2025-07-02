@@ -113,7 +113,13 @@
 
         <!-- 评论列表 -->
         <div v-if="comments.length" class="comment-list">
-          <div v-for="(comment, index) in comments" :key="index" class="comment-item">
+          <div
+          v-for="(comment, index) in comments"
+          :key="index"
+          :id="`comment-${comment.id}`"
+          class="comment-item"
+          >
+
   <!-- 用户头像与昵称 -->
   <div class="comment-user-info">
     <el-avatar
@@ -433,6 +439,26 @@ function insertEmoji(emoji) {
   })
 }
 
+function scrollToCommentFromHash(){
+  const hash = route.hash
+  if (hash.startsWith('#comment/')) {
+    const commentId = hash.replace('#comment/', '')
+    
+    nextTick(() => {
+      const el = document.getElementById(`comment-${commentId}`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+        // 高亮评论
+        el.classList.add('highlight-comment')
+        setTimeout(() => {
+          el.classList.remove('highlight-comment')
+        }, 3000)
+      }
+    })
+  }
+}
+
 onUnmounted(() => {
   document.removeEventListener('click', handleOutsideClick)
 })
@@ -451,6 +477,7 @@ function handleOutsideClick(event) {
 onMounted(() => {
   loadPost()
   loadComments()
+  scrollToCommentFromHash();
     document.addEventListener('click', handleOutsideClick)
 })
 </script>
@@ -676,6 +703,12 @@ emoji-picker {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-radius: 8px;
 }
+
+.highlight-comment {
+  background-color: #fff8c5;
+  transition: background-color 0.3s ease;
+}
+
 
 
 </style>

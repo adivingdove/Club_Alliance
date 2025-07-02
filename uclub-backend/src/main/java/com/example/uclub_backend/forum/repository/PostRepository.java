@@ -44,6 +44,8 @@ List<Integer> findRecentActiveClubIds(@Param("since") LocalDateTime since);
 // 根据用户ID查询帖子，按创建时间倒序排列
 List<Post> findByUserIdOrderByCreatedAtDesc(Long userId);
 
-
+// 查询作者ID
+@Query("SELECT p.userId FROM Post p WHERE p.id = :id")
+Integer getUserId(@Param("id") Integer id);
 
 }

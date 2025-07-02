@@ -15,7 +15,7 @@
 
       <el-table :data="clubList" style="width: 100%" border>
         <el-table-column prop="name" label="社团名称" />
-        <el-table-column prop="creatorNickname" label="创建者昵称" width="100" />
+        <el-table-column prop="creatorNickname" label="创建者昵称" width="150" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusTagType(row.status)">

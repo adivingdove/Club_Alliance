@@ -23,7 +23,7 @@ public class PostService {
     }
 
     //  分页查询
-public Page<Post> getPostPage(Map<String, String> filters, int page, int size) {
+    public Page<Post> getPostPage(Map<String, String> filters, int page, int size) {
     String title = filters.getOrDefault("title", "");
     String clubName = filters.getOrDefault("clubName", "");
     String timeRange = filters.getOrDefault("timeRange", "");
@@ -116,5 +116,8 @@ public Page<Post> getPostPage(Map<String, String> filters, int page, int size) {
         postRepository.decrementCommentCount(postId);
      }
 
-
+    // 获取用户ID
+    public Integer getUserId(Integer postId) {
+        return postRepository.getUserId(postId);
+    }
 }

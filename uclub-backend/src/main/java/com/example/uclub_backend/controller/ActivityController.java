@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.HashMap;
 import java.util.stream.Collectors;
+import com.example.uclub_backend.service.ClubService;
 
 @RestController
 @RequestMapping("/api/activities")
@@ -24,6 +25,9 @@ public class ActivityController {
     
     @Autowired
     private ActivityParticipantService activityParticipantService;
+
+    @Autowired
+    private ClubService clubService;
     
     @GetMapping("/test")
     public Result<String> test() {
@@ -416,12 +420,63 @@ public class ActivityController {
 
     // 获取所有“历史记录”类型的活动（非待审核）
     @GetMapping("/history")
-    public Result<List<ClubActivity>> getHistoryActivities() {
-        List<ClubActivity> list = clubActivityService.getHistoryActivities();
-        return Result.success(list);
+    public Result<List<Map<String, Object>>> getHistoryActivities() {
+        List<ClubActivity> activities = clubActivityService.getHistoryActivities();
+
+        // 提取所有 clubId
+        List<Integer> clubIds = activities.stream()
+            .map(ClubActivity::getClubId)
+            .distinct()
+            .collect(Collectors.toList());
+
+        // 获取社团名称映射
+        Map<Integer, String> clubNameMap = clubService.getClubNamesByIds(clubIds);
+
+        List<Map<String, Object>> result = activities.stream().map(activity -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", activity.getId());
+            map.put("title", activity.getTitle());
+            map.put("clubId", activity.getClubId());
+            map.put("clubName", clubNameMap.getOrDefault(activity.getClubId(), "未知社团"));
+            map.put("startTime", activity.getStartTime());
+            map.put("endTime", activity.getEndTime());
+            map.put("applyStatus", activity.getApplyStatus());
+            map.put("createdAt", activity.getCreatedAt());
+            map.put("description", activity.getDescription());
+            return map;
+        }).collect(Collectors.toList());
+
+        return Result.success(result);
     }
 
+    @GetMapping("/admin/pending")
+    public Result<List<Map<String, Object>>> getAdminPendingActivities() {
+        List<ClubActivity> activities = clubActivityService.getPendingActivities();
 
+        // 提取所有 clubId
+        List<Integer> clubIds = activities.stream()
+            .map(ClubActivity::getClubId)
+            .distinct()
+            .collect(Collectors.toList());
+
+        // 获取社团名称映射
+        Map<Integer, String> clubNameMap = clubService.getClubNamesByIds(clubIds);
+
+        List<Map<String, Object>> result = activities.stream().map(activity -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", activity.getId());
+            map.put("title", activity.getTitle());
+            map.put("clubId", activity.getClubId());
+            map.put("clubName", clubNameMap.getOrDefault(activity.getClubId(), "未知社团"));
+            map.put("startTime", activity.getStartTime());
+            map.put("endTime", activity.getEndTime());
+            map.put("applyStatus", activity.getApplyStatus());
+            map.put("createdAt", activity.getCreatedAt());
+            return map;
+        }).collect(Collectors.toList());
+
+        return Result.success(result);
+    }
 
 
 } 

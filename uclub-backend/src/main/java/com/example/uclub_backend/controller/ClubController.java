@@ -396,8 +396,11 @@ public Page<ClubResponse> getClubsPage(@RequestParam int page, @RequestParam int
             Map<Integer, String> nicknameMap = userService.getUserNamesByIds(creatorIds);
             List<ClubResponse> responses = pendingClubs.stream().map(club -> {
                 ClubResponse response = new ClubResponse();
+                response.setId(club.getId());
                 response.setName(club.getName());
+                response.setCreatorId(club.getCreatorId());
                 response.setCreatorNickname(nicknameMap.getOrDefault(club.getCreatorId(), "Unknown"));
+                response.setDescription(club.getDescription());
                 response.setStatus(club.getStatus());
                 return response;
             }).collect(Collectors.toList());
@@ -419,7 +422,9 @@ public Page<ClubResponse> getClubsPage(@RequestParam int page, @RequestParam int
             Map<Integer, String> nicknameMap = userService.getUserNamesByIds(creatorIds);
             List<ClubResponse> responses = historyClubs.stream().map(club -> {
                 ClubResponse response = new ClubResponse();
+                response.setId(club.getId());
                 response.setName(club.getName());
+                response.setCreatorId(club.getCreatorId());
                 response.setCreatorNickname(nicknameMap.getOrDefault(club.getCreatorId(), "Unknown"));
                 response.setStatus(club.getStatus());
                 response.setDescription(club.getDescription());
