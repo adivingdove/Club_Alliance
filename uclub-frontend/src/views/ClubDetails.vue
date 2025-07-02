@@ -471,6 +471,14 @@ const quitClub = async () => {
   }
 }
 
+// 在<script setup>中添加：
+const canManageClub = computed(() => {
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  if (!user.id || !club.value.members) return false
+  const me = club.value.members.find(m => Number(m.userId) === Number(user.id))
+  return me && me.role !== '成员'
+})
+
 console.log(club.value.members, user.value)
 </script>
 
@@ -534,6 +542,7 @@ console.log(club.value.members, user.value)
             社团聊天室
           </el-button>
           <el-button 
+            v-if="canManageClub"
             :type="activeTab === 'manage' ? 'primary' : 'default'"
             @click="activeTab = 'manage'"
             size="large"
