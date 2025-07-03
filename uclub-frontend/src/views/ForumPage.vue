@@ -3,7 +3,15 @@
     <!-- 标题 + 发帖按钮 -->
     <div class="forum-header">
       <h2>交流论坛 <el-icon><Edit /></el-icon></h2>
-      <el-button type="primary" @click="goToPostCreate">发布帖子</el-button>
+      <div class="forum-actions">
+   <el-button type="primary" @click="goToPostCreate">
+    发布帖子
+  </el-button>
+  <el-button type="success" @click="goToChatroom">
+    在线聊天
+  </el-button>
+</div>
+
     </div>
 
     <!-- 筛选栏 -->
@@ -17,7 +25,7 @@
         </el-form-item>
         <el-form-item label="时间范围">
           <el-select v-model="filter.timeRange" placeholder="请选择">
-            <el-option label="今日" value="today" />
+            <el-option label="最近24小时" value="today" />
             <el-option label="最近7天" value="7days" />
             <el-option label="最近30天" value="30days" />
           </el-select>
@@ -157,6 +165,10 @@ const handleLike = (postId) => {
 const goToPostCreate = () => {
   router.push('/post/create')
 }
+const goToChatroom = () => {
+  router.push('/chatroom')
+}
+
 const handleFilterSearch = () => {
   page.value = 1 // 每次筛选回到第一页
   loadPosts()
@@ -267,4 +279,10 @@ watch(route, (newRoute, oldRoute) => {
 .el-button + .el-button {
   margin-left: 10px;
 }
+
+.forum-actions {
+  display: flex;
+  gap: 12px;
+}
+
 </style>

@@ -87,4 +87,21 @@ public class TokenManager {
         // 检查token是否在存储中
         return tokenUserMap.containsKey(token);
     }
+
+    /**
+ * 直接从 JWT 中解析出用户名（不依赖 tokenUserMap）
+ */
+public String parseUsernameFromJwt(String token) {
+    try {
+        Claims claims = Jwts.parser()
+                .setSigningKey(SECRET_KEY)
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getSubject(); // 返回用户名
+    } catch (Exception e) {
+        System.out.println("❌ 解析 JWT 失败: " + e.getMessage());
+        return null;
+    }
+}
+
 }

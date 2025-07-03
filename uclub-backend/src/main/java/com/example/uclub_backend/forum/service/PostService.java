@@ -23,12 +23,15 @@ public class PostService {
     }
 
     //  分页查询
-    public Page<Post> getPostPage(Map<String, String> filters, int page, int size) {
-    String title = filters.getOrDefault("title", "");
-    String clubName = filters.getOrDefault("clubName", "");
+
+public Page<Post> getPostPage(Map<String, String> filters, int page, int size) {
+    String title = filters.getOrDefault("title", "").trim();
+    String clubName = filters.getOrDefault("clubName", "").trim();
+
     String timeRange = filters.getOrDefault("timeRange", "");
     String startTimeStr = filters.get("startTime"); // 前端显式传入
-
+    String fuzzyTitle = title.isEmpty() ? null : "%" + title + "%";
+    String fuzzyClubName = clubName.isEmpty() ? null : "%" + clubName + "%";
     Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
 
     // 支持 startTime 优先（前端传 ISO 字符串）
@@ -48,15 +51,15 @@ public class PostService {
             startTime = LocalDateTime.now().minusDays(30);
         }
     }
-
-    Long clubId = null;
-    if (!clubName.isBlank()) {
-        clubId = forumClubRepository.findByName(clubName)
-                .map(club -> club.getId().longValue())
-                .orElse(null);
-    }
-
-    Page<Post> postPage = postRepository.findByFilters(title, clubId, startTime, pageable);
+    
+   
+   
+Page<Post> postPage = postRepository.findByFiltersWithClubName(
+    fuzzyTitle,
+    fuzzyClubName,
+    startTime,
+    pageable
+);
 
     // 填充社团名
     for (Post post : postPage.getContent()) {

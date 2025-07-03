@@ -45,7 +45,7 @@ public class ActivityParticipantService {
         }
         
         // 检查用户是否已经参与该活动
-        if (activityParticipantRepository.existsByActivityIdAndUserId(activityId, userId)) {
+        if (activityParticipantRepository.existsByActivityIdAndUserIdAndStatus(activityId, userId, ActivityParticipant.ParticipantStatus.已加入)) {
             throw new RuntimeException("您已经参与该活动");
         }
         
@@ -74,18 +74,17 @@ public class ActivityParticipantService {
     // 用户退出活动
     @Transactional
     public boolean leaveActivity(Integer activityId, Integer userId) {
-        Optional<ActivityParticipant> participantOpt = activityParticipantRepository.findByActivityIdAndUserId(activityId, userId);
-        if (participantOpt.isEmpty()) {
+        List<ActivityParticipant> participants = activityParticipantRepository.findAllByActivityIdAndUserIdAndStatus(
+            activityId, userId, ActivityParticipant.ParticipantStatus.已加入);
+        if (participants.isEmpty()) {
             throw new RuntimeException("您未参与该活动");
         }
-        
-        ActivityParticipant participant = participantOpt.get();
-        participant.setStatus(ActivityParticipant.ParticipantStatus.已退出);
-        activityParticipantRepository.save(participant);
-        
+        for (ActivityParticipant participant : participants) {
+            participant.setStatus(ActivityParticipant.ParticipantStatus.已退出);
+            activityParticipantRepository.save(participant);
+        }
         // 更新活动的当前参与人数
         updateActivityParticipantCount(activityId);
-        
         return true;
     }
     
@@ -101,7 +100,7 @@ public class ActivityParticipantService {
     
     // 检查用户是否参与某个活动
     public boolean isUserParticipating(Integer activityId, Integer userId) {
-        return activityParticipantRepository.existsByActivityIdAndUserId(activityId, userId);
+        return activityParticipantRepository.existsByActivityIdAndUserIdAndStatus(activityId, userId, ActivityParticipant.ParticipantStatus.已加入);
     }
     
     // 获取活动的当前参与人数

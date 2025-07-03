@@ -3,30 +3,33 @@
     <!-- 页面标题 -->
     <div class="page-header">
       <h1 style="font-family:楷体;font-size:50px;color:red;">社团活动</h1>
-      <p>参与社团活动，发现精彩生活</p>
+      <p>参与社团活动，享受精彩生活</p>
     </div>
 
     <!-- 搜索和筛选区域 -->
     <div class="search-filter-section">
-      <div class="search-box">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索活动标题或描述"
-          prefix-icon="Search"
-          clearable
-          @input="handleSearch"
-          @clear="handleSearch"
-        />
-      </div>
-
        <!-- Banner -->
       <div class="banner">
         <img src="../assets/ABack.jpg" class="banner-img" />
         <div class="banner-content">
           <h1>2025 年武汉大学社团活动开始啦</h1>
-          <p>丰富多彩的活动，让你的校院生活丰富多彩！</p>
+          <p>让我们共同为这段记忆染上独属于珞珈山的颜色！</p>
  <!--        <el-button type="primary" size="large">了解更多</el-button>-->
         </div>
+      </div>
+
+      <div class="search-box">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索活动标题或描述"
+          clearable
+          @input="handleSearch"
+          @clear="handleSearch"
+        >
+          <template #suffix>
+            <span style="font-size: 22px; margin-right: 8px; cursor: pointer;">🔍</span>
+          </template>
+        </el-input>
       </div>
 
       <div class="filter-tabs">
@@ -91,17 +94,9 @@
             </div>
             
             <div class="activity-footer">
-              <el-button 
-                type="primary" 
-                size="small" 
-                @click.stop="viewActivityDetail(activity)"
-              >
-                查看详情
-              </el-button>
-              
               <!-- 参与/退出按钮 -->
               <el-button 
-                v-if="isLoggedIn && activity.applyStatus === '通过' && !canEditActivity(activity)"
+                v-if="isLoggedIn && activity.applyStatus === '通过'"
                 :type="activity.isParticipating ? 'danger' : 'success'"
                 size="small" 
                 @click.stop="activity.isParticipating ? leaveActivityHandler(activity) : joinActivityHandler(activity)"
@@ -109,16 +104,6 @@
               >
                 {{ activity.isParticipating ? '退出活动' : '加入活动' }}
               </el-button>
-              
-              <!-- 如果活动状态不是"通过"，显示状态信息 -->
-              <div v-if="isLoggedIn && activity.applyStatus !== '通过'" style="font-size: 12px; color: #999; margin-top: 5px;">
-                活动状态: {{ getStatusText(activity.applyStatus) }}
-              </div>
-              
-              <!-- 如果用户是活动创建者，显示提示 -->
-              <div v-if="isLoggedIn && canEditActivity(activity)" style="font-size: 12px; color: #409EFF; margin-top: 5px;">
-                您是活动创建者
-              </div>
               
               <el-button 
                 v-if="canEditActivity(activity)" 
@@ -136,6 +121,10 @@
               >
                 删除
               </el-button>
+            </div>
+            <!-- 如果用户是活动创建者，显示提示，放在按钮下方并居中 -->
+            <div v-if="isLoggedIn && canEditActivity(activity)" style="font-size: 12px; color: #409EFF; margin-top: 8px; text-align: center;">
+              您是活动创建者
             </div>
           </el-card>
         </el-col>
@@ -298,7 +287,7 @@
           <el-button type="primary" @click="editActivity(selectedActivity)">编辑活动</el-button>
         </div>
         
-        <div class="detail-actions" v-if="isLoggedIn && selectedActivity.applyStatus === '通过' && !canEditActivity(selectedActivity)">
+        <div class="detail-actions" v-if="isLoggedIn && selectedActivity.applyStatus === '通过'">
           <el-button 
             :type="selectedActivity.isParticipating ? 'danger' : 'success'"
             @click="selectedActivity.isParticipating ? leaveActivityHandler(selectedActivity) : joinActivityHandler(selectedActivity)"
@@ -306,17 +295,6 @@
           >
             {{ selectedActivity.isParticipating ? '退出活动' : '加入活动' }}
           </el-button>
-        </div>
-        
-        <!-- 如果活动状态不是"通过"，显示状态信息 -->
-        <div v-if="isLoggedIn && selectedActivity.applyStatus !== '通过'" class="detail-actions">
-          <el-alert
-            :title="`活动状态: ${getStatusText(selectedActivity.applyStatus)}`"
-            :description="selectedActivity.applyStatus === '待审核' ? '活动正在等待管理员审核，审核通过后才能加入' : '活动已被拒绝，无法加入'"
-            :type="selectedActivity.applyStatus === '待审核' ? 'warning' : 'error'"
-            show-icon
-            :closable="false"
-          />
         </div>
         
         <!-- 如果用户是活动创建者，显示提示 -->
@@ -328,11 +306,6 @@
             show-icon
             :closable="false"
           />
-        </div>
-        
-        <!-- 调试信息：显示详情对话框中的按钮显示条件 -->
-        <div v-if="isLoggedIn" style="font-size: 10px; color: #999; margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px;">
-          调试信息: 登录={{isLoggedIn}}, 活动状态={{selectedActivity.applyStatus}}, 可编辑={{canEditActivity(selectedActivity)}}, 可加入={{canJoinActivity(selectedActivity)}}, 参与状态={{selectedActivity.isParticipating}}
         </div>
       </div>
     </el-dialog>
@@ -479,6 +452,13 @@ const isAdmin = computed(() => userInfo.value?.role === '系统管理员')
 const filteredActivities = computed(() => {
   let filtered = activities.value
 
+  // "我的活动"显示"待审核"和"通过"，其它只显示"通过"
+  if (activeTab.value === 'my') {
+    filtered = filtered.filter(activity => activity.applyStatus === '通过' || activity.applyStatus === '待审核')
+  } else {
+    filtered = filtered.filter(activity => activity.applyStatus === '通过')
+  }
+
   // 根据搜索关键词过滤
   if (searchKeyword.value) {
     filtered = filtered.filter(activity => 
@@ -487,56 +467,30 @@ const filteredActivities = computed(() => {
     )
   }
 
-  // 如果是"即将开始"标签页，额外过滤开始时间在当前时间之后的活动
+  // "即将开始"标签页再过滤时间
   if (activeTab.value === 'upcoming') {
     const now = new Date()
-    console.log('当前时间:', now.toISOString())
-    
     filtered = filtered.filter(activity => {
-      if (!activity.startTime) {
-        console.log('活动缺少开始时间:', activity.title)
-        return false
-      }
-      
-      // 解析活动开始时间
+      if (!activity.startTime) return false
       let startTime
       try {
-        // 处理不同的时间格式
         if (typeof activity.startTime === 'string') {
-          // 如果是字符串格式，尝试解析
           if (activity.startTime.includes('T')) {
-            // ISO格式: "2025-01-15T14:00:00"
             startTime = new Date(activity.startTime)
           } else if (activity.startTime.includes(' ')) {
-            // 数据库格式: "2025-01-15 14:00:00"
             startTime = new Date(activity.startTime.replace(' ', 'T'))
           } else {
-            // 其他格式
             startTime = new Date(activity.startTime)
           }
         } else {
-          // 如果已经是Date对象
           startTime = new Date(activity.startTime)
         }
-        
-        // 检查解析是否成功
-        if (isNaN(startTime.getTime())) {
-          console.error('无法解析活动时间:', activity.startTime)
-          return false
-        }
-        
+        if (isNaN(startTime.getTime())) return false
       } catch (error) {
-        console.error('解析活动时间失败:', activity.startTime, error)
         return false
       }
-      
-      const isUpcoming = startTime > now
-      console.log(`活动 "${activity.title}" 开始时间:`, startTime.toISOString(), '是否在未来:', isUpcoming)
-      
-      return isUpcoming
+      return startTime > now
     })
-    
-    console.log('即将开始的活动数量:', filtered.length)
   }
 
   return filtered
@@ -1028,15 +982,11 @@ const checkUserParticipation = async () => {
   margin-bottom: 18px;
 }
 
-
-
-
 .activities-container {
   padding: 20px;
-  max-width: 1200px;
+ 
   margin: 0 auto;
  background: #87CEEB;
-
 }
 
 .page-header {
@@ -1061,6 +1011,30 @@ const checkUserParticipation = async () => {
 
 .search-box {
   margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 24px;
+}
+
+.search-box .el-input {
+  width: 600px;
+  border-radius: 24px;
+  box-shadow: 0 2px 12px rgba(64,158,255,0.10);
+  background: #fff;
+  height: 48px;
+  transition: box-shadow 0.2s;
+}
+
+.search-box .el-input input {
+  border-radius: 24px;
+  height: 48px;
+  font-size: 16px;
+  background: #fff;
+}
+
+.search-box .el-input.is-focus {
+  box-shadow: 0 4px 16px rgba(64,158,255,0.18);
 }
 
 .filter-tabs {
@@ -1225,7 +1199,6 @@ const checkUserParticipation = async () => {
   padding: 20px;
   border-radius: 8px;
   background: #87CEEB;
-
 }
 
 .info-row {
