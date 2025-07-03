@@ -3,7 +3,7 @@
     <!-- 页面标题 -->
     <div class="page-header">
       <h1 style="font-family:楷体;font-size:50px;color:red;">社团活动</h1>
-      <p>参与社团活动，发现精彩生活</p>
+      <p>参与社团活动，享受精彩生活</p>
     </div>
 
     <!-- 搜索和筛选区域 -->
@@ -13,7 +13,8 @@
         <img src="../assets/ABack.jpg" class="banner-img" />
         <div class="banner-content">
           <h1>2025 年武汉大学社团活动开始啦</h1>
-          <p>丰富多彩的活动，让你的校院生活丰富多彩！</p>
+          <p>让我们共同为这段记忆染上独属于珞珈山的颜色！</p>
+ <!--        <el-button type="primary" size="large">了解更多</el-button>-->
         </div>
       </div>
 
@@ -983,7 +984,7 @@ const checkUserParticipation = async () => {
 
 .activities-container {
   padding: 20px;
-  max-width: 1200px;
+ 
   margin: 0 auto;
  background: #87CEEB;
 }

@@ -32,6 +32,10 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
+                          .requestMatchers("/ws-chat/**", "/webjars/**", "/sockjs-node/**", "/info", "/info/**").permitAll()
+                           .requestMatchers("/api/auth/**").permitAll()
+                           .requestMatchers("/api/user/**").permitAll()
+                           .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/user/login").permitAll()
                         .requestMatchers("/api/user/register").permitAll()
@@ -58,7 +62,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/announcements").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/clubs/*/members/*").authenticated()
                         .anyRequest().authenticated()
+                        
                 )
+                 .csrf(csrf -> csrf.disable())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

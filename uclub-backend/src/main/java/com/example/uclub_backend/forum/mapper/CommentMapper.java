@@ -15,8 +15,9 @@ public interface CommentMapper {
     @Select("SELECT * FROM comment WHERE post_id = #{postId} AND status = 'active' ORDER BY created_at DESC")
     List<Comment> findByPostId(Long postId);
 
-    @Insert("INSERT INTO comment(post_id, user_id, content, status, like_count, created_at) " +
-            "VALUES(#{postId}, #{userId}, #{content}, #{status}, #{likeCount}, NOW())")
+    @Insert("INSERT INTO comment(post_id, user_id, content, parent_comment_id, status, like_count, created_at) " +
+        "VALUES(#{postId}, #{userId}, #{content}, #{parentCommentId}, #{status}, #{likeCount}, NOW())")
+
     void insert(Comment comment);
 
     @Update("UPDATE comment SET like_count = like_count + 1 WHERE id = #{id}")
