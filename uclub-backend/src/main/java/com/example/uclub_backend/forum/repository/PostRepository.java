@@ -41,11 +41,38 @@ void decrementLikeCount(@Param("postId") Long postId);
 @Query("SELECT DISTINCT p.clubId FROM Post p WHERE p.createdAt >= :since")
 List<Integer> findRecentActiveClubIds(@Param("since") LocalDateTime since);
 
+
 // 根据用户ID查询帖子，按创建时间倒序排列
 List<Post> findByUserIdOrderByCreatedAtDesc(Long userId);
 
 // 查询作者ID
 @Query("SELECT p.userId FROM Post p WHERE p.id = :id")
 Integer getUserId(@Param("id") Integer id);
+
+@Query(value = """
+    SELECT p.* FROM post p
+    LEFT JOIN club c ON p.club_id = c.id
+    WHERE (:title IS NULL OR p.title LIKE :title)
+      AND (:clubName IS NULL OR c.name LIKE :clubName)
+      AND (:createdAfter IS NULL OR p.created_at >= :createdAfter)
+      AND p.status = 'active'
+    ORDER BY p.id DESC
+    """,
+    countQuery = """
+    SELECT COUNT(*) FROM post p
+    LEFT JOIN club c ON p.club_id = c.id
+    WHERE (:title IS NULL OR p.title LIKE :title)
+      AND (:clubName IS NULL OR c.name LIKE :clubName)
+      AND (:createdAfter IS NULL OR p.created_at >= :createdAfter)
+      AND p.status = 'active'
+    """,
+    nativeQuery = true)
+Page<Post> findByFiltersWithClubName(
+    @Param("title") String title,
+    @Param("clubName") String clubName,
+    @Param("createdAfter") LocalDateTime createdAfter,
+    Pageable pageable
+);
+
 
 }

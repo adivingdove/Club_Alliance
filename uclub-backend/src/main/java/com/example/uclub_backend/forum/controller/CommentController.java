@@ -32,31 +32,48 @@ public class CommentController {
 
     @GetMapping
 public List<Map<String, Object>> getComments(@PathVariable Long postId, @RequestParam(required = false) Long userId) {
-    List<Comment> comments = commentService.getCommentsByPostId(postId);
-    List<Map<String, Object>> result = new ArrayList<>();
+    List<Comment> flatList = commentService.getCommentsByPostId(postId);
+    Map<Long, Map<String, Object>> mapById = new HashMap<>();
+    List<Map<String, Object>> roots = new ArrayList<>();
 
-    for (Comment comment : comments) {
+    // 第一次遍历：构造基本信息
+    for (Comment comment : flatList) {
         Map<String, Object> map = new HashMap<>();
         map.put("id", comment.getId());
         map.put("content", comment.getContent());
         map.put("createdAt", comment.getCreatedAt());
         map.put("likeCount", comment.getLikeCount());
         map.put("liked", userId != null && likeService.hasLiked(userId, Like.TargetType.comment, comment.getId()));
+        map.put("replies", new ArrayList<Map<String, Object>>());
 
-        // 查询用户信息
+        // 用户信息
         User user = userService.getUserById(comment.getUserId().intValue());
         if (user != null) {
             Map<String, Object> userMap = new HashMap<>();
             userMap.put("id", user.getId());
             userMap.put("nickname", user.getNickname());
-            userMap.put("avatarUrl", user.getHeadUrl()); // 或 getAvatarUrl()
+            userMap.put("avatarUrl", user.getHeadUrl());
             map.put("user", userMap);
         }
 
-        result.add(map);
+        mapById.put(comment.getId(), map);
     }
 
-    return result;
+    // 第二次遍历：构造树结构
+    for (Comment comment : flatList) {
+        Map<String, Object> current = mapById.get(comment.getId());
+        if (comment.getParentCommentId() == null) {
+            roots.add(current);
+        } else {
+            Map<String, Object> parent = mapById.get(comment.getParentCommentId());
+            if (parent != null) {
+                List<Map<String, Object>> replies = (List<Map<String, Object>>) parent.get("replies");
+                replies.add(current);
+            }
+        }
+    }
+
+    return roots;
 }
 
 

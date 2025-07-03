@@ -4,8 +4,8 @@
       <div class="ai-title">我是 万事通，很高兴帮助你！</div>
       <div class="ai-subtitle">我可以帮你介绍社团、提供建议，帮助你解决各种问题，请把你的问题交给我吧~</div>
     </div>
-    <div class="ai-messages-scroll">
-      <div v-if="messages.length > 0" class="ai-messages">
+    <div v-if="messages.length > 0" class="ai-messages-scroll">
+      <div class="ai-messages">
         <div v-for="msg in messages" :key="msg.id" :class="['ai-message-row', msg.role === '你' ? 'user' : 'ai']">
           <div class="msg-inner">
             <!-- AI 消息：头像和昵称在气泡左上角 -->
@@ -137,7 +137,8 @@ export default {
   flex: 1 1 auto;
   width: 100%;
   max-width: 1000px;
-  height: 60vh;
+  min-height: 0;
+  max-height: 60vh;
   overflow-y: auto;
   margin-bottom: 32px;
   background: transparent;

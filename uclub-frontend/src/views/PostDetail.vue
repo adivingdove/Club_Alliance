@@ -5,56 +5,51 @@
       <h2 class="post-title">{{ post.title }}</h2>
 
       <!-- 元信息 + 删除按钮 -->
-    <div class="post-meta">
-  <el-avatar
-    :src="getUserAvatar(post.user?.avatarUrl)"
-    :size="40"
-    style="margin-right: 10px"
-  />
-  <span class="post-author-nickname">{{ post.user?.nickname || '匿名用户' }}</span>
-  <el-tag type="success" size="small">社团ID: {{ post.clubId }}</el-tag>
-  <span>作者ID: {{ post.userId }}</span>
-  <span>发表于: {{ formatTime(post.createdAt) }}</span>
+      <div class="post-meta">
+        <el-avatar
+          :src="getUserAvatar(post.user?.avatarUrl)"
+          :size="40"
+          style="margin-right: 10px"
+        />
+        <span class="post-author-nickname">{{ post.user?.nickname || '匿名用户' }}</span>
+        <el-tag type="success" size="small">社团ID: {{ post.clubId }}</el-tag>
+        <span>作者ID: {{ post.userId }}</span>
+        <span>发表于: {{ formatTime(post.createdAt) }}</span>
 
+        <!-- 删除按钮 -->
+        <el-tooltip
+          v-if="post.userId === currentUserId"
+          content="删除帖子"
+          placement="top"
+        >
+          <el-button
+            :icon="Delete"
+            circle
+            type="default"
+            size="small"
+            @click="deletePost"
+            style="color: #888; border-color: #ccc; margin-left: auto;"
+          />
+        </el-tooltip>
 
-  <!-- 删除按钮 -->
-<el-tooltip
-  v-if="post.userId === currentUserId"
-  content="删除帖子"
-  placement="top"
->
-  <el-button
-    :icon="Delete"
-    circle
-    type="default"
-    size="small"
-    @click="deletePost"
-    style="color: #888; border-color: #ccc; margin-left: auto;"
-  />
-</el-tooltip>
-
-
-  <!-- 举报按钮 -->
-  <el-tooltip content="举报帖子" placement="top">
-    <el-button
-      circle
-      type="default"
-      size="small"
-      @click="() => openReportDialog('帖子', post.id)"
-
-      style="color: #888; border-color: #ccc; margin-left: 8px;"
-    >
-      <el-icon><WarnTriangleFilled  /></el-icon>
-    </el-button>
-  </el-tooltip>
-</div>
-
-      <!-- 正文 Markdown -->
-      <div class="post-content" v-if="post.content">
-        <vue3-markdown-it :source="post.content" />
+        <!-- 举报按钮 -->
+        <el-tooltip content="举报帖子" placement="top">
+          <el-button
+            circle
+            type="default"
+            size="small"
+            @click="() => openReportDialog('帖子', post.id)"
+            style="color: #888; border-color: #ccc; margin-left: 8px;"
+          >
+            <el-icon><WarnTriangleFilled /></el-icon>
+          </el-button>
+        </el-tooltip>
       </div>
-      <div class="post-content" v-else>
-        正文加载中...
+
+      <!-- 正文 Markdown + 加载中 -->
+      <div class="post-content">
+        <vue3-markdown-it v-if="post.content" :source="post.content" />
+        <div v-else>正文加载中...</div>
       </div>
 
       <!-- 点赞与评论数 -->
@@ -75,32 +70,31 @@
       <!-- 评论区域 -->
       <div class="post-comments">
         <h3>💬 评论</h3>
-       
-<!-- Emoji 面板容器 -->
-<div class="emoji-picker-wrapper" ref="emojiWrapper">
- <el-button
-  circle
-  size="small"
-  @click="showEmoji = !showEmoji"
-  style="margin-bottom: 6px; font-size: 18px;"
->😊</el-button>
 
-  <emoji-picker
-    v-show="showEmoji"
-    @emoji-click="onEmojiClick"
-  ></emoji-picker>
-</div>
+        <!-- Emoji 面板容器 -->
+        <div class="emoji-picker-wrapper" ref="emojiWrapper">
+          <el-button
+            circle
+            size="small"
+            @click="showEmoji = !showEmoji"
+            style="margin-bottom: 6px; font-size: 18px;"
+          >😊</el-button>
+          <emoji-picker
+            v-show="showEmoji"
+            @emoji-click="onEmojiClick"
+          ></emoji-picker>
+        </div>
 
-       <!-- 评论输入框区域 -->
-<div ref="textareaWrapper">
-  <el-input
-    v-model="newComment"
-    type="textarea"
-    placeholder="写下你的评论..."
-    :rows="3"
-    resize="none"
-  />
-</div>
+        <!-- 评论输入框区域 -->
+        <div ref="textareaWrapper">
+          <el-input
+            v-model="newComment"
+            type="textarea"
+            placeholder="写下你的评论..."
+            :rows="3"
+            resize="none"
+          />
+        </div>
 
         <el-button
           type="primary"
@@ -114,74 +108,128 @@
         <!-- 评论列表 -->
         <div v-if="comments.length" class="comment-list">
           <div
-          v-for="(comment, index) in comments"
-          :key="index"
-          :id="`comment-${comment.id}`"
-          class="comment-item"
+            v-for="(comment, index) in comments"
+            :key="index"
+            :id="`comment-${comment.id}`"
+            class="comment-item"
           >
+            <!-- 用户信息 -->
+            <div class="comment-user-info">
+              <el-avatar
+                :src="getUserAvatar(comment.user?.avatarUrl)"
+                :size="40"
+                style="margin-right: 10px"
+              />
+              <span class="comment-nickname">{{ comment.user?.nickname || '匿名用户' }}</span>
+              <span class="comment-time">发表于：{{ formatTime(comment.createdAt) }}</span>
 
-  <!-- 用户头像与昵称 -->
-  <div class="comment-user-info">
-    <el-avatar
-      :src="getUserAvatar(comment.user?.avatarUrl)"
-      :size="40"
-      style="margin-right: 10px"
-    />
-    <span class="comment-nickname">{{ comment.user?.nickname || '匿名用户' }}</span>
-    <span class="comment-time">发表于：{{ formatTime(comment.createdAt) }}</span>
-      <!-- 删除/举报按钮 -->
-  <div class="comment-actions">
-   <el-tooltip
-  v-if="comment.user?.id === currentUserId || comment.userId === currentUserId"
-  content="删除评论"
-  placement="top"
->
+              <!-- 删除/举报按钮 -->
+              <div class="comment-actions">
+                <el-tooltip
+                  v-if="comment.user?.id === currentUserId || comment.userId === currentUserId"
+                  content="删除评论"
+                  placement="top"
+                >
+                  <el-button
+                    :icon="Delete"
+                    circle
+                    type="default"
+                    size="small"
+                    @click="deleteComment(comment.id)"
+                    class="delete-icon-btn"
+                  />
+                </el-tooltip>
 
-      <el-button
-        :icon="Delete"
-        circle
-        type="default"
-        size="small"
-        @click="deleteComment(comment.id)"
-        class="delete-icon-btn"
-      />
-    </el-tooltip>
+                <el-tooltip content="举报评论" placement="top">
+                  <el-button
+                    circle
+                    type="default"
+                    size="small"
+                    @click="() => openReportDialog('评论', comment.id)"
+                    style="color: #888; border-color: #ccc; margin-left: 8px;"
+                  >
+                    <el-icon><WarnTriangleFilled /></el-icon>
+                  </el-button>
+                </el-tooltip>
+              </div>
+            </div>
 
-    <el-tooltip content="举报评论" placement="top">
-      <el-button
-        circle
-        type="default"
-        size="small"
-        @click="() => openReportDialog('评论', comment.id)"
-        style="color: #888; border-color: #ccc; margin-left: 8px;"
-      >
-        <el-icon><WarnTriangleFilled /></el-icon>
-      </el-button>
-    </el-tooltip>
-  </div>
-  </div>
+            <!-- 内容 -->
+            <p class="comment-content">{{ comment.content }}</p>
 
+            <!-- 点赞 -->
+            <div class="comment-like-bar">
+              <el-button
+                size="small"
+                class="like-comment-button"
+                @click="toggleCommentLike(comment)"
+                :plain="!comment.liked"
+                text
+              >
+                <img :src="thumbIcon" alt="点赞" class="icon-thumb" />
+                {{ comment.likeCount }}
+              </el-button>
+            </div>
 
+            <!-- 回复按钮 -->
+            <el-button
+              size="small"
+              text
+              style="margin-left: 10px;"
+              @click="toggleReplyBox(comment.id)"
+            >回复</el-button>
 
-  <!-- 评论内容 -->
-  <p class="comment-content">{{ comment.content }}</p>
+            <!-- 回复输入框 -->
+            <div v-if="replyMap[comment.id]" class="reply-box" style="margin-top: 8px;">
+              <el-input
+                v-model="replyContentMap[comment.id]"
+                type="textarea"
+                :rows="2"
+                placeholder="输入你的回复..."
+                resize="none"
+              />
+              <el-button
+                type="primary"
+                size="small"
+                style="margin-top: 6px;"
+                @click="submitReply(comment.id)"
+              >提交回复</el-button>
+            </div>
 
-  <!-- 点赞按钮 -->
-  <div class="comment-like-bar">
-    <el-button
-      size="small"
-      class="like-comment-button"
-      @click="toggleCommentLike(comment)"
-      :plain="!comment.liked"
-      text
-    >
-      <img :src="thumbIcon" alt="点赞" class="icon-thumb" />
-      {{ comment.likeCount }}
-    </el-button>
-  </div>
-</div>
+            <!-- 折叠按钮 -->
+            <div v-if="comment.replies?.length" style="margin-top: 8px; margin-left: 10px;">
+              <el-button
+                
+                size="small"
+                @click="toggleCollapse(comment.id)"
+                style="font-size: 13px;"
+              >
+                <el-icon style="vertical-align: middle; margin-right: 4px;">
+                  <component :is="collapsedMap[comment.id] ? 'ArrowUp' : 'ArrowDown'" />
+                </el-icon>
+                {{ collapsedMap[comment.id] ? '收起回复' : `展开回复 (${comment.replies.length})` }}
+              </el-button>
+            </div>
 
+            <!-- 子评论展示 -->
+            <div
+              v-if="comment.replies?.length && collapsedMap[comment.id]"
+              class="sub-comment-list"
+              style="margin-left: 50px; margin-top: 10px;"
+            >
+              <div v-for="sub in comment.replies" :key="sub.id" class="comment-item sub-comment">
+                <div class="comment-user-info">
+                  <el-avatar :src="getUserAvatar(sub.user?.avatarUrl)" :size="36" style="margin-right: 10px" />
+                  <span class="comment-nickname">{{ sub.user?.nickname || '匿名用户' }}</span>
+                  <span class="comment-time">发表于：{{ formatTime(sub.createdAt) }}</span>
+                </div>
+                <p class="comment-content">{{ sub.content }}</p>
+              </div>
+            </div>
+          </div>
         </div>
+
+        <!-- 无评论提示 -->
         <p v-else class="no-comment">暂无评论，快来抢沙发！</p>
       </div>
     </el-card>
@@ -202,6 +250,31 @@ import{ WarnTriangleFilled }from '@element-plus/icons-vue'
 import { useStore } from 'vuex'
 import { addBrowsingHistory } from '../utils/history'
 import 'emoji-picker-element'
+import { ArrowDown, ArrowUp } from '@element-plus/icons-vue'
+
+const collapsedMap = ref({}) // { [commentId]: boolean }
+
+function toggleCollapse(commentId) {
+  collapsedMap.value[commentId] = !collapsedMap.value[commentId]
+}
+
+// 初始化折叠状态（建议在 loadComments 中添加）：
+async function loadComments() {
+  try {
+    const res = await request.get(`/api/posts/${postId}/comments`)
+    comments.value = res.data
+
+    // 初始化每条主评论的子评论折叠状态为 false（默认折叠）
+    comments.value.forEach(comment => {
+      if (comment.replies?.length) {
+        collapsedMap.value[comment.id] = false
+      }
+    })
+
+  } catch (err) {
+    console.error('加载评论失败', err)
+  }
+}
 
 
 const showEmoji = ref(false)
@@ -233,6 +306,11 @@ const comments = ref([])
 
 // 模拟当前登录用户ID（应从登录信息中获取）
 const currentUserId = userId.value || 1001 // 默认用户ID为1001
+// 是否展开每条评论的回复框
+const replyMap = ref({}) // { [commentId]: true/false }
+
+// 每条评论的回复内容
+const replyContentMap = ref({}) // { [commentId]: '文本内容' }
 
 // 时间格式化
 function formatTime(str) {
@@ -288,16 +366,7 @@ async function deletePost() {
   }
 }
 
-// 加载评论
-async function loadComments() {
-  try {
-    const res = await request.get(`/api/posts/${postId}/comments`)
-    console.log(' 获取评论数据:', res.data)
-    comments.value = res.data
-  } catch (err) {
-    console.error('加载评论失败', err)
-  }
-}
+
 
 // 提交评论
 async function submitComment() {
@@ -458,6 +527,39 @@ function scrollToCommentFromHash(){
     })
   }
 }
+
+function toggleReplyBox(commentId) {
+  replyMap.value[commentId] = !replyMap.value[commentId]
+  if (!replyMap.value[commentId]) {
+    replyContentMap.value[commentId] = ''
+  }
+}
+
+async function submitReply(parentId) {
+  const content = replyContentMap.value[parentId]?.trim()
+  if (!content) {
+    ElMessage.warning('回复内容不能为空')
+    return
+  }
+
+  try {
+    const url = `/api/posts/${postId}/comments`
+    const payload = {
+      userId: currentUserId,
+      content,
+      parentCommentId: parentId // 添加这个字段
+    }
+    await request.post(url, payload)
+    ElMessage.success('回复成功')
+    replyContentMap.value[parentId] = ''
+    replyMap.value[parentId] = false
+    await loadComments()
+  } catch (err) {
+    console.error('回复失败', err)
+    ElMessage.error('回复失败，请查看控制台')
+  }
+}
+
 
 onUnmounted(() => {
   document.removeEventListener('click', handleOutsideClick)
@@ -707,6 +809,14 @@ emoji-picker {
 .highlight-comment {
   background-color: #fff8c5;
   transition: background-color 0.3s ease;
+}
+
+.sub-comment {
+  background-color: #f5f7fa;
+  border-left: 3px solid #dcdfe6;
+  padding-left: 12px;
+  margin-top: 6px;
+  border-radius: 6px;
 }
 
 

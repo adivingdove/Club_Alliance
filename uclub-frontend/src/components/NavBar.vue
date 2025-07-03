@@ -39,9 +39,6 @@
       <!-- 后台管理按钮 -->
       <button @click.stop="handleAdminClick" class="admin-btn">后台管理</button>
     </div>
-
-    <!-- 弹窗组件 -->
-    <VerifyPasswordDialog v-model:show="showVerifyPasswordDialog" />
     
     <!-- 登录/注册对话框 -->
        <el-dialog
