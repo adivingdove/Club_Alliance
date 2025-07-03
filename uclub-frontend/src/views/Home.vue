@@ -38,7 +38,6 @@
         <div class="banner-content">
           <h1>2025 年武汉大学社团招新季</h1>
           <p>百团大战，等你来选！3月15日-3月30日，武汉大学桂操，不见不散</p>
-          <el-button type="primary" size="large">了解更多</el-button>
         </div>
       </div>
       <!-- 分类Tab -->
@@ -463,33 +462,35 @@ const joinClub = async (club) => {
   margin-left: 0;
   margin-right: 0;
   border-radius: 0;
-  /* 让标签均匀分布 */
-  display: flex;
-  justify-content: space-between;
   background: transparent;
 }
 .club-tabs .el-tabs__header {
   width: 100%;
   display: flex;
   justify-content: center;
+  align-items: center;
+  margin: 0 ;
+  padding: 0 ;
 }
 .club-tabs .el-tabs__nav {
-  display: flex;
-  justify-content: space-between;
   width: 100%;
-}
-.club-tabs .el-tabs__item {
-  flex: 0 1 auto;
-  min-width: 0 !important;
-  text-align: center;
-  font-size: 26px;
-  padding: 0 0 !important;
-  height: 64px;
-  line-height: 64px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin: 0;
+  padding: 0;
 }
-.club-tabs .el-tabs__item.tab-left {
-  margin-right: auto !important;
+.club-tabs .el-tabs__item,
+.club-tabs .el-tabs__item.el-tabs__item {
+  flex: 1;
+  text-align: center;
+  font-size: 42px !important;
+  padding: 0 !important;
+  height: 100px !important;
+  line-height: 100px !important;
+  margin: 0 !important;
+  font-weight: bold !important;
+  letter-spacing: 2px !important;
 }
 .club-list {
   max-width: 1200px;
@@ -499,9 +500,9 @@ const joinClub = async (club) => {
 @media (max-width: 900px) {
   .banner,
   .club-tabs .el-tabs__item{
-    font-size: 18px;
-    height: 44px;
-    line-height: 44px;
+    font-size: 28px !important;
+    height: 80px !important;
+    line-height: 80px !important;
   }
 }
 .search-bar-wrapper {
@@ -741,14 +742,10 @@ const joinClub = async (club) => {
   color: #ff4d4f;
   transform: scale(1.18) rotate(10deg);
 }
-@media (max-width: 900px) {
-  .club-tabs .el-tabs__item {
-    font-size: 18px;
-    height: 44px;
-    line-height: 44px;
-  }
-}
-.club-tabs .el-tabs__item:first-child {
-  margin-right: auto !important;
+:deep(.club-tabs .el-tabs__item) {
+  font-size: 20px !important;
+  font-weight: bold;
+  letter-spacing: 1px;
+  padding: 0 55px !important;
 }
 </style>
