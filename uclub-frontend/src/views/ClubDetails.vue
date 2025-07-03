@@ -556,6 +556,12 @@ const toggleMute = (member) => {
     ElMessage.success(`${member.name} 已解除禁言`)
   }
 }
+
+// 排序函数：社长 > 副社长 > 干事 > 成员
+const roleOrder = { '社长': 1, '副社长': 2, '干事': 3, '成员': 4 }
+const sortedMembers = computed(() => {
+  return (club.value.members || []).slice().sort((a, b) => (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99))
+})
 </script>
 
 <template>
@@ -660,7 +666,7 @@ const toggleMute = (member) => {
         <!-- 成员列表 -->
         <div v-if="activeTab === 'members'" class="tab-content">
           <el-row :gutter="16">
-            <el-col :span="4" v-for="member in club.members" :key="member.userId">
+            <el-col :span="4" v-for="member in sortedMembers" :key="member.userId">
               <el-card class="member-card">
                 <img :src="member.avatar || '/logo.png'" class="member-avatar" />
                 <div class="member-name">{{ member.name }}</div>
@@ -682,7 +688,7 @@ const toggleMute = (member) => {
         <div v-if="activeTab === 'manage'" class="tab-content">
           <el-tabs v-model="manageTab" style="margin-bottom: 20px;">
             <el-tab-pane label="成员管理" name="members">
-              <el-table :data="club.members" style="width: 100%">
+              <el-table :data="sortedMembers" style="width: 100%">
                 <el-table-column prop="name" label="昵称" />
                 <el-table-column prop="role" label="角色">
                   <template #default="{ row }">
@@ -690,7 +696,6 @@ const toggleMute = (member) => {
                       <el-option label="成员" value="成员" />
                       <el-option label="干事" value="干事" />
                       <el-option label="副社长" value="副社长" />
-                      <el-option label="社长" value="社长" />
                     </el-select>
                   </template>
                 </el-table-column>

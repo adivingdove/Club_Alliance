@@ -17,6 +17,9 @@ public interface ActivityParticipantRepository extends JpaRepository<ActivityPar
     // 根据用户ID查找用户参与的所有活动
     List<ActivityParticipant> findByUserId(Integer userId);
     
+    // 根据用户ID和状态查找用户参与的活动
+    List<ActivityParticipant> findByUserIdAndStatus(Integer userId, ActivityParticipant.ParticipantStatus status);
+    
     // 根据活动ID和用户ID查找特定参与记录
     Optional<ActivityParticipant> findByActivityIdAndUserId(Integer activityId, Integer userId);
     

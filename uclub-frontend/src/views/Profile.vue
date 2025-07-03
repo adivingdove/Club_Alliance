@@ -194,6 +194,11 @@
                     </el-tag>
                   </template>
                 </el-table-column>
+                <el-table-column prop="participantCount" label="参与人数" width="100">
+                  <template #default="scope">
+                    {{ scope.row.participants ? scope.row.participants.length : (scope.row.participantCount || 0) }}
+                  </template>
+                </el-table-column>
               </el-table>
               <el-pagination
                 v-if="myActivities.length > activitiesPageSize"
@@ -670,9 +675,9 @@ const myPosts = ref([])
 const clubsPage = ref(1)
 const clubsPageSize = ref(8)
 const activitiesPage = ref(1)
-const activitiesPageSize = ref(8)
+const activitiesPageSize = ref(12)
 const recentPage = ref(1)
-const recentPageSize = ref(8)
+const recentPageSize = ref(12)
 const favoritesPage = ref(1)
 const favoritesPageSize = ref(8)
 const postsPage = ref(1)
@@ -691,27 +696,37 @@ const pagedClubs = computed(() => {
   return myClubs.value.slice(start, start + clubsPageSize.value)
 })
 
-function getCustomActivityStatus(activity) {
-  if (activity.applyStatus !== '通过') return '';
-  const now = new Date();
-  const start = new Date(activity.startTime);
-  const end = new Date(activity.endTime);
-  if (now < start) return '未开始';
-  if (now >= start && now <= end) return '进行中';
-  if (now > end) return '已结束';
-  return '';
+const processActivities = (activities) => {
+  const now = new Date()
+  const filtered = activities
+    .filter(act => act.isCreator || act.participantStatus === '已加入')
+    .map(act => {
+      if (act.applyStatus === '待审核' || act.participantStatus === '待审核') {
+        act.activityStatus = '待审核'
+      } else if (act.applyStatus === '已通过' || act.participantStatus === '已通过' || act.isCreator) {
+        if (new Date(act.startTime) > now) {
+          act.activityStatus = '未开始'
+        } else if (new Date(act.endTime) < now) {
+          act.activityStatus = '已结束'
+        } else {
+          act.activityStatus = '进行中'
+        }
+      }
+      return act
+    })
+  return filtered
 }
 
 const pagedActivities = computed(() => {
-  const filtered = myActivities.value.filter(a => a.applyStatus === '通过');
+  const filtered = processActivities(myActivities.value)
   const start = (activitiesPage.value - 1) * activitiesPageSize.value;
-  return filtered.slice(start, start + activitiesPageSize.value).map(a => ({ ...a, activityStatus: getCustomActivityStatus(a) }));
+  return filtered.slice(start, start + activitiesPageSize.value);
 });
 
 const pagedRecentActivities = computed(() => {
-  const filtered = recentActivities.value.filter(a => a.applyStatus === '通过');
+  const filtered = processActivities(recentActivities.value)
   const start = (recentPage.value - 1) * recentPageSize.value;
-  return filtered.slice(start, start + recentPageSize.value).map(a => ({ ...a, activityStatus: getCustomActivityStatus(a) }));
+  return filtered.slice(start, start + recentPageSize.value);
 });
 
 const pagedFavoriteClubs = computed(() => {
@@ -1032,10 +1047,15 @@ const fetchMyClubs = async () => {
 // 获取我的活动
 const fetchMyActivities = async () => {
   try {
+    console.log('开始获取我的活动')
     const response = await getMyActivities()
-    
+    console.log('活动API响应:', response)
     if (response.data.code === 200) {
-      myActivities.value = response.data.data || []
+      console.log('原始活动数据:', response.data.data)
+      myActivities.value = processActivities(response.data.data || [])
+      console.log('处理后的活动数据:', myActivities.value)
+    } else {
+      console.error('获取活动失败:', response.data.message)
     }
   } catch (error) {
     console.error('获取我的活动失败:', error)
