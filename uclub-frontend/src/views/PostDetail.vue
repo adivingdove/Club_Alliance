@@ -241,6 +241,30 @@
                   <span class="comment-time">发表于：{{ formatTime(sub.createdAt) }}</span>
                 </div>
                 <p class="comment-content">{{ sub.content }}</p>
+                      <div class="sub-comment-actions" style="display: flex; align-items: center; gap: 10px;">
+                     <!-- 子评论点赞 -->
+                     <el-button
+                   size="small"
+                   text
+                   :plain="!sub.liked"
+                 @click="toggleCommentLike(sub)"
+                 >
+                <img :src="thumbIcon" alt="点赞" class="icon-thumb" />
+              {{ sub.likeCount }}
+              </el-button>
+
+      <!-- 子评论举报 -->
+      <el-button
+        size="small"
+        circle
+        type="default"
+        @click="() => openReportDialog('评论', sub.id)"
+        style="color: #888; border-color: #ccc;"
+      >
+        <el-icon><WarnTriangleFilled /></el-icon>
+         </el-button>
+              </div>
+
               </div>
             </div>
           </div>

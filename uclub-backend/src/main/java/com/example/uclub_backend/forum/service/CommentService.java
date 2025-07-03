@@ -75,5 +75,11 @@ public class CommentService {
     public Integer getUserId(Integer commentId) {
         return commentRepository.getUserId(commentId);
     }
+    
+    
+public List<Comment> getHotComments(int limit) {
+    return commentRepository.findTopByOrderByLikeCountDesc(limit);
+}
+
 
 }
