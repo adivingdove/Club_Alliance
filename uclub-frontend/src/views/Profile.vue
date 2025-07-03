@@ -519,6 +519,7 @@ import {
   getMyPosts,
   uploadAvatar 
 } from '../api/profileApi'
+import { deletePost as apiDeletePost } from '../api/forum'
 
 import request from '../utils/request'
 import { 
@@ -1294,12 +1295,14 @@ const deletePost = async (postId) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    
-    const response = await request.delete(`/api/posts/${postId}`)
-    
-    if (response.data.code === 200) {
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    if (!user.id) {
+      ElMessage.error('请先登录')
+      return
+    }
+    const response = await apiDeletePost(postId, user.id)
+    if (response.data.code === 200 || response.data.code === 0) {
       ElMessage.success('帖子删除成功')
-      // 重新获取帖子列表
       await fetchMyPosts()
     } else {
       ElMessage.error(response.data.message || '删除失败')
