@@ -27,7 +27,8 @@ request.interceptors.request.use(
       '/api/user/sendRegisterCode',
       '/api/user/register',
       '/api/user/login',
-      '/api/user/sendResetCode'
+      '/api/user/sendResetCode',
+       '/api/comments/hot',
     ]
     // 只有不在 noAuthUrls 里的接口才加 token
     if (!noAuthUrls.some(url => config.url && config.url.includes(url))) {

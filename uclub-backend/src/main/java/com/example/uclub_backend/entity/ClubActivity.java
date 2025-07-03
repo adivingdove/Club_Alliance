@@ -46,6 +46,9 @@ public class ClubActivity {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
+    @Column(name = "image_url")
+    private String imageUrl;
+    
     public enum ApplyStatus {
         待审核, 通过, 拒绝
     }

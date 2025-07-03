@@ -215,7 +215,7 @@ public class ClubService {
                     activityVO.setLocation(activity.getLocation());
                     activityVO.setMaxParticipants(activity.getMaxParticipants());
                     activityVO.setStatus(activity.getApplyStatus().name());
-                    activityVO.setImg(null); // 暂时设为null，后续可以添加图片字段
+                    activityVO.setImg(activity.getImageUrl());
                     return activityVO;
                 })
                 .collect(Collectors.toList());
