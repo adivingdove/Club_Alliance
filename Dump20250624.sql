@@ -117,14 +117,16 @@ DROP TABLE IF EXISTS `comment`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `comment` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `post_id` bigint NOT NULL,
-  `user_id` bigint NOT NULL,
-  `content` text COLLATE utf8mb4_general_ci NOT NULL,
-  `status` enum('active','deleted','hidden','violated') COLLATE utf8mb4_general_ci DEFAULT 'active',
-  `like_count` int DEFAULT '0',
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `post_id` BIGINT NOT NULL,
+  `user_id` BIGINT NOT NULL,
+  `content` TEXT COLLATE utf8mb4_general_ci NOT NULL,
+  `status` ENUM('active','deleted','hidden','violated') COLLATE utf8mb4_general_ci DEFAULT 'active',
+  `like_count` INT DEFAULT '0',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `parent_comment_id` BIGINT DEFAULT NULL COMMENT '被回复的评论ID（为空表示是一级评论）',
+  PRIMARY KEY (`id`),
+  KEY `idx_parent_comment` (`parent_comment_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

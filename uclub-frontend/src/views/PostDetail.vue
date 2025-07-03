@@ -10,7 +10,7 @@
           :src="getUserAvatar(post.user?.avatarUrl)"
           :size="40"
           style="margin-right: 10px"
-        />
+        ></el-avatar>
         <span class="post-author-nickname">{{ post.user?.nickname || '匿名用户' }}</span>
         <el-tag type="success" size="small">社团ID: {{ post.clubId }}</el-tag>
         <span>作者ID: {{ post.userId }}</span>
@@ -29,7 +29,7 @@
             size="small"
             @click="deletePost"
             style="color: #888; border-color: #ccc; margin-left: auto;"
-          />
+          ></el-button>
         </el-tooltip>
 
         <!-- 举报按钮 -->
@@ -46,7 +46,7 @@
         </el-tooltip>
       </div>
 
-      <!-- 正文 Markdown + 加载中 -->
+      <!-- 正文 Markdown -->
       <div class="post-content">
         <vue3-markdown-it v-if="post.content" :source="post.content" />
         <div v-else>正文加载中...</div>
@@ -85,7 +85,7 @@
           ></emoji-picker>
         </div>
 
-        <!-- 评论输入框区域 -->
+        <!-- 评论输入框 -->
         <div ref="textareaWrapper">
           <el-input
             v-model="newComment"
@@ -93,7 +93,7 @@
             placeholder="写下你的评论..."
             :rows="3"
             resize="none"
-          />
+          ></el-input>
         </div>
 
         <el-button
@@ -119,12 +119,12 @@
                 :src="getUserAvatar(comment.user?.avatarUrl)"
                 :size="40"
                 style="margin-right: 10px"
-              />
+              ></el-avatar>
               <span class="comment-nickname">{{ comment.user?.nickname || '匿名用户' }}</span>
               <span class="comment-time">发表于：{{ formatTime(comment.createdAt) }}</span>
 
-              <!-- 删除/举报按钮 -->
               <div class="comment-actions">
+                <!-- 删除 -->
                 <el-tooltip
                   v-if="comment.user?.id === currentUserId || comment.userId === currentUserId"
                   content="删除评论"
@@ -137,9 +137,10 @@
                     size="small"
                     @click="deleteComment(comment.id)"
                     class="delete-icon-btn"
-                  />
+                  ></el-button>
                 </el-tooltip>
 
+                <!-- 举报 -->
                 <el-tooltip content="举报评论" placement="top">
                   <el-button
                     circle
@@ -154,10 +155,10 @@
               </div>
             </div>
 
-            <!-- 内容 -->
+            <!-- 评论内容 -->
             <p class="comment-content">{{ comment.content }}</p>
 
-            <!-- 点赞 -->
+            <!-- 点赞按钮 -->
             <div class="comment-like-bar">
               <el-button
                 size="small"
@@ -185,21 +186,37 @@
                 v-model="replyContentMap[comment.id]"
                 type="textarea"
                 :rows="2"
+                :id="`reply-textarea-${comment.id}`"
                 placeholder="输入你的回复..."
                 resize="none"
-              />
+              ></el-input>
+
               <el-button
                 type="primary"
                 size="small"
                 style="margin-top: 6px;"
                 @click="submitReply(comment.id)"
               >提交回复</el-button>
+
+              <!-- 回复 emoji -->
+              <div class="emoji-picker-wrapper" style="margin-top: 6px;">
+                <el-button
+                  circle
+                  size="small"
+                  @click="replyEmojiMap[comment.id] = !replyEmojiMap[comment.id]"
+                  style="font-size: 16px;"
+                >😊</el-button>
+                <emoji-picker
+                  v-show="replyEmojiMap[comment.id]"
+                  @emoji-click="(event) => onReplyEmojiClick(event, comment.id)"
+                ></emoji-picker>
+              </div>
             </div>
 
             <!-- 折叠按钮 -->
             <div v-if="comment.replies?.length" style="margin-top: 8px; margin-left: 10px;">
               <el-button
-                
+                type="text"
                 size="small"
                 @click="toggleCollapse(comment.id)"
                 style="font-size: 13px;"
@@ -237,6 +254,7 @@
 </template>
 
 
+
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 
@@ -251,7 +269,8 @@ import { useStore } from 'vuex'
 import { addBrowsingHistory } from '../utils/history'
 import 'emoji-picker-element'
 import { ArrowDown, ArrowUp } from '@element-plus/icons-vue'
-
+// 每条主评论的回复 emoji 控制：{ commentId: boolean }
+const replyEmojiMap = ref({})
 const collapsedMap = ref({}) // { [commentId]: boolean }
 
 function toggleCollapse(commentId) {
@@ -555,6 +574,25 @@ async function submitReply(parentId) {
     console.error('回复失败', err)
     ElMessage.error('回复失败，请查看控制台')
   }
+}
+
+function onReplyEmojiClick(event, commentId) {
+  const emoji = event.detail.unicode
+  const inputEl = document.querySelector(`#reply-textarea-${commentId}`)
+  if (!inputEl) return
+
+  const start = inputEl.selectionStart
+  const end = inputEl.selectionEnd
+  const before = replyContentMap.value[commentId]?.slice(0, start) || ''
+  const after = replyContentMap.value[commentId]?.slice(end) || ''
+  replyContentMap.value[commentId] = before + emoji + after
+
+  nextTick(() => {
+    inputEl.selectionStart = inputEl.selectionEnd = start + emoji.length
+    inputEl.focus()
+  })
+
+  replyEmojiMap.value[commentId] = false
 }
 
 
