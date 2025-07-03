@@ -134,6 +134,8 @@ const loadPosts = async () => {
   }
 
   console.log('[加载帖子] 请求参数:', filterParams)
+  console.log('[加载帖子] Token:', localStorage.getItem('token'))
+  console.log('[加载帖子] User:', localStorage.getItem('user'))
 
   try {
     const res = await fetchPostList(filterParams)
@@ -144,6 +146,9 @@ const loadPosts = async () => {
 
   } catch (err) {
     console.error('[加载帖子] 请求失败:', err)
+    console.error('[加载帖子] 请求配置:', err.config)
+    console.error('[加载帖子] 响应状态:', err.response?.status)
+    console.error('[加载帖子] 响应数据:', err.response?.data)
     posts.value = []
     total.value = 0
   }

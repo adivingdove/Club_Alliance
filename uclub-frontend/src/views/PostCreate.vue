@@ -8,6 +8,7 @@
       placeholder="请输入标题"
       size="large"
       style="margin: 20px 0"
+      aria-label="帖子标题"
     />
 
     <!-- 社团选择（只能选择我加入的）-->
@@ -15,6 +16,7 @@
       v-model="form.clubId"
       placeholder="请选择社团"
       style="width: 300px; margin-bottom: 20px"
+      aria-label="选择社团"
     >
       <el-option
         v-for="club in clubs"
@@ -24,269 +26,274 @@
       />
     </el-select>
 
-    <!-- Emoji 面板按钮 -->
-    <div class="emoji-picker-wrapper" ref="emojiWrapper">
-      <el-button
-        circle
-        size="small"
-        @click="showEmoji = !showEmoji"
-        style="margin-bottom: 6px; font-size: 18px;"
-      >
-        😊
-      </el-button>
-
-      <emoji-picker
-        v-show="showEmoji"
-        @emoji-click="onEmojiClick"
-      ></emoji-picker>
+    <!-- 内容编辑区（富文本）-->
+    <div class="editor-container">
+      <QuillEditor
+        ref="quillEditor"
+        v-model:content="form.content"
+        :options="editorOptions"
+        @ready="onEditorReady"
+        @textChange="onEditorChange"
+        aria-label="帖子内容"
+      />
     </div>
-
-    <!-- 内容编辑区（Markdown）-->
-    <textarea
-      v-model="form.content"
-      class="markdown-textarea"
-      rows="10"
-      placeholder="请输入 Markdown 格式正文内容"
-    ></textarea>
-
-    <!-- 实时预览 -->
-    <el-divider>实时预览</el-divider>
-    <vue3-markdown-it :source="form.content" />
-
-    <!-- 图片上传 -->
-    <el-upload
-      action="/api/forum/upload"
-      :headers="uploadHeaders"
-      list-type="picture-card"
-      :limit="9"
-      :on-success="handleUploadSuccess"
-      :on-error="handleUploadError"
-      :before-upload="handleBeforeUpload"
-      :on-remove="handleUploadRemove"
-      multiple
-    >
-      <i class="el-icon-plus" />
-    </el-upload>
 
     <!-- 提交按钮 -->
     <div style="margin-top: 20px; text-align: right">
-      <el-button type="primary" @click="submitPost">发布帖子</el-button>
+      <el-button @click="$router.back()" aria-label="取消">取消</el-button>
+      <el-button type="primary" @click="submitPost" :loading="submitting" aria-label="发布帖子">
+        发布帖子
+      </el-button>
     </div>
   </el-card>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import Vue3MarkdownIt from 'vue3-markdown-it'
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
-
 import { createPost } from '@/api/forum'
 import { getMyClubs } from '@/api/profileApi'
-import 'emoji-picker-element'
+import Quill from 'quill'
+import ImageResize from 'quill-image-resize-module-plus'
+
+// 注册图片调整模块
+Quill.register('modules/imageResize', ImageResize)
 
 // Store & Router
 const store = useStore()
-
 const router = useRouter()
+
+// 编辑器配置
+const editorOptions = {
+  modules: {
+    toolbar: [
+      ['bold', 'italic', 'underline', 'strike'],        // 文字格式
+      ['blockquote', 'code-block'],                     // 引用和代码块
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],       // 标题级别
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],    // 有序和无序列表
+      [{ 'script': 'sub'}, { 'script': 'super' }],     // 上标/下标
+      [{ 'indent': '-1'}, { 'indent': '+1' }],         // 缩进
+      [{ 'direction': 'rtl' }],                         // 文字方向
+      [{ 'size': ['small', false, 'large', 'huge'] }], // 字体大小
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],       // 标题
+      [{ 'color': [] }, { 'background': [] }],         // 字体颜色和背景颜色
+      [{ 'font': [] }],                                // 字体系列
+      [{ 'align': [] }],                               // 对齐方式
+      ['clean'],                                        // 清除格式
+      ['link'],                                         // 链接
+      ['image']                                         // 图片
+    ],
+    imageResize: {
+      displaySize: true,   // 显示图片尺寸
+      modules: ['Resize', 'DisplaySize', 'Toolbar']  // 启用调整大小、显示尺寸和工具栏
+    }
+  },
+  theme: 'snow',
+  placeholder: '请输入内容...'
+}
 
 // 当前用户ID
 const userId = computed(() => store.getters.currentUser?.id || null)
 
-// 帖子表单
+// 表单数据
 const form = ref({
   clubId: '',
   title: '',
   content: '',
-  imageUrlList: [],
-  userId: userId.value || 1001 // 默认值避免为 null
+  userId: userId.value
 })
+
+// 编辑器ref
+const quillEditor = ref(null)
 
 // 用户加入的社团列表
 const clubs = ref([])
 
+// 加载状态
+const submitting = ref(false)
+
+// 加载用户的社团列表
 const loadClubs = async () => {
   try {
     const res = await getMyClubs()
-    console.log('[获取我的社团列表] 响应数据:', res.data)
-
     if (res.data?.code === 200) {
       clubs.value = (res.data.data || []).map(c => ({
         id: c.id,
         name: c.name
       }))
     } else {
-      ElMessage.error(res.data?.message || '加载我的社团失败')
+      ElMessage.error(res.data?.message || '加载社团列表失败')
     }
   } catch (error) {
-    console.error('[加载我的社团失败]', error)
-    ElMessage.error('无法加载我的社团列表，请检查接口')
+    console.error('[加载社团失败]', error)
+    ElMessage.error('无法加载社团列表')
   }
 }
 
-onMounted(loadClubs)
-
-// 上传相关处理
-const uploadHeaders = computed(() => {
-  const token = localStorage.getItem('token')
-  return {
-    Authorization: token ? `Bearer ${token}` : ''
-  }
-})
-
-const insertAtCursor = (text) => {
-  const textarea = document.querySelector('.markdown-textarea')
-  if (!textarea) return
-
-  const start = textarea.selectionStart
-  const end = textarea.selectionEnd
-  const before = form.value.content.slice(0, start)
-  const after = form.value.content.slice(end)
-  form.value.content = before + text + after
-
-  nextTick(() => {
-    textarea.selectionStart = textarea.selectionEnd = start + text.length
-    textarea.focus()
-  })
+// 编辑器相关
+const onEditorReady = (editor) => {
+  console.log('Editor is ready!')
+  
+  // 配置链接格式化
+  editor.clipboard.addMatcher(Node.ELEMENT_NODE, function(node, delta) {
+    let ops = []
+    delta.ops.forEach(op => {
+      if (op.attributes && op.attributes.link) {
+        let href = op.attributes.link;
+        if (!href.startsWith('http://') && !href.startsWith('https://')) {
+          href = 'https://' + href;
+        }
+        ops.push({
+          insert: op.insert,
+          attributes: {
+            link: href
+          }
+        });
+      } else {
+        ops.push(op);
+      }
+    });
+    delta.ops = ops;
+    return delta;
+  });
 }
 
-const handleUploadRemove = (file) => {
-  const url = file.response?.url || file.url
-  form.value.imageUrlList = form.value.imageUrlList.filter((img) => img !== url)
+const onEditorChange = ({ html, text }) => {
+  console.log('编辑器内容变化:', html) // 调试用
+  form.value.content = html || ''
 }
 
-const handleBeforeUpload = (file) => {
-  console.log('[上传准备]', file)
-  return true
-}
-
-const handleUploadSuccess = (res, file) => {
-  console.log('[上传成功]', res, file)
-  const url = res.url?.startsWith('http') ? res.url : `http://localhost:8080${res.url}`
-  const markdownImage = `\n![${file.name}](${url})\n`
-  insertAtCursor(markdownImage)
-  form.value.imageUrlList.push(url)
-  ElMessage.success('图片上传成功')
-}
-
-const handleUploadError = (err, file) => {
-  console.error('[上传失败]', err, file)
-  ElMessage.error('图片上传失败，请检查接口')
-}
-
-// 发布帖子
+// 提交帖子
 const submitPost = async () => {
-  const token = localStorage.getItem('token')
-  if (!token) {
-    ElMessage.error('请先登录后再发帖')
+  // 获取最新的编辑器内容
+  const editorContent = quillEditor.value?.getHTML() || form.value.content || ''
+  
+  // 表单验证
+  const title = form.value.title || ''
+  const content = editorContent
+  const clubId = form.value.clubId
+
+  console.log('提交时的内容:', { title, content, clubId }) // 调试用
+
+  if (!title.trim()) {
+    ElMessage.warning('请输入标题')
+    return
+  }
+  if (!clubId) {
+    ElMessage.warning('请选择社团')
+    return
+  }
+  if (!content.trim()) {
+    ElMessage.warning('请输入内容')
     return
   }
 
-  const payload = {
-    ...form.value,
-    imageUrlList: form.value.imageUrlList
-  }
-
-  console.log('[提交帖子] 请求体:', payload)
-
   try {
-    const res = await createPost(payload)
-    if (res.data?.code === 200) {
-      const postId = res.data.data?.post_id
-      if (postId) {
-        ElMessage.success('发布成功')
-        router.push('/forum')
+    submitting.value = true
+    // 构造请求数据
+    const postData = {
+      title: title.trim(),
+      content: content.trim(),
+      clubId: clubId,
+      userId: userId.value,
+      imageUrlList: [], // 保持空数组
+      status: 'active'
+    }
 
-        // 重置表单
-        form.value = {
-          clubId: '',
-          title: '',
-          content: '',
-          imageUrlList: [],
-          userId: userId.value || 1001
-        }
-      } else {
-        ElMessage.error('发布失败：响应缺失 post_id')
-      }
+    console.log('发送的数据:', postData) // 调试用
+
+    const res = await createPost(postData)
+    
+    if (res.data?.code === 200) {
+      ElMessage.success('发布成功')
+      router.push('/forum')
     } else {
       ElMessage.error(res.data?.message || '发布失败')
     }
-  } catch (err) {
-    console.error('[提交帖子] 失败:', err)
-    ElMessage.error(err?.response?.data?.message || '发布失败，请检查接口')
+  } catch (error) {
+    console.error('[发布失败]', error)
+    if (error.response?.status === 403) {
+      ElMessage.error('没有权限发布，请先登录')
+    } else {
+      ElMessage.error('发布失败，请重试')
+    }
+  } finally {
+    submitting.value = false
   }
 }
 
-// Emoji 处理
-const showEmoji = ref(false)
-const emojiWrapper = ref(null)
-
-function onEmojiClick(event) {
-  const emoji = event.detail.unicode
-  insertAtCursor(emoji)
-  showEmoji.value = false
-}
-
-function handleOutsideClick(event) {
-  if (emojiWrapper.value && !emojiWrapper.value.contains(event.target)) {
-    showEmoji.value = false
-  }
-}
-
+// 生命周期
 onMounted(() => {
-  document.addEventListener('click', handleOutsideClick)
-})
-onUnmounted(() => {
-  document.removeEventListener('click', handleOutsideClick)
+  loadClubs()
 })
 </script>
 
 <style scoped>
 .post-create {
-  padding: 30px;
-  border-radius: 12px;
-  background-color: #ffffff;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  max-width: 900px;
-  margin: 30px auto;
+  max-width: 1000px;
+  margin: 20px auto;
+  padding: 20px;
 }
 
-.emoji-toolbar {
-  margin-bottom: 10px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.markdown-textarea {
-  width: 100%;
-  padding: 10px;
+.editor-container {
+  margin-bottom: 20px;
   border: 1px solid #dcdfe6;
-  border-radius: 6px;
-  font-size: 14px;
-  font-family: Consolas, 'Courier New', monospace;
-  resize: vertical;
-  transition: border-color 0.2s;
-}
-.markdown-textarea:focus {
-  border-color: #409eff;
-  outline: none;
+  border-radius: 4px;
 }
 
-.vue3-markdown-it {
-  background-color: #f9f9f9;
-  padding: 15px;
-  border-radius: 8px;
-  margin-top: 10px;
-}
-.vue3-markdown-it img {
-  max-width: 100%;
-  height: auto;
-  object-fit: contain;
-  display: block;
-  border-radius: 6px;
-  margin: 10px 0;
+.editor-container :deep(.ql-container) {
+  height: 300px;
 }
 
+.editor-container :deep(.ql-toolbar) {
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+/* 图片和视频调整相关样式 */
+.editor-container :deep(.ql-editor) {
+  img, video {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .image-resizer {
+    border: 1px dashed #999;
+    
+    .image-resizer-handle {
+      background: #fff;
+      border: 1px solid #999;
+      border-radius: 2px;
+    }
+  }
+}
+
+/* 图片工具栏样式 */
+.editor-container :deep(.ql-toolbar-wrap) {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 5px;
+  margin: 5px;
+}
+
+/* 图片尺寸显示样式 */
+.editor-container :deep(.image-size-label) {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+:deep(.el-upload--picture-card) {
+  --el-upload-picture-card-size: 100px;
+}
 </style>
+

@@ -33,9 +33,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         System.out.println("JWT Filter - Request URI: " + requestURI);
         System.out.println("JWT Filter - Authorization Header: " + (authHeader != null ? authHeader : "null"));
+        System.out.println("JWT Filter - Request Method: " + request.getMethod());
+        System.out.println("JWT Filter - All Headers: ");
+        java.util.Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            System.out.println(headerName + ": " + request.getHeader(headerName));
+        }
         
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
+            System.out.println("JWT Filter - Token: " + token.substring(0, Math.min(token.length(), 20)) + "...");
             
             try {
                 String username = tokenManager.validateTokenAndGetUsername(token);
@@ -43,23 +51,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                    System.out.println("JWT Filter - UserDetails: " + (userDetails != null ? userDetails.toString() : "null"));
+                    System.out.println("JWT Filter - UserDetails loaded: " + (userDetails != null));
+                    System.out.println("JWT Filter - Authorities: " + (userDetails != null ? userDetails.getAuthorities() : "null"));
                     
                     if (userDetails != null) {
                         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());
                         SecurityContextHolder.getContext().setAuthentication(authentication);
-                        System.out.println("JWT Filter - Authentication set successfully: " + authentication);
+                        System.out.println("JWT Filter - Authentication set successfully");
                     }
                 } else {
                     System.out.println("JWT Filter - Username is null or authentication already exists");
+                    System.out.println("JWT Filter - Current Authentication: " + SecurityContextHolder.getContext().getAuthentication());
                 }
             } catch (Exception e) {
-                logger.error("Token验证失败", e);
                 System.out.println("JWT Filter - Token validation failed: " + e.getMessage());
+                e.printStackTrace();
             }
         } else {
-            System.out.println("JWT Filter - No valid Authorization header");
+            System.out.println("JWT Filter - No valid Authorization header found");
         }
         
         filterChain.doFilter(request, response);

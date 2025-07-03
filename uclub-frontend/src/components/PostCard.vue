@@ -64,15 +64,23 @@ function formatTime(dateStr) {
   return new Date(dateStr).toLocaleString()
 }
 
-const getTextSummary = (markdown) => {
-  if (!markdown) return ''
-  return markdown
-    .replace(/!\[.*?\]\(.*?\)/g, '')  // 去掉图片语法
-    .replace(/\[.*?\]\(.*?\)/g, '')   // 去掉链接
-    .replace(/[#>*`]/g, '')           // 去掉特殊符号
-    .replace(/\n/g, ' ')              // 替换换行
-    .trim()
-    .slice(0, 100) + '...'            // 截断并加省略号
+const getTextSummary = (html) => {
+  if (!html) return ''
+  
+  // 创建一个临时的 div 元素来解析 HTML
+  const tempDiv = document.createElement('div')
+  tempDiv.innerHTML = html
+  
+  // 获取纯文本内容
+  let text = tempDiv.textContent || tempDiv.innerText || ''
+  
+  // 基本的清理
+  text = text
+    .replace(/\s+/g, ' ')  // 将多个空白字符替换为单个空格
+    .trim()                 // 去除首尾空白
+  
+  // 如果文本长度超过 100，截断并添加省略号
+  return text.length > 100 ? text.slice(0, 100) + '...' : text
 }
 
 </script>
