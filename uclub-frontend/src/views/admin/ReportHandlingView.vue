@@ -36,22 +36,20 @@
       <span class="label">举报链接：</span>
       <a
         v-if="selectedReport.targetType === '帖子'"
-        :href="`/post/${selectedReport.targetId}`"
+        href="#"
+        @click.prevent="goToPost(selectedReport.targetId)"
         class="link-btn"
         target="_blank"
       >查看帖子</a>
-
       <a
         v-else-if="selectedReport.targetType === '评论'"
-        :href="`/post/${selectedReport.postId}#comment/${selectedReport.targetId}`"
+        href="#"
+        @click.prevent="goToComment(selectedReport.postId, selectedReport.targetId)"
         class="link-btn"
         target="_blank"
       >查看评论</a>
-
-      <span v-else class="value">无链接</span>
-    </div>
-
-    <div class="report-row"><span class="label">举报原因：</span>{{ selectedReport.reason }}</div>
+  <span v-else class="value">无链接</span>
+</div>
     <div class="report-row"><span class="label">状态：</span>
       <el-tag :type="selectedReport.status === '待处理' ? 'warning' : 'success'">{{ selectedReport.status }}</el-tag>
     </div>
@@ -69,11 +67,13 @@ import { ref, onMounted } from 'vue'
 import axios from '@/utils/axios'
 import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
+import { useRouter } from 'vue-router'
 
 const reports = ref([])
 const statusFilter = ref('')
 const showDetail = ref(false)
 const selectedReport = ref(null)
+const router = useRouter()
 
 
 const formatTime = (time) => {
@@ -117,6 +117,13 @@ const changeStatus = async (id, status) => {
   fetchReports()
 }
 
+const goToPost = (postId) => {
+  router.push(`/post/${postId}`)
+}
+
+const goToComment = (postId, commentId) => {
+  router.push(`/post/${postId}#comment/${commentId}`)
+}
 
 onMounted(fetchReports)
 </script>

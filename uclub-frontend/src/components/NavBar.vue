@@ -349,11 +349,6 @@ function handleAdminClick() {
   }
 }
 
-function goToAdmin(){
-  showVerifyDialog.value = false
-  router.push('/admin/club-list')
-}
-
 // 切换登录/注册模式
 const toggleMode = () => {
   isRegister.value = !isRegister.value
@@ -566,21 +561,6 @@ onUnmounted(() => {
   window.removeEventListener('userLogout', handleUserLogout)
   document.removeEventListener('click', handleClickOutside)
 })
-
-// original functions
-function openLoginModal() {
-  showLoginModal.value = true;
-}
-
-function openManageLogin(){
-  showManageLogin.value = true;
-}
-
-function goSearch() {
-  if (query.value.trim() !== '') {
-    router.push({ name: 'Search', query: { q: query.value.trim() } });
-  }
-}
 
 // 添加新的方法
 function goToProfile() {
