@@ -1,130 +1,144 @@
 <template>
   <div class="activities-container">
-    <!-- 页面标题 -->
-    <div class="page-header">
-      <h1 style="font-family:楷体;font-size:50px;color:red;">社团活动</h1>
-      <p>参与社团活动，享受精彩生活</p>
-    </div>
-
-    <!-- 搜索和筛选区域 -->
-    <div class="search-filter-section">
-       <!-- Banner -->
-      <div class="banner">
-        <img src="../assets/ABack.jpg" class="banner-img" />
-        <div class="banner-content">
-          <h1>2025 年武汉大学社团活动开始啦</h1>
-          <p>让我们共同为这段记忆染上独属于珞珈山的颜色！</p>
- <!--        <el-button type="primary" size="large">了解更多</el-button>-->
+     <!-- Banner -->
+        <div class="banner">
+            <img src="../assets/ABack.jpg" class="banner-img" />
+            <div class="banner-content">
+              <h1>2025年武汉大学社团活动开始啦</h1>
+              <p>丰富多彩的活动，让你的校院生活丰富多彩！</p>
+              <el-button type="primary" size="large" @click="handle">了解更多</el-button>
+            </div>
         </div>
-      </div>
 
-      <div class="search-box">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索活动标题或描述"
-          clearable
-          @input="handleSearch"
-          @clear="handleSearch"
-        >
-          <template #suffix>
-            <span style="font-size: 22px; margin-right: 8px; cursor: pointer;">🔍</span>
-          </template>
-        </el-input>
-      </div>
-
-      <div class="filter-tabs">
-        <el-tabs v-model="activeTab" class="club-tabs" @tab-click="handleTabChange">
-          <el-tab-pane label="全部活动" name="all"></el-tab-pane>
-          <el-tab-pane label="即将开始" name="upcoming"></el-tab-pane>
-          <el-tab-pane label="我的活动" name="my"></el-tab-pane>
-          <el-tab-pane label="待审核" name="pending" v-if="isAdmin"></el-tab-pane>
-        </el-tabs>
-      </div>
-    </div>
+        <!-- 搜索和筛选区域 -->
+        <div class="search-filter-section">
+              <div class="search-box">
+                  <el-input
+                    v-model="searchKeyword"
+                    placeholder="搜索活动标题或描述"
+                    prefix-icon="Search"
+                    clearable
+                    @input="handleSearch"
+                    @clear="handleSearch"
+                  />    
+              </div>
+          </div>
+          <div class="filter-tabs">
+              <el-tabs v-model="activeTab" class="club-tabs" @tab-click="handleTabChange">
+                <el-tab-pane label="全部活动" name="all"></el-tab-pane>
+                <el-tab-pane label="即将开始" name="upcoming"></el-tab-pane>
+                <el-tab-pane label="我的活动" name="my"></el-tab-pane>
+                <el-tab-pane label="待审核" name="pending" v-if="isAdmin"></el-tab-pane>
+              </el-tabs>
+          </div>
+       
 
     <!-- 活动列表 -->
     <div class="activities-list">
-      <!-- 调试信息：显示当前活动列表状态 -->
-      <div v-if="isAdmin" style="font-size: 12px; color: #666; margin-bottom: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px;">
-        调试信息: 当前标签页={{activeTab}}, 活动总数={{activities.length}}, 过滤后数量={{filteredActivities.length}}
-        <br>
-        活动状态列表: {{activities.map(a => `${a.id}:${a.title}:${a.applyStatus}`).join(', ')}}
-      </div>
+        <!-- 调试信息：显示当前活动列表状态 -->
+        <div v-if="isAdmin" style="font-size: 12px; color: #666; margin-bottom: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px;">
+          调试信息: 当前标签页={{activeTab}}, 活动总数={{activities.length}}, 过滤后数量={{filteredActivities.length}}
+          <br>
+          活动状态列表: {{activities.map(a => `${a.id}:${a.title}:${a.applyStatus}`).join(', ')}}
+        </div>
       
-      <el-row :gutter="24">
-        <el-col 
-          :xs="24" 
-          :sm="12" 
-          :md="8" 
-          :lg="6" 
-          v-for="activity in filteredActivities" 
-          :key="activity.id"
-        >
-          <el-card 
-            class="activity-card" 
-            :class="{ 'pending': activity.applyStatus === '待审核' }"
-            @click="viewActivityDetail(activity)"
+        <el-row :gutter="24">
+          <el-col 
+            :xs="24" 
+            :sm="12" 
+            :md="8" 
+            :lg="6" 
+            v-for="activity in filteredActivities" 
+            :key="activity.id"
           >
-            <div class="activity-participants-badge">
-              <i class="el-icon-user"></i>
-              <span>{{ activity.currentParticipants || 0 }}/{{ activity.maxParticipants ? activity.maxParticipants : '∞' }}人</span>
-            </div>
-            <div class="activity-header">
-              <div class="activity-status" :class="getStatusClass(activity.applyStatus)">
-                {{ getStatusText(activity.applyStatus) }}
+            <el-card 
+              class="activity-card" 
+              :class="{ 'pending': activity.applyStatus === '待审核' }"
+              @click="viewActivityDetail(activity)"
+            >
+              <div class="activity-header">
+                <div class="activity-status" :class="getStatusClass(activity.applyStatus)">
+                  {{ getStatusText(activity.applyStatus) }}
+                </div>
+                <div class="activity-time">
+                  <i class="el-icon-time"></i>
+                  {{ formatDate(activity.startTime) }}
+                </div>
               </div>
-              <div class="activity-time">
-                <i class="el-icon-time"></i>
-                {{ formatDate(activity.startTime) }}
-              </div>
-            </div>
-            
-            <div class="activity-content activity-content--bg">
-              <h3 class="activity-title" style="margin-top: 0; margin-bottom: 4px; text-align: center; position: relative; z-index: 3;">{{ activity.title }}</h3>
-              <img v-if="activity.imageUrl" :src="getImageUrl(activity.imageUrl)" class="activity-img-bg" />
-            </div>
-            
-            <div class="activity-footer">
-              <!-- 参与/退出按钮 -->
-              <el-button 
-                v-if="isLoggedIn && activity.applyStatus === '通过'"
-                :type="activity.isParticipating ? 'danger' : 'success'"
-                size="small" 
-                @click.stop="activity.isParticipating ? leaveActivityHandler(activity) : joinActivityHandler(activity)"
-                :disabled="!canJoinActivity(activity)"
-              >
-                {{ activity.isParticipating ? '退出活动' : '加入活动' }}
-              </el-button>
               
-              <el-button 
-                v-if="canEditActivity(activity)" 
-                type="warning" 
-                size="small" 
-                @click.stop="editActivity(activity)"
-              >
-                编辑
-              </el-button>
-              <el-button 
-                v-if="canDeleteActivity(activity)" 
-                type="danger" 
-                size="small" 
-                @click.stop="deleteActivityHandler(activity)"
-              >
-                删除
-              </el-button>
-            </div>
-            <!-- 如果用户是活动创建者，显示提示，放在按钮下方并居中 -->
-            <div v-if="isLoggedIn && canEditActivity(activity)" style="font-size: 12px; color: #409EFF; margin-top: 8px; text-align: center;">
-              您是活动创建者
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
+              <div class="activity-content">
+                <h3 class="activity-title">{{ activity.title }}</h3>
+                <p class="activity-description">{{ activity.description }}</p>
+                
+                <div class="activity-info">
+                  <div class="info-item">
+                    <i class="el-icon-location"></i>
+                    <span>{{ activity.location || '地点待定' }}</span>
+                  </div>
+                  <div class="info-item">
+                    <i class="el-icon-user"></i>
+                    <span>
+                      {{ activity.currentParticipants || 0 }}/{{ activity.maxParticipants ? activity.maxParticipants : '∞' }}人
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="activity-footer">
+                <el-button 
+                  type="primary" 
+                  size="small" 
+                  @click.stop="viewActivityDetail(activity)"
+                >
+                  查看详情
+                </el-button>
+                
+                <!-- 参与/退出按钮 -->
+                <el-button 
+                  v-if="isLoggedIn && activity.applyStatus === '通过' && !canEditActivity(activity)"
+                  :type="activity.isParticipating ? 'danger' : 'success'"
+                  size="small" 
+                  @click.stop="activity.isParticipating ? leaveActivityHandler(activity) : joinActivityHandler(activity)"
+                  :disabled="!canJoinActivity(activity)"
+                >
+                  {{ activity.isParticipating ? '退出活动' : '加入活动' }}
+                </el-button>
+                
+                <!-- 如果活动状态不是"通过"，显示状态信息 -->
+                <div v-if="isLoggedIn && activity.applyStatus !== '通过'" style="font-size: 12px; color: #999; margin-top: 5px;">
+                  活动状态: {{ getStatusText(activity.applyStatus) }}
+                </div>
+                
+                <!-- 如果用户是活动创建者，显示提示 -->
+                <div v-if="isLoggedIn && canEditActivity(activity)" style="font-size: 12px; color: #409EFF; margin-top: 5px;">
+                  您是活动创建者
+                </div>
+                
+                <el-button 
+                  v-if="canEditActivity(activity)" 
+                  type="warning" 
+                  size="small" 
+                  @click.stop="editActivity(activity)"
+                >
+                  编辑
+                </el-button>
+                <el-button 
+                  v-if="canDeleteActivity(activity)" 
+                  type="danger" 
+                  size="small" 
+                  @click.stop="deleteActivityHandler(activity)"
+                >
+                  删除
+                </el-button>
+              </div>
+            </el-card>
+          </el-col>
+        </el-row>
       
-      <!-- 空状态 -->
-      <div v-if="filteredActivities.length === 0" class="empty-state">
-        <el-empty description="暂无活动" />
-      </div>
+          <!-- 空状态 -->
+          <div v-if="filteredActivities.length === 0" class="empty-state">
+            <el-empty description="暂无活动" />
+          </div>
     </div>
 
     <!-- 悬浮创建按钮 -->
@@ -177,7 +191,6 @@
             placeholder="选择开始时间"
             format="YYYY-MM-DD HH:mm"
             value-format="YYYY-MM-DDTHH:mm:ss"
-            :disabled-date="disabledStartDate"
           />
         </el-form-item>
         
@@ -188,7 +201,6 @@
             placeholder="选择结束时间"
             format="YYYY-MM-DD HH:mm"
             value-format="YYYY-MM-DDTHH:mm:ss"
-            :disabled-date="disabledEndDate"
           />
         </el-form-item>
         
@@ -203,25 +215,12 @@
         <el-form-item label="所属社团" prop="clubId" v-if="userClubs.length > 0">
           <el-select v-model="activityForm.clubId" placeholder="请选择所属社团">
             <el-option 
-              v-for="club in userClubs.filter(c => ['干事', '副社长', '社长'].includes(c.myRole))" 
+              v-for="club in userClubs" 
               :key="club.id" 
               :label="club.name" 
               :value="club.id" 
             />
           </el-select>
-        </el-form-item>
-        
-        <el-form-item label="活动图片" prop="imageUrl">
-          <el-upload
-            class="avatar-uploader activity-upload-highlight"
-            action="/api/upload"
-            :show-file-list="false"
-            :on-success="(res) => handleImageSuccess(res, activityForm)"
-            :before-upload="beforeImageUpload"
-          >
-            <img v-if="activityForm.imageUrl" :src="getImageUrl(activityForm.imageUrl)" style="width: 100px; height: 100px; border-radius: 8px; border: 2px solid #409EFF; object-fit: cover; display: block; margin: 0 auto;" />
-            <i v-else class="el-icon-plus avatar-uploader-icon" style="font-size: 40px; color: #409EFF; width: 100px; height: 100px; line-height: 100px; text-align: center; border: 2px dashed #409EFF; border-radius: 8px; background: #f4faff; display: flex; align-items: center; justify-content: center; margin: 0 auto;"></i>
-          </el-upload>
         </el-form-item>
         
         <el-form-item v-if="userClubs.length === 0 && isLoggedIn">
@@ -251,15 +250,17 @@
     <el-dialog 
       v-model="showDetailDialog" 
       title="活动详情" 
-      width="420px"
+      width="700px"
     >
       <div v-if="selectedActivity" class="activity-detail">
         <div class="detail-header">
           <h2>{{ selectedActivity.title }}</h2>
+          <div class="detail-status" :class="getStatusClass(selectedActivity.applyStatus)">
+            {{ getStatusText(selectedActivity.applyStatus) }}
+          </div>
         </div>
         
         <div class="detail-content">
-          <img v-if="selectedActivity && selectedActivity.imageUrl" :src="getImageUrl(selectedActivity.imageUrl)" class="activity-img activity-img--dialog" />
           <p class="detail-description">{{ selectedActivity.description }}</p>
           
           <div class="detail-info">
@@ -276,8 +277,8 @@
               <span>{{ selectedActivity.currentParticipants || 0 }}/{{ selectedActivity.maxParticipants ? selectedActivity.maxParticipants : '∞' }}人</span>
             </div>
             <div class="info-row">
-              <span class="label">所属社团：</span>
-              <span>{{ getClubNameById(selectedActivity.clubId) }}</span>
+              <span class="label">创建时间：</span>
+              <span>{{ formatDateTime(selectedActivity.createdAt) }}</span>
             </div>
           </div>
         </div>
@@ -288,20 +289,44 @@
         </div>
         
         <div class="detail-actions" v-if="canEditActivity(selectedActivity)">
-          <el-button class="edit-activity-btn" @click="editActivity(selectedActivity)">编辑活动</el-button>
+          <el-button type="primary" @click="editActivity(selectedActivity)">编辑活动</el-button>
         </div>
         
-        <div class="detail-actions" v-if="isLoggedIn && selectedActivity.applyStatus === '通过'">
+        <div class="detail-actions" v-if="isLoggedIn && selectedActivity.applyStatus === '通过' && !canEditActivity(selectedActivity)">
           <el-button 
-            class="join-activity-btn"
-            v-if="!selectedActivity.isParticipating"
-            @click="joinActivityHandler(selectedActivity)"
-          >加入活动</el-button>
-          <el-button 
-            class="leave-activity-btn"
-            v-if="selectedActivity.isParticipating"
-            @click="leaveActivityHandler(selectedActivity)"
-          >退出活动</el-button>
+            :type="selectedActivity.isParticipating ? 'danger' : 'success'"
+            @click="selectedActivity.isParticipating ? leaveActivityHandler(selectedActivity) : joinActivityHandler(selectedActivity)"
+            :disabled="!canJoinActivity(selectedActivity)"
+          >
+            {{ selectedActivity.isParticipating ? '退出活动' : '加入活动' }}
+          </el-button>
+        </div>
+        
+        <!-- 如果活动状态不是"通过"，显示状态信息 -->
+        <div v-if="isLoggedIn && selectedActivity.applyStatus !== '通过'" class="detail-actions">
+          <el-alert
+            :title="`活动状态: ${getStatusText(selectedActivity.applyStatus)}`"
+            :description="selectedActivity.applyStatus === '待审核' ? '活动正在等待管理员审核，审核通过后才能加入' : '活动已被拒绝，无法加入'"
+            :type="selectedActivity.applyStatus === '待审核' ? 'warning' : 'error'"
+            show-icon
+            :closable="false"
+          />
+        </div>
+        
+        <!-- 如果用户是活动创建者，显示提示 -->
+        <div v-if="isLoggedIn && canEditActivity(selectedActivity)" class="detail-actions">
+          <el-alert
+            title="您是活动创建者"
+            description="您可以编辑和管理这个活动"
+            type="info"
+            show-icon
+            :closable="false"
+          />
+        </div>
+        
+        <!-- 调试信息：显示详情对话框中的按钮显示条件 -->
+        <div v-if="isLoggedIn" style="font-size: 10px; color: #999; margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px;">
+          调试信息: 登录={{isLoggedIn}}, 活动状态={{selectedActivity.applyStatus}}, 可编辑={{canEditActivity(selectedActivity)}}, 可加入={{canJoinActivity(selectedActivity)}}, 参与状态={{selectedActivity.isParticipating}}
         </div>
       </div>
     </el-dialog>
@@ -309,7 +334,7 @@
     <!-- 编辑活动对话框 -->
     <el-dialog 
       v-model="showEditDialog" 
-      title="编辑活动"
+      :title="`编辑活动 (ID: ${currentEditActivityId || '未知'})`" 
       width="600px"
     >
       <el-form 
@@ -362,19 +387,6 @@
             placeholder="不填表示人数不限"
           />
         </el-form-item>
-        
-        <el-form-item label="活动图片" prop="imageUrl">
-          <el-upload
-            class="avatar-uploader activity-upload-highlight"
-            action="/api/upload"
-            :show-file-list="false"
-            :on-success="(res) => handleImageSuccess(res, editForm)"
-            :before-upload="beforeImageUpload"
-          >
-            <img v-if="editForm.imageUrl" :src="getImageUrl(editForm.imageUrl)" style="width: 100px; height: 100px; border-radius: 8px; border: 2px solid #409EFF; object-fit: cover; display: block; margin: 0 auto;" />
-            <i v-else class="el-icon-plus avatar-uploader-icon" style="font-size: 40px; color: #409EFF; width: 100px; height: 100px; line-height: 100px; text-align: center; border: 2px dashed #409EFF; border-radius: 8px; background: #f4faff; display: flex; align-items: center; justify-content: center; margin: 0 auto;"></i>
-          </el-upload>
-        </el-form-item>
       </el-form>
       
       <template #footer>
@@ -384,6 +396,16 @@
     </el-dialog>
   </div>
 </template>
+
+<script>
+    export default{
+        methods:{
+            handle (){           
+                this.$router.push('/ActivitiesManagerView');
+            }
+        }
+    }
+</script>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
@@ -407,6 +429,8 @@ import {
 } from '@/api/activityApi'
 import request from '@/utils/request'
 
+
+
 // 响应式数据
 const activities = ref([])
 const searchKeyword = ref('')
@@ -419,7 +443,9 @@ const currentEditActivityId = ref(null)
 const activityFormRef = ref()
 const editFormRef = ref()
 const userClubs = ref([])
-const allClubs = ref([])
+
+
+
 
 // 活动表单
 const activityForm = ref({
@@ -429,8 +455,7 @@ const activityForm = ref({
   startTime: '',
   endTime: '',
   maxParticipants: null,
-  clubId: null,
-  imageUrl: ''
+  clubId: null
 })
 
 const editForm = ref({
@@ -440,8 +465,7 @@ const editForm = ref({
   startTime: '',
   endTime: '',
   maxParticipants: null,
-  clubId: null,
-  imageUrl: ''
+  clubId: null
 })
 
 // 表单验证规则
@@ -464,13 +488,6 @@ const isAdmin = computed(() => userInfo.value?.role === '系统管理员')
 const filteredActivities = computed(() => {
   let filtered = activities.value
 
-  // "我的活动"显示"待审核"和"通过"，其它只显示"通过"
-  if (activeTab.value === 'my') {
-    filtered = filtered.filter(activity => activity.applyStatus === '通过' || activity.applyStatus === '待审核')
-  } else {
-    filtered = filtered.filter(activity => activity.applyStatus === '通过')
-  }
-
   // 根据搜索关键词过滤
   if (searchKeyword.value) {
     filtered = filtered.filter(activity => 
@@ -479,30 +496,56 @@ const filteredActivities = computed(() => {
     )
   }
 
-  // "即将开始"标签页再过滤时间
+  // 如果是"即将开始"标签页，额外过滤开始时间在当前时间之后的活动
   if (activeTab.value === 'upcoming') {
     const now = new Date()
+    console.log('当前时间:', now.toISOString())
+    
     filtered = filtered.filter(activity => {
-      if (!activity.startTime) return false
+      if (!activity.startTime) {
+        console.log('活动缺少开始时间:', activity.title)
+        return false
+      }
+      
+      // 解析活动开始时间
       let startTime
       try {
+        // 处理不同的时间格式
         if (typeof activity.startTime === 'string') {
+          // 如果是字符串格式，尝试解析
           if (activity.startTime.includes('T')) {
+            // ISO格式: "2025-01-15T14:00:00"
             startTime = new Date(activity.startTime)
           } else if (activity.startTime.includes(' ')) {
+            // 数据库格式: "2025-01-15 14:00:00"
             startTime = new Date(activity.startTime.replace(' ', 'T'))
           } else {
+            // 其他格式
             startTime = new Date(activity.startTime)
           }
         } else {
+          // 如果已经是Date对象
           startTime = new Date(activity.startTime)
         }
-        if (isNaN(startTime.getTime())) return false
+        
+        // 检查解析是否成功
+        if (isNaN(startTime.getTime())) {
+          console.error('无法解析活动时间:', activity.startTime)
+          return false
+        }
+        
       } catch (error) {
+        console.error('解析活动时间失败:', activity.startTime, error)
         return false
       }
-      return startTime > now
+      
+      const isUpcoming = startTime > now
+      console.log(`活动 "${activity.title}" 开始时间:`, startTime.toISOString(), '是否在未来:', isUpcoming)
+      
+      return isUpcoming
     })
+    
+    console.log('即将开始的活动数量:', filtered.length)
   }
 
   return filtered
@@ -527,7 +570,8 @@ const fetchActivities = async () => {
           console.log('用户未登录，返回空列表')
           response = { data: { code: 0, data: [] } }
         }
-        break
+      break
+    
       case 'pending':
         if (isAdmin.value) {
           console.log('获取待审核活动')
@@ -581,18 +625,6 @@ const fetchUserClubs = async () => {
   }
 }
 
-// 获取所有社团列表
-const fetchAllClubs = async () => {
-  try {
-    const response = await request.get('/api/clubs/all')
-    if (response.data.code === 0) {
-      allClubs.value = response.data.data || []
-    }
-  } catch (e) {
-    allClubs.value = []
-  }
-}
-
 // 处理标签页切换
 const handleTabChange = () => {
   fetchActivities()
@@ -624,8 +656,7 @@ const editActivity = (activity) => {
     startTime: activity.startTime,
     endTime: activity.endTime,
     maxParticipants: activity.maxParticipants,
-    clubId: activity.clubId,
-    imageUrl: activity.imageUrl
+    clubId: activity.clubId
   }
   
   // 关闭详情对话框，打开编辑对话框
@@ -716,8 +747,7 @@ const submitActivity = async () => {
         startTime: '',
         endTime: '',
         maxParticipants: null,
-        clubId: null,
-        imageUrl: ''
+        clubId: null
       }
       fetchActivities()
     }
@@ -867,7 +897,6 @@ onMounted(async () => {
   if (isLoggedIn.value) {
     await fetchUserClubs()
   }
-  await fetchAllClubs()
 })
 
 // 提交编辑
@@ -918,11 +947,7 @@ const joinActivityHandler = async (activity) => {
       ElMessage.error('请先登录')
       return
     }
-    // 如果不是社团成员，弹窗但不跳转
-    if (!userClubs.value.find(c => c.id === activity.clubId)) {
-      ElMessage.error('您需要先加入对应社团！')
-      return
-    }
+    
     const response = await joinActivity(activity.id, userInfo.value.id)
     if (response.data.code === 0) {
       ElMessage.success('成功加入活动')
@@ -977,59 +1002,6 @@ const checkUserParticipation = async () => {
     }
   }
 }
-
-// 在<script setup>中添加图片上传相关方法
-const handleImageSuccess = (response, form) => {
-  // 兼容后端直接返回 {code, message, url}
-  const url = response.url || (response.data && response.data.url)
-  if (url) {
-    form.imageUrl = url
-    ElMessage.success('图片上传成功')
-  } else {
-    ElMessage.error('图片上传失败')
-  }
-}
-const beforeImageUpload = (file) => {
-  const isImage = file.type.startsWith('image/')
-  const isLt2M = file.size / 1024 / 1024 < 2
-  if (!isImage) {
-    ElMessage.error('只能上传图片文件!')
-  }
-  if (!isLt2M) {
-    ElMessage.error('图片大小不能超过 2MB!')
-  }
-  return isImage && isLt2M
-}
-
-// 在<script setup>中添加图片URL拼接方法
-const getImageUrl = (url) => {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  return 'http://localhost:8080' + url
-}
-
-function disabledStartDate(date) {
-  const now = new Date()
-  return date.getTime() < now.getTime() - 60000
-}
-function disabledEndDate(date) {
-  if (!activityForm.value.startTime) return false
-  return date.getTime() < new Date(activityForm.value.startTime).getTime()
-}
-
-// 修改 getClubNameById 方法
-const getClubNameById = (clubId) => {
-  // 1. 从 userClubs 查找
-  const club = userClubs.value.find(c => c.id === clubId)
-  if (club) return club.name
-  // 2. 从 activities 查找
-  const activity = activities.value.find(a => a.clubId === clubId && a.clubName)
-  if (activity) return activity.clubName
-  // 3. 从 allClubs 查找
-  const allClub = allClubs.value.find(c => c.id === clubId)
-  if (allClub) return allClub.name
-  return '未知社团'
-}
 </script>
 
 <style scoped>
@@ -1066,14 +1038,16 @@ const getClubNameById = (clubId) => {
   margin-bottom: 18px;
 }
 
+
+
+
 .activities-container {
   padding: 20px;
-  margin: 0 auto;
-  background: #fff;
+ //background: #87CEEB;
+
 }
 
 .page-header {
-  text-align: center;
   margin-bottom: 30px;
 }
 
@@ -1093,31 +1067,8 @@ const getClubNameById = (clubId) => {
 }
 
 .search-box {
+  width: 271px;
   margin-bottom: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 24px;
-}
-
-.search-box .el-input {
-  width: 600px;
-  border-radius: 24px;
-  box-shadow: 0 2px 12px rgba(64,158,255,0.10);
-  background: #fff;
-  height: 48px;
-  transition: box-shadow 0.2s;
-}
-
-.search-box .el-input input {
-  border-radius: 24px;
-  height: 48px;
-  font-size: 16px;
-  background: #fff;
-}
-
-.search-box .el-input.is-focus {
-  box-shadow: 0 4px 16px rgba(64,158,255,0.18);
 }
 
 .filter-tabs {
@@ -1134,7 +1085,6 @@ const getClubNameById = (clubId) => {
   transition: all 0.3s ease;
   border-radius: 8px;
   overflow: hidden;
-  position: relative;
 }
 
 .activity-card:hover {
@@ -1181,11 +1131,11 @@ const getClubNameById = (clubId) => {
 }
 
 .activity-content {
-  padding: 16px 12px 8px 12px;
+  margin-bottom: 15px;
 }
 
 .activity-title {
-  font-size: 25px;
+  font-size: 16px;
   font-weight: bold;
   color: #303133;
   margin-bottom: 8px;
@@ -1243,69 +1193,77 @@ const getClubNameById = (clubId) => {
 /* 活动详情样式 */
 .activity-detail {
   padding: 20px 0;
-  background: #fff;
+  background: #87CEEB;
 }
 
 .detail-header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
   border-bottom: 1px solid #e4e7ed;
-  background: #fff;
+  background: #87CEEB;
 }
 
 .detail-header h2 {
-  font-size: 20px;
+  margin: 0;
+  color: #303133;
+  background: #87CEEB;
+}
+
+.detail-status {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
   font-weight: bold;
-  margin-bottom: 8px;
-}
-
-.detail-content {
-  text-align: center;
-  padding: 8px 0 0 0;
-  background: #fff;
-}
-
-.activity-img.activity-img--dialog {
-  width: 360px;
-  height: 180px;
-  max-width: 100%;
-  margin: 0 auto 10px auto;
-  border-radius: 10px;
+  background: #87CEEB;
 }
 
 .detail-description {
+  font-size: 16px;
+  line-height: 1.6;
   color: #606266;
-  font-size: 14px;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
+  background: #87CEEB;
 }
 
 .detail-info {
-  text-align: center;
-  margin-top: 6px;
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  background: #87CEEB;
+
 }
 
 .info-row {
-  margin-bottom: 6px;
+  display: flex;
+  margin-bottom: 12px;
+  background: #87CEEB;
 }
 
-.label {
-  font-size: 13px;
+.info-row:last-child {
+  margin-bottom: 0;
+  background: #87CEEB;
+}
+
+.info-row .label {
   font-weight: bold;
-  margin-right: 6px;
+  color: #303133;
+  width: 100px;
+  flex-shrink: 0;
+  background: #87CEEB;
 }
 
 .detail-actions {
   margin-top: 20px;
   text-align: center;
-  background: #fff;
+  background: #87CEEB;
 }
 
 .detail-actions .el-button {
   margin: 0 10px;
-  background: #fff;
+  background: #87CEEB;
 }
 
 /* 编辑按钮样式 */
@@ -1346,115 +1304,9 @@ const getClubNameById = (clubId) => {
   }
 }
 
-.activity-img-wrapper {
-  width: 100%;
-  height: 120px;
-  margin-bottom: 8px;
-  overflow: hidden;
-  border-radius: 12px;
+.custom-button {
+  color: #FFFFFF; 
+  background-color: #409EFF; 
 }
 
-.activity-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  background: #f8f8f8;
-}
-
-.activity-img--dialog {
-  width: 320px;
-  height: 180px;
-  max-width: 90%;
-}
-
-.avatar-uploader {
-  display: inline-block;
-}
-
-.avatar-uploader-icon {
-  font-size: 28px;
-  color: #ffffff;
-  width: 100px;
-  height: 100px;
-  line-height: 100px;
-  text-align: center;
-  border: 1px dashed #ffffff;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.activity-content--bg {
-  position: relative;
-  overflow: hidden;
-  min-height: 160px;
-  padding: 10px 10px 6px 10px;
-  border-radius: 12px;
-}
-.activity-img-bg {
-  position: absolute;
-  left: 0; top: 0; width: 100%; height: 95%;
-  object-fit: cover;
-  z-index: 1;
-  filter: brightness(1);
-}
-.activity-content-inner {
-  position: relative;
-  z-index: 2;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0);
-  border-radius: 12px;
-  padding: 8px;
-}
-
-.activity-participants-badge {
-  position: absolute;
-  bottom: 16px;
-  left: 16px;
-  background: rgba(64,158,255,0.92);
-  color: #fff;
-  padding: 4px 12px;
-  border-radius: 16px;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  z-index: 10;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  gap: 4px;
-}
-
-.avatar-uploader.activity-upload-highlight {
-  border: 2px dashed #409EFF;
-  border-radius: 8px;
-  width: 104px;
-  height: 104px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f4faff;
-  margin-bottom: 8px;
-  transition: border-color 0.2s;
-}
-.avatar-uploader.activity-upload-highlight:hover {
-  border-color: #66b1ff;
-  background: #e6f7ff;
-}
-
-.detail-actions .el-button.edit-activity-btn {
-  background: #ffcc00 !important;
-  color: #222 !important;
-  border-color: #ffcc00 !important;
-}
-.detail-actions .el-button.join-activity-btn {
-  background: #409EFF !important;
-  color: #fff !important;
-  border-color: #409EFF !important;
-}
-.detail-actions .el-button.leave-activity-btn {
-  background: #f56c6c !important;
-  color: #fff !important;
-  border-color: #f56c6c !important;
-}
 </style>
