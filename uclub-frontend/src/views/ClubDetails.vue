@@ -150,14 +150,13 @@ const fetchClub = async (id) => {
       if (Array.isArray(data.activities)) {
         console.log('处理活动数据，原始活动数量:', data.activities.length)
         data.activities = data.activities.map(activity => {
-          console.log('处理单个活动:', activity)
           return {
             id: activity.id,
             title: activity.title,
+            imageUrl: activity.imageUrl || activity.img || DEFAULT_IMG,
             date: activity.startTime ? new Date(activity.startTime).toLocaleString('zh-CN') : '时间待定',
             place: activity.location || '地点待定',
             people: 0, // 暂时设为0，后续可以从后端获取实际参与人数
-            img: activity.img || DEFAULT_IMG,
             description: activity.description,
             startTime: activity.startTime,
             endTime: activity.endTime,
@@ -411,9 +410,9 @@ const handleEditSubmit = () => {
 }
 
 const getImageUrl = (url) => {
-  if (url && url.startsWith('/uploads/')) {
-    return 'http://localhost:8080' + url
-  }
+  if (!url) return '/logo.png'
+  if (url.startsWith('http')) return url
+  if (url.startsWith('/uploads/')) return 'http://localhost:8080' + url
   return url
 }
 
@@ -620,7 +619,9 @@ watch(
           <el-row :gutter="24">
             <el-col :span="8" v-for="activity in club.activities" :key="activity.id">
               <el-card class="activity-card">
-                <img :src="activity.img || '/logo.png'" class="activity-img" />
+                <div class="activity-img-wrapper">
+                  <img v-if="activity.imageUrl" :src="getImageUrl(activity.imageUrl)" class="activity-img" />
+                </div>
                 <div class="activity-info">
                   <div class="activity-title">{{ activity.title }}</div>
                   <div class="activity-description">{{ activity.description }}</div>
@@ -824,7 +825,22 @@ watch(
 .tab-content { padding: 0 20px 20px; }
 .activity-card { border-radius: 10px; overflow: hidden; transition: transform 0.3s ease; }
 .activity-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.activity-img { width: 100%; height: 120px; object-fit: cover; }
+.activity-img-wrapper {
+  width: 100%;
+  height: 120px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.activity-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  background: #f8f8f8;
+}
 .activity-title { font-size: 16px; font-weight: bold; margin: 8px 0; color: #303133; }
 .activity-description { color: #909399; font-size: 13px; margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .activity-meta { color: #909399; font-size: 13px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }

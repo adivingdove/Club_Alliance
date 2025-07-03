@@ -238,66 +238,14 @@ public class ActivityController {
     
     @PostMapping
     public Result<ClubActivity> createActivity(@RequestBody ClubActivity activity) {
-        try {
-            System.out.println("收到创建活动请求，数据: " + activity);
-            
-            // 验证必需字段
-            if (activity.getTitle() == null || activity.getTitle().trim().isEmpty()) {
-                return Result.error("活动标题不能为空");
-            }
-            if (activity.getClubId() == null) {
-                return Result.error("社团ID不能为空");
-            }
-            if (activity.getCreatorId() == null) {
-                return Result.error("创建者ID不能为空");
-            }
-            if (activity.getStartTime() == null) {
-                return Result.error("开始时间不能为空");
-            }
-            if (activity.getEndTime() == null) {
-                return Result.error("结束时间不能为空");
-            }
-            
-            ClubActivity createdActivity = clubActivityService.createActivity(activity);
-            System.out.println("活动创建成功，ID: " + createdActivity.getId());
-            return Result.success(createdActivity);
-        } catch (Exception e) {
-            System.err.println("创建活动失败: " + e.getMessage());
-            e.printStackTrace();
-            return Result.error("创建活动失败: " + e.getMessage());
-        }
+        ClubActivity created = clubActivityService.createActivity(activity);
+        return Result.success(created);
     }
     
     @PutMapping("/{id}")
     public Result<ClubActivity> updateActivity(@PathVariable Integer id, @RequestBody ClubActivity activity) {
-        try {
-            System.out.println("收到更新活动请求，ID: " + id + ", 数据: " + activity);
-            
-            // 验证必需字段
-            if (activity.getTitle() == null || activity.getTitle().trim().isEmpty()) {
-                return Result.error("活动标题不能为空");
-            }
-            if (activity.getStartTime() == null) {
-                return Result.error("开始时间不能为空");
-            }
-            if (activity.getEndTime() == null) {
-                return Result.error("结束时间不能为空");
-            }
-            
-            // 检查活动是否存在
-            Optional<ClubActivity> existingActivity = clubActivityService.getActivityById(id);
-            if (existingActivity.isEmpty()) {
-                return Result.error("活动不存在");
-            }
-            
-            ClubActivity updatedActivity = clubActivityService.updateActivity(id, activity);
-            System.out.println("活动更新成功，ID: " + updatedActivity.getId());
-            return Result.success(updatedActivity);
-        } catch (Exception e) {
-            System.err.println("更新活动失败: " + e.getMessage());
-            e.printStackTrace();
-            return Result.error("更新活动失败: " + e.getMessage());
-        }
+        ClubActivity updated = clubActivityService.updateActivity(id, activity);
+        return Result.success(updated);
     }
     
     @DeleteMapping("/{id}")
@@ -418,7 +366,7 @@ public class ActivityController {
         }
     }
 
-    // 获取所有“历史记录”类型的活动（非待审核）
+    // 获取所有"历史记录"类型的活动（非待审核）
     @GetMapping("/history")
     public Result<List<Map<String, Object>>> getHistoryActivities() {
         List<ClubActivity> activities = clubActivityService.getHistoryActivities();

@@ -65,6 +65,10 @@
             :class="{ 'pending': activity.applyStatus === '待审核' }"
             @click="viewActivityDetail(activity)"
           >
+            <div class="activity-participants-badge">
+              <i class="el-icon-user"></i>
+              <span>{{ activity.currentParticipants || 0 }}/{{ activity.maxParticipants ? activity.maxParticipants : '∞' }}人</span>
+            </div>
             <div class="activity-header">
               <div class="activity-status" :class="getStatusClass(activity.applyStatus)">
                 {{ getStatusText(activity.applyStatus) }}
@@ -75,22 +79,9 @@
               </div>
             </div>
             
-            <div class="activity-content">
-              <h3 class="activity-title">{{ activity.title }}</h3>
-              <p class="activity-description">{{ activity.description }}</p>
-              
-              <div class="activity-info">
-                <div class="info-item">
-                  <i class="el-icon-location"></i>
-                  <span>{{ activity.location || '地点待定' }}</span>
-                </div>
-                <div class="info-item">
-                  <i class="el-icon-user"></i>
-                  <span>
-                    {{ activity.currentParticipants || 0 }}/{{ activity.maxParticipants ? activity.maxParticipants : '∞' }}人
-                  </span>
-                </div>
-              </div>
+            <div class="activity-content activity-content--bg">
+              <h3 class="activity-title" style="margin-top: 0; margin-bottom: 4px; text-align: center; position: relative; z-index: 3;">{{ activity.title }}</h3>
+              <img v-if="activity.imageUrl" :src="getImageUrl(activity.imageUrl)" class="activity-img-bg" />
             </div>
             
             <div class="activity-footer">
@@ -218,6 +209,19 @@
           </el-select>
         </el-form-item>
         
+        <el-form-item label="活动图片" prop="imageUrl">
+          <el-upload
+            class="avatar-uploader"
+            action="/api/upload"
+            :show-file-list="false"
+            :on-success="(res) => handleImageSuccess(res, activityForm)"
+            :before-upload="beforeImageUpload"
+          >
+            <img v-if="activityForm.imageUrl" :src="getImageUrl(activityForm.imageUrl)" class="activity-img activity-img--dialog" />
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+          </el-upload>
+        </el-form-item>
+        
         <el-form-item v-if="userClubs.length === 0 && isLoggedIn">
           <el-alert
             title="您还没有创建任何社团"
@@ -256,6 +260,7 @@
         </div>
         
         <div class="detail-content">
+          <img v-if="selectedActivity && selectedActivity.imageUrl" :src="getImageUrl(selectedActivity.imageUrl)" class="activity-img activity-img--dialog" />
           <p class="detail-description">{{ selectedActivity.description }}</p>
           
           <div class="detail-info">
@@ -270,10 +275,6 @@
             <div class="info-row">
               <span class="label">参与人数：</span>
               <span>{{ selectedActivity.currentParticipants || 0 }}/{{ selectedActivity.maxParticipants ? selectedActivity.maxParticipants : '∞' }}人</span>
-            </div>
-            <div class="info-row">
-              <span class="label">创建时间：</span>
-              <span>{{ formatDateTime(selectedActivity.createdAt) }}</span>
             </div>
           </div>
         </div>
@@ -366,6 +367,19 @@
             placeholder="不填表示人数不限"
           />
         </el-form-item>
+        
+        <el-form-item label="活动图片" prop="imageUrl">
+          <el-upload
+            class="avatar-uploader"
+            action="/api/upload"
+            :show-file-list="false"
+            :on-success="(res) => handleImageSuccess(res, editForm)"
+            :before-upload="beforeImageUpload"
+          >
+            <img v-if="editForm.imageUrl" :src="getImageUrl(editForm.imageUrl)" class="activity-img activity-img--dialog" />
+            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+          </el-upload>
+        </el-form-item>
       </el-form>
       
       <template #footer>
@@ -419,7 +433,8 @@ const activityForm = ref({
   startTime: '',
   endTime: '',
   maxParticipants: null,
-  clubId: null
+  clubId: null,
+  imageUrl: ''
 })
 
 const editForm = ref({
@@ -429,7 +444,8 @@ const editForm = ref({
   startTime: '',
   endTime: '',
   maxParticipants: null,
-  clubId: null
+  clubId: null,
+  imageUrl: ''
 })
 
 // 表单验证规则
@@ -600,7 +616,8 @@ const editActivity = (activity) => {
     startTime: activity.startTime,
     endTime: activity.endTime,
     maxParticipants: activity.maxParticipants,
-    clubId: activity.clubId
+    clubId: activity.clubId,
+    imageUrl: activity.imageUrl
   }
   
   // 关闭详情对话框，打开编辑对话框
@@ -691,7 +708,8 @@ const submitActivity = async () => {
         startTime: '',
         endTime: '',
         maxParticipants: null,
-        clubId: null
+        clubId: null,
+        imageUrl: ''
       }
       fetchActivities()
     }
@@ -946,6 +964,36 @@ const checkUserParticipation = async () => {
     }
   }
 }
+
+// 在<script setup>中添加图片上传相关方法
+const handleImageSuccess = (response, form) => {
+  // 兼容后端直接返回 {code, message, url}
+  const url = response.url || (response.data && response.data.url)
+  if (url) {
+    form.imageUrl = url
+    ElMessage.success('图片上传成功')
+  } else {
+    ElMessage.error('图片上传失败')
+  }
+}
+const beforeImageUpload = (file) => {
+  const isImage = file.type.startsWith('image/')
+  const isLt2M = file.size / 1024 / 1024 < 2
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件!')
+  }
+  if (!isLt2M) {
+    ElMessage.error('图片大小不能超过 2MB!')
+  }
+  return isImage && isLt2M
+}
+
+// 在<script setup>中添加图片URL拼接方法
+const getImageUrl = (url) => {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return 'http://localhost:8080' + url
+}
 </script>
 
 <style scoped>
@@ -1051,6 +1099,7 @@ const checkUserParticipation = async () => {
   transition: all 0.3s ease;
   border-radius: 8px;
   overflow: hidden;
+  position: relative;
 }
 
 .activity-card:hover {
@@ -1097,11 +1146,11 @@ const checkUserParticipation = async () => {
 }
 
 .activity-content {
-  margin-bottom: 15px;
+  padding: 16px 12px 8px 12px;
 }
 
 .activity-title {
-  font-size: 16px;
+  font-size: 25px;
   font-weight: bold;
   color: #303133;
   margin-bottom: 8px;
@@ -1164,7 +1213,7 @@ const checkUserParticipation = async () => {
 
 .detail-header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
@@ -1176,6 +1225,8 @@ const checkUserParticipation = async () => {
   margin: 0;
   color: #303133;
   background: #87CEEB;
+  font-size: 2rem;
+  text-align: center;
 }
 
 .detail-status {
@@ -1184,6 +1235,24 @@ const checkUserParticipation = async () => {
   font-size: 14px;
   font-weight: bold;
   background: #87CEEB;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #87CEEB;
+}
+
+.detail-content .activity-img {
+  display: block;
+  margin: 0 auto 18px auto;
+  border-radius: 12px;
+  width: 800px;
+  height: 260px;
+  object-fit: cover;
 }
 
 .detail-description {
@@ -1192,6 +1261,7 @@ const checkUserParticipation = async () => {
   color: #606266;
   margin-bottom: 20px;
   background: #87CEEB;
+  text-align: center;
 }
 
 .detail-info {
@@ -1199,17 +1269,16 @@ const checkUserParticipation = async () => {
   padding: 20px;
   border-radius: 8px;
   background: #87CEEB;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .info-row {
   display: flex;
   margin-bottom: 12px;
   background: #87CEEB;
-}
-
-.info-row:last-child {
-  margin-bottom: 0;
-  background: #87CEEB;
+  justify-content: center;
 }
 
 .info-row .label {
@@ -1218,6 +1287,7 @@ const checkUserParticipation = async () => {
   width: 100px;
   flex-shrink: 0;
   background: #87CEEB;
+  text-align: right;
 }
 
 .detail-actions {
@@ -1267,5 +1337,84 @@ const checkUserParticipation = async () => {
     width: 50px;
     height: 50px;
   }
+}
+
+.activity-img-wrapper {
+  width: 100%;
+  height: 120px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.activity-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  background: #f8f8f8;
+}
+
+.activity-img--dialog {
+  width: 320px;
+  height: 180px;
+  max-width: 90%;
+}
+
+.avatar-uploader {
+  display: inline-block;
+}
+
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #ffffff;
+  width: 100px;
+  height: 100px;
+  line-height: 100px;
+  text-align: center;
+  border: 1px dashed #ffffff;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.activity-content--bg {
+  position: relative;
+  overflow: hidden;
+  min-height: 160px;
+  padding: 10px 10px 6px 10px;
+  border-radius: 12px;
+}
+.activity-img-bg {
+  position: absolute;
+  left: 0; top: 0; width: 100%; height: 95%;
+  object-fit: cover;
+  z-index: 1;
+  filter: brightness(1);
+}
+.activity-content-inner {
+  position: relative;
+  z-index: 2;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0);
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.activity-participants-badge {
+  position: absolute;
+  bottom: 42px;
+  left: 16px;
+  background: rgba(64,158,255,0.92);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  gap: 4px;
 }
 </style>

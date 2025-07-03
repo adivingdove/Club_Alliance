@@ -111,6 +111,7 @@ public class ClubActivityService {
         activityToUpdate.setEndTime(activity.getEndTime());
         activityToUpdate.setMaxParticipants(activity.getMaxParticipants());
         activityToUpdate.setApplyStatus(activity.getApplyStatus());
+        activityToUpdate.setImageUrl(activity.getImageUrl());
         
         return clubActivityRepository.save(activityToUpdate);
     }
