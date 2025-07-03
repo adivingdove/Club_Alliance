@@ -35,7 +35,7 @@
   <div v-if="hotComments.length">
     <div v-for="comment in hotComments" :key="comment.id" class="hot-comment-item">
       <div class="hot-comment-user">
-        <el-avatar :src="getUserAvatar(comment.user?.avatarUrl)" :size="30" />
+        <el-avatar :src="getUserAvatar(comment.user?.headUrl)" :size="30" />
         <span class="nickname">{{ comment.user?.nickname || '匿名用户' }}</span>
         <span class="likes">👍 {{ comment.likeCount }}</span>
       </div>
@@ -117,7 +117,8 @@ async function fetchHotClubs() {
   }
 }
 function getUserAvatar(url) {
-  return url ? url : "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
+  const baseUrl = "http://localhost:8080"; 
+  return url ? baseUrl + url : "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png";
 }
 
 onMounted(() => {
