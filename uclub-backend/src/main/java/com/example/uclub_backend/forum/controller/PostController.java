@@ -184,7 +184,7 @@ public ResponseEntity<Map<String, Object>> toggleLike(@PathVariable Long id, @Re
     
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deletePost(@PathVariable Long id, @RequestParam Long userId) {
+    public ResponseEntity<?> deletePost(@PathVariable Long id, @RequestParam Integer userId) {
         try {
             postService.deletePostById(id, userId);
             return ResponseEntity.ok(Map.of("code", 200, "message", "删除成功"));

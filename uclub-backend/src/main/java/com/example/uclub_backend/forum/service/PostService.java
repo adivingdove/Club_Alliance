@@ -1,7 +1,10 @@
 package com.example.uclub_backend.forum.service;
+import com.example.uclub_backend.entity.User;
 import com.example.uclub_backend.forum.entity.Post;
 import com.example.uclub_backend.forum.repository.ForumClubRepository;
 import com.example.uclub_backend.forum.repository.PostRepository;
+import com.example.uclub_backend.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +19,9 @@ import java.util.Map;
 public class PostService {
     private final PostRepository postRepository;
     private final ForumClubRepository forumClubRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public PostService(PostRepository postRepository, ForumClubRepository forumClubRepository) {
         this.postRepository = postRepository;
@@ -96,11 +102,16 @@ Page<Post> postPage = postRepository.findByFiltersWithClubName(
     }
 
     //  删除
-    public void deletePostById(Long id, Long userId) {
+    public void deletePostById(Long id, Integer userId) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("帖子不存在"));
 
-        if (!post.getUserId().equals(userId)) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        System.out.println("当前用户的角色为："+user.getRole());
+
+        if (!post.getUserId().equals(userId) && user.getRole() != User.UserRole.系统管理员) {
             throw new IllegalArgumentException("无权限删除该帖子");
         }
 

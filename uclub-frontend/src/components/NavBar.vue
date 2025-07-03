@@ -529,6 +529,12 @@ const checkLoginStatus = () => {
     try {
       const user = JSON.parse(userStr)
       store.dispatch('login', user)
+
+      if(user.role === '系统管理员'){
+        router.push('/admin/club-list') // 跳转到管理员页面
+      }else{
+        router.push('/') // 跳转到首页
+      }
     } catch (error) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
