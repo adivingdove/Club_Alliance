@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.*;
-
+import org.springframework.lang.NonNull;
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
@@ -19,7 +19,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     // 配置客户端连接入口
 @Override
-public void registerStompEndpoints(StompEndpointRegistry registry) {
+public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
     registry.addEndpoint("/ws-chat")
             .setHandshakeHandler(new CustomPrincipalHandshakeHandler())  //  设置 Principal
             .addInterceptors(new WebSocketHandshakeInterceptor(tokenManager))
@@ -31,14 +31,14 @@ public void registerStompEndpoints(StompEndpointRegistry registry) {
 
     // 配置消息代理（订阅/发布前缀）
     @Override
-    public void configureMessageBroker(MessageBrokerRegistry registry) {
+    public void configureMessageBroker(@NonNull MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic");
         registry.setApplicationDestinationPrefixes("/app");
     }
 
     // 注册自定义拦截器处理 CONNECT 请求中的 token
     @Override
-    public void configureClientInboundChannel(ChannelRegistration registration) {
+    public void configureClientInboundChannel(@NonNull ChannelRegistration registration) {
         registration.interceptors(new TokenChannelInterceptor(tokenManager));
     }
 }
