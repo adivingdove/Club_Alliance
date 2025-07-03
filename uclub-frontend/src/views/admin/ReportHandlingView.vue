@@ -25,24 +25,41 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="showDetail" title="举报详情" width="50%">
-      <div v-if="selectedReport">
-        <div><strong>举报ID：</strong>{{ selectedReport.id }}</div>
-        <div><strong>举报人ID：</strong>{{ selectedReport.reporterId }}</div>
-        <div><strong>目标类型：</strong>{{ selectedReport.targetType }}</div>
-        <div><strong>目标ID：</strong>{{ selectedReport.targetId }}</div>
-        <div><strong>帖子ID：</strong>{{selectedReport.postId}}</div>
-        <div><strong>目标链接：</strong>
-          <a v-if="selectedReport.targetType === '帖子'" :href="`/post/${selectedReport.targetId}`" target="_blank">查看帖子</a>
-          <a v-else-if="selectedReport.targetType === '评论'" :href="`/post/${selectedReport.postId}#comment/${selectedReport.targetId}`" target="_blank">查看评论</a>
-          <span v-else>无链接</span>
-        </div>
-        <div><strong>举报原因：</strong>{{ selectedReport.reason }}</div>
-        <div><strong>状态：</strong>{{ selectedReport.status }}</div>
-        <div><strong>创建时间：</strong>{{ formatTime(selectedReport.createdAt) }}</div>
-      </div>
-      <div v-else>加载中...</div>
-    </el-dialog>
+    <el-dialog v-model="showDetail" title="📋 举报详情" width="600px" class="report-dialog">
+  <div v-if="selectedReport" class="report-detail">
+    <div class="report-row"><span class="label">举报人昵称：</span><span class="value">{{ selectedReport.reporter.nickname }}</span></div>
+    <div class="report-row"><span class="label">被举报人昵称：</span><span class="value">{{ selectedReport.reportedUser.nickname }}</span></div>
+    <div class="report-row"><span class="label">举报原因：</span><span>{{ selectedReport.reason }}</span></div>
+    <div class="report-row"><span class="label">举报类型：</span>{{ selectedReport.targetType }}</div>
+
+    <div class="report-row">
+      <span class="label">举报链接：</span>
+      <a
+        v-if="selectedReport.targetType === '帖子'"
+        :href="`/post/${selectedReport.targetId}`"
+        class="link-btn"
+        target="_blank"
+      >查看帖子</a>
+
+      <a
+        v-else-if="selectedReport.targetType === '评论'"
+        :href="`/post/${selectedReport.postId}#comment/${selectedReport.targetId}`"
+        class="link-btn"
+        target="_blank"
+      >查看评论</a>
+
+      <span v-else class="value">无链接</span>
+    </div>
+
+    <div class="report-row"><span class="label">举报原因：</span>{{ selectedReport.reason }}</div>
+    <div class="report-row"><span class="label">状态：</span>
+      <el-tag :type="selectedReport.status === '待处理' ? 'warning' : 'success'">{{ selectedReport.status }}</el-tag>
+    </div>
+    <div class="report-row"><span class="label">创建时间：</span>{{ formatTime(selectedReport.createdAt) }}</div>
+  </div>
+  <div v-else>加载中...</div>
+</el-dialog>
+
 
   </div>
 </template>
@@ -76,8 +93,8 @@ const viewDetail = async (report) => {
 
   try {
     const res = await axios.get(`/report/${report.id}`)
-    console.log('完整响应:', res) // 这里的 res 就是数据对象
-    selectedReport.value = res     // 直接赋值
+    console.log('完整响应:', res) 
+    selectedReport.value = res  
   } catch (error) {
     showDetail.value = false
     if (error.response) {
@@ -110,4 +127,43 @@ onMounted(fetchReports)
   justify-content: flex-start;
   margin-bottom: 1rem;
 }
+
+.report-dialog .report-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 4px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.report-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.label {
+  font-weight: 600;
+  color: #606266;
+  width: 120px;
+  min-width: 120px;
+}
+
+.value {
+  color: #409EFF;
+  font-weight: 500;
+}
+
+.link-btn {
+  color: #409EFF;
+  text-decoration: underline;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.link-btn:hover {
+  color: #66b1ff;
+}
+
 </style>

@@ -74,14 +74,10 @@
 <script>
 import { ref } from 'vue';
 import axios from 'axios';
-import VerifyPasswordDialog from '@/views/admin/VerifyPasswordDialog.vue';
 import dayjs from 'dayjs'
 
 export default {
   name: 'UserQueryView',
-  components: {
-    VerifyPasswordDialog
-  },
   data() {
   return {
     formData: {

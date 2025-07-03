@@ -494,10 +494,10 @@ const fetchApplications = async () => {
   if (!club.value.id || !user.value.id) return
   const res = await request.get(`/api/clubs/applications`, { params: { creatorId: user.value.id } })
   if (res.data.code === 0) {
-    // 只保留当前社团的申请
+    // 只保留当前社团的待审核申请
     const all = res.data.data
-    const clubApplications = all[club.value.id] || []
-    applications.value = clubApplications
+    const clubPending = (all.pending || []).filter(app => app.clubId === club.value.id)
+    applications.value = clubPending
   } else {
     applications.value = []
   }
@@ -517,7 +517,7 @@ const removeMember = async (member) => {
 const approveApplication = async (app) => {
   try {
     const clubId = club.value.id
-    await request.post(`/api/clubs/${clubId}/applications/${app.id}/approve`)
+    await request.put(`/api/clubs/applications/${app.id}/approve`, { creatorId: user.value.id })
     ElMessage.success('已同意')
     fetchApplications()
     fetchClub(clubId)
@@ -527,8 +527,7 @@ const approveApplication = async (app) => {
 }
 const rejectApplication = async (app) => {
   try {
-    const clubId = club.value.id
-    await request.post(`/api/clubs/${clubId}/applications/${app.id}/reject`)
+    await request.put(`/api/clubs/applications/${app.id}/reject`, { creatorId: user.value.id })
     ElMessage.success('已拒绝')
     fetchApplications()
   } catch (e) {
@@ -543,6 +542,25 @@ watch(
   },
   { immediate: false }
 )
+
+const mutedMembers = ref([])
+
+const toggleMute = (member) => {
+  const idx = mutedMembers.value.indexOf(member.userId)
+  if (idx === -1) {
+    mutedMembers.value.push(member.userId)
+    ElMessage.info(`${member.name} 已被禁言`)
+  } else {
+    mutedMembers.value.splice(idx, 1)
+    ElMessage.success(`${member.name} 已解除禁言`)
+  }
+}
+
+// 排序函数：社长 > 副社长 > 干事 > 成员
+const roleOrder = { '社长': 1, '副社长': 2, '干事': 3, '成员': 4 }
+const sortedMembers = computed(() => {
+  return (club.value.members || []).slice().sort((a, b) => (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99))
+})
 </script>
 
 <template>
@@ -649,7 +667,7 @@ watch(
         <!-- 成员列表 -->
         <div v-if="activeTab === 'members'" class="tab-content">
           <el-row :gutter="16">
-            <el-col :span="4" v-for="member in club.members" :key="member.userId">
+            <el-col :span="4" v-for="member in sortedMembers" :key="member.userId">
               <el-card class="member-card">
                 <img :src="member.avatar || '/logo.png'" class="member-avatar" />
                 <div class="member-name">{{ member.name }}</div>
@@ -671,7 +689,7 @@ watch(
         <div v-if="activeTab === 'manage'" class="tab-content">
           <el-tabs v-model="manageTab" style="margin-bottom: 20px;">
             <el-tab-pane label="成员管理" name="members">
-              <el-table :data="club.members" style="width: 100%">
+              <el-table :data="sortedMembers" style="width: 100%">
                 <el-table-column prop="name" label="昵称" />
                 <el-table-column prop="role" label="角色">
                   <template #default="{ row }">
@@ -679,14 +697,16 @@ watch(
                       <el-option label="成员" value="成员" />
                       <el-option label="干事" value="干事" />
                       <el-option label="副社长" value="副社长" />
-                      <el-option label="社长" value="社长" />
                     </el-select>
                   </template>
                 </el-table-column>
                 <el-table-column prop="joinedAt" label="加入时间" />
                 <el-table-column label="操作">
                   <template #default="{ row }">
-                    <el-button v-if="row.role !== '社长'" type="danger" size="small" @click="removeMember(row)">移除</el-button>
+                    <el-button v-if="row.role !== '社长'" type="danger" size="small" @click="removeMember(row)">踢出社团</el-button>
+                    <el-button type="warning" size="small" @click="toggleMute(row)">
+                      {{ mutedMembers.includes(row.userId) ? '解除禁言' : '禁言' }}
+                    </el-button>
                     <el-button v-if="isPresident && row.role !== '社长'" type="primary" size="small" @click="transferPresident(row)">转让社长</el-button>
                   </template>
                 </el-table-column>
@@ -694,9 +714,11 @@ watch(
             </el-tab-pane>
             <el-tab-pane label="申请管理" name="applications">
               <el-table :data="applications" style="width: 100%">
-                <el-table-column prop="nickname" label="申请人" />
-                <el-table-column prop="applyTime" label="申请时间" />
+                <el-table-column prop="applicantName" label="申请人" />
+                <el-table-column prop="applicantInfo" label="信息" />
                 <el-table-column prop="reason" label="理由" />
+                <el-table-column prop="appliedAt" label="申请时间" />
+                <el-table-column prop="status" label="状态" />
                 <el-table-column label="操作">
                   <template #default="{ row }">
                     <el-button type="success" size="small" @click="approveApplication(row)">同意</el-button>

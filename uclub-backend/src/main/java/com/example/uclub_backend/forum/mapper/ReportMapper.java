@@ -3,6 +3,7 @@ import com.example.uclub_backend.forum.entity.Report;
 import com.example.uclub_backend.forum.entity.ReportStatus;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
@@ -35,4 +36,7 @@ public interface ReportMapper {
 
     // 删除举报
     void deleteReportById(Long id);
+
+    @Select("SELECT * FROM report WHERE id = #{id}")
+    Report selectById(Long id);
 }

@@ -21,17 +21,6 @@
           </el-menu-item>
         </el-sub-menu>
 
-        <el-sub-menu index="2">
-          <template #title>
-            <el-icon><Lock /></el-icon>
-            <span v-if="!collapsed">权限管理</span>
-          </template>
-          <el-menu-item index="/admin/club-admin">
-            <el-icon><UserFilled /></el-icon>
-            <span v-if="!collapsed">社团管理员管理</span>
-          </el-menu-item>
-        </el-sub-menu>
-
         <el-sub-menu index="3">
           <template #title>
             <el-icon><User /></el-icon>
@@ -51,11 +40,6 @@
           <el-menu-item index="/admin/system-announcement">
             <el-icon><Edit /></el-icon>
             <span v-if="!collapsed">系统公告发布</span>
-          </el-menu-item>
-
-          <el-menu-item index="/admin/club-announcement-review">
-            <el-icon><Document /></el-icon>
-            <span v-if="!collapsed">社团公告审核</span>
           </el-menu-item>
         </el-sub-menu>
 
@@ -93,10 +77,6 @@
           <el-menu-item index="/admin/post-admin">
             <el-icon><Edit /></el-icon>
             <span v-if="!collapsed">帖子管理</span>
-          </el-menu-item>
-          <el-menu-item index="/admin/comment-admin">
-            <el-icon><Document /></el-icon>
-            <span v-if="!collapsed">评论管理</span>
           </el-menu-item>
         </el-sub-menu>
       </el-menu>
