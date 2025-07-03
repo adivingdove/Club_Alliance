@@ -231,7 +231,7 @@
     <!-- 创建活动对话框 -->
     <el-dialog 
       v-model="showCreateActivityDialog" 
-      title="发布活动" 
+      title="创建活动" 
       width="600px"
       :close-on-click-modal="false"
     >
@@ -244,7 +244,6 @@
         <el-form-item label="活动标题" prop="title">
           <el-input v-model="activityForm.title" placeholder="请输入活动标题" />
         </el-form-item>
-        
         <el-form-item label="活动描述" prop="description">
           <el-input 
             v-model="activityForm.description" 
@@ -253,11 +252,9 @@
             placeholder="请输入活动描述"
           />
         </el-form-item>
-        
         <el-form-item label="活动地点" prop="location">
           <el-input v-model="activityForm.location" placeholder="请输入活动地点" />
         </el-form-item>
-        
         <el-form-item label="开始时间" prop="startTime">
           <el-date-picker
             v-model="activityForm.startTime"
@@ -265,9 +262,9 @@
             placeholder="选择开始时间"
             format="YYYY-MM-DD HH:mm"
             value-format="YYYY-MM-DDTHH:mm:ss"
+            :disabled-date="disabledStartDate"
           />
         </el-form-item>
-        
         <el-form-item label="结束时间" prop="endTime">
           <el-date-picker
             v-model="activityForm.endTime"
@@ -275,9 +272,9 @@
             placeholder="选择结束时间"
             format="YYYY-MM-DD HH:mm"
             value-format="YYYY-MM-DDTHH:mm:ss"
+            :disabled-date="disabledEndDate"
           />
         </el-form-item>
-        
         <el-form-item label="最大人数" prop="maxParticipants">
           <el-input-number 
             v-model="activityForm.maxParticipants" 
@@ -285,19 +282,29 @@
             placeholder="不填表示人数不限"
           />
         </el-form-item>
-        
         <el-form-item label="所属社团" prop="clubId">
           <el-select v-model="activityForm.clubId" placeholder="请选择所属社团">
             <el-option 
-              v-for="club in clubList" 
+              v-for="club in clubList.filter(c => ['干事', '副社长', '社长'].includes(c.myRole))" 
               :key="club.id" 
               :label="club.name" 
               :value="club.id" 
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="活动图片" prop="imageUrl">
+          <el-upload
+            class="avatar-uploader activity-upload-highlight"
+            action="/api/upload"
+            :show-file-list="false"
+            :on-success="(res) => handleImageSuccess(res, activityForm)"
+            :before-upload="beforeImageUpload"
+          >
+            <img v-if="activityForm.imageUrl" :src="getImageUrl(activityForm.imageUrl)" style="width: 100px; height: 100px; border-radius: 8px; border: 2px solid #409EFF; object-fit: cover; display: block; margin: 0 auto;" />
+            <i v-else class="el-icon-plus avatar-uploader-icon" style="font-size: 40px; color: #409EFF; width: 100px; height: 100px; line-height: 100px; text-align: center; border: 2px dashed #409EFF; border-radius: 8px; background: #f4faff; display: flex; align-items: center; justify-content: center; margin: 0 auto;"></i>
+          </el-upload>
+        </el-form-item>
       </el-form>
-      
       <template #footer>
         <el-button @click="showCreateActivityDialog = false">取消</el-button>
         <el-button 
@@ -305,7 +312,7 @@
           @click="submitActivity"
           :disabled="clubList.length === 0"
         >
-          发布活动
+          创建活动
         </el-button>
       </template>
     </el-dialog>
@@ -511,7 +518,8 @@ const activityForm = ref({
   startTime: '',
   endTime: '',
   maxParticipants: null,
-  clubId: null
+  clubId: null,
+  imageUrl: ''
 })
 
 const editActivityForm = ref({
@@ -783,7 +791,8 @@ const submitActivity = async () => {
         startTime: '',
         endTime: '',
         maxParticipants: null,
-        clubId: null
+        clubId: null,
+        imageUrl: ''
       }
       fetchActivities()
     } else {
@@ -1064,6 +1073,40 @@ const getMyRole = (club) => {
 const canHandleApplication = (clubId) => {
   const club = clubList.value.find(c => c.id === clubId)
   return club && (club.myRole === '社长' || club.myRole === '副社长')
+}
+
+const disabledStartDate = (date) => {
+  const now = new Date()
+  return date < now || date > new Date(now.setDate(now.getDate() + 30))
+}
+
+const disabledEndDate = (date) => {
+  const now = new Date()
+  return date < now || date > new Date(now.setDate(now.getDate() + 30))
+}
+
+const handleImageSuccess = (res, form) => {
+  form.imageUrl = res.url
+  ElMessage.success('图片上传成功')
+}
+
+const beforeImageUpload = (file) => {
+  const token = localStorage.getItem('token')
+  if (!token) {
+    ElMessage.error('请先登录后再上传图片')
+    return false
+  }
+  const isJPG = file.type === 'image/jpeg' || file.type === 'image/png'
+  const isLt5M = file.size / 1024 / 1024 < 5
+  if (!isJPG) {
+    ElMessage.error('上传图片必须是 JPG 或 PNG 格式')
+    return false
+  }
+  if (!isLt5M) {
+    ElMessage.error('上传图片大小不能超过 5MB')
+    return false
+  }
+  return true
 }
 
 onMounted(() => {

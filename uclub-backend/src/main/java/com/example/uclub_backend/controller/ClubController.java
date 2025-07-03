@@ -475,6 +475,14 @@ public Page<ClubResponse> getClubsPage(@RequestParam int page, @RequestParam int
         }
     }
 
-
+    @GetMapping("/all")
+    public Result<List<Club>> getAllClubsForFrontend() {
+        try {
+            List<Club> clubs = clubService.getAllClubs();
+            return Result.success(clubs);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
 
 } 
