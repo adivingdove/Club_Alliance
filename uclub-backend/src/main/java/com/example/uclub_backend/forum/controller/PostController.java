@@ -63,8 +63,41 @@ public Map<String, Object> getPosts(
     }
 
     var postPage = postService.getPostPage(filters, page, pageSize);
+    List<Post>posts = postPage.getContent();
+
+    List<Map<String,Object>> postListWithUser = new ArrayList<>();
+    for(Post post: posts){
+        Map<String, Object> postMap = new HashMap<>();
+        postMap.put("id", post.getId());
+        postMap.put("title", post.getTitle());
+        postMap.put("content", post.getContent());
+        postMap.put("clubId", post.getClubId());
+        postMap.put("userId", post.getUserId());
+        postMap.put("createdAt", post.getCreatedAt());
+        postMap.put("likeCount", post.getLikeCount());
+        postMap.put("commentCount", post.getCommentCount());
+        postMap.put("clubName",post.getClubName());
+        postMap.put("timeRange",timeRange);
+        if (startTime != null && !startTime.isBlank()) {
+            postMap.put("startTime", startTime);
+        }
+
+
+        // 查询用户信息
+        User user = userService.getUserById(post.getUserId().intValue());
+        if (user != null) {
+            Map<String, Object> userMap = new HashMap<>();
+            userMap.put("id", user.getId());
+            userMap.put("nickname", user.getNickname());
+            userMap.put("avatarUrl", user.getHeadUrl());
+            postMap.put("user", userMap); // 嵌入 user 信息
+        }
+
+        postListWithUser.add(postMap);
+    }
+
     Map<String, Object> res = new HashMap<>();
-    res.put("posts", postPage.getContent());
+    res.put("posts", postListWithUser);
     res.put("total", postPage.getTotalElements());
     return res;
 }
