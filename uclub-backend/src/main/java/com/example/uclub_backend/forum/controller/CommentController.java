@@ -80,7 +80,7 @@ public List<Map<String, Object>> getComments(@PathVariable Long postId, @Request
     @PostMapping
     public ResponseEntity<?> addComment(@PathVariable Long postId, @RequestBody Comment comment) {
         comment.setPostId(postId);
-        commentService.save(comment);
+        commentService.addComment(comment);
         postService.incrementCommentCount(postId);
         return ResponseEntity.ok().build();
     }
@@ -114,7 +114,7 @@ public List<Map<String, Object>> getComments(@PathVariable Long postId, @Request
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getCommentDetail(@PathVariable Long id) {
-        Comment comment = commentService.findById(id);
+        Comment comment = commentService.getCommentById(id);
         if (comment == null) {
             return ResponseEntity.status(404).body(Map.of("message", "评论不存在"));
         }

@@ -13,8 +13,6 @@ import com.example.uclub_backend.forum.vo.ReportVO;
 import com.example.uclub_backend.service.UserService;
 import com.example.uclub_backend.forum.service.*;
 
-import org.springframework.beans.BeanUtils;
-
 
 @RestController
 @RequestMapping("/api/report")

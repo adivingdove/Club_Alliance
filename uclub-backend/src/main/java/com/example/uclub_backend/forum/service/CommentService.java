@@ -2,8 +2,9 @@ package com.example.uclub_backend.forum.service;
 
 import com.example.uclub_backend.forum.entity.Comment;
 import com.example.uclub_backend.forum.entity.CommentStatus;
-import com.example.uclub_backend.forum.mapper.CommentMapper;
+
 import com.example.uclub_backend.forum.repository.CommentRepository;
+import org.springframework.context.annotation.Lazy;
 
 import org.springframework.stereotype.Service;
 
@@ -14,57 +15,61 @@ public class CommentService {
 
    private final CommentRepository commentRepository;
 
-   private final CommentMapper commentMapper;
+   
 
    private final PostService postService;
 
-   public CommentService(CommentMapper commentMapper, PostService postService,CommentRepository commentRepository) {
-     this.commentMapper = commentMapper;
-     this.postService = postService;
-     this.commentRepository = commentRepository;
-    }
+   public CommentService(@Lazy PostService postService, CommentRepository commentRepository) {
+    this.postService = postService;
+    this.commentRepository = commentRepository;
+}
 
     public List<Comment> getCommentsByPostId(Long postId) {
-        return commentMapper.findByPostId(postId);
+        return commentRepository.findByPostId(postId);
+
     }
 
     public void addComment(Comment comment) {
-        comment.setStatus(CommentStatus.active); // 默认状态
+    if (comment.getId() == null) {
+        comment.setStatus(CommentStatus.active);
         comment.setLikeCount(0);
-        commentMapper.insert(comment);
+    }
+    commentRepository.save(comment); // 插入或更新
     }
 
-    public void likeComment(Long commentId) {
-        commentMapper.incrementLikeCount(commentId);
-    }
+ 
 
-    public void updateStatus(Long commentId, CommentStatus status) {
-        commentMapper.updateStatus(commentId, status);
-    }
-    public void save(Comment comment) {
-        if (comment.getId() == null) {
-            addComment(comment);
-        } else {
+   public void likeComment(Long commentId) {
+    Comment comment = commentRepository.findById(commentId)
+        .orElseThrow(() -> new RuntimeException("评论不存在"));
+    comment.setLikeCount(comment.getLikeCount() + 1);
+    commentRepository.save(comment);
+}
 
-            addComment(comment);
-        }
-    }
 
-    public void deleteComment(Long postId, Long commentId, Long userId) {
-    Comment comment = commentMapper.findById(commentId);
-    if (comment == null || !comment.getPostId().equals(postId)) {
-        throw new RuntimeException("评论不存在");
+public void updateStatus(Long commentId, CommentStatus status) {
+    Comment comment = commentRepository.findById(commentId)
+        .orElseThrow(() -> new RuntimeException("评论不存在"));
+    comment.setStatus(status);
+    commentRepository.save(comment);
+}
+
+
+   public void deleteComment(Long postId, Long commentId, Long userId) {
+    Comment comment = commentRepository.findById(commentId)
+        .orElseThrow(() -> new RuntimeException("评论不存在"));
+
+    if (!comment.getPostId().equals(postId)) {
+        throw new RuntimeException("评论与帖子不匹配");
     }
     if (!comment.getUserId().equals(userId)) {
         throw new IllegalArgumentException("无权限删除该评论");
     }
-    commentMapper.deleteById(commentId);
-    postService.decrementCommentCount(postId);
-   }
 
-    public Comment findById(Long commentId) {
-        return commentMapper.findById(commentId);
-    }
+    commentRepository.deleteById(commentId);
+    postService.decrementCommentCount(postId);
+}
+
 
     public Comment getCommentById(Long id) {
     return commentRepository.findById(id)
@@ -81,5 +86,8 @@ public List<Comment> getHotComments(int limit) {
     return commentRepository.findTopByOrderByLikeCountDesc(limit);
 }
 
+public void deleteCommentsByPostId(Long postId) {
+    commentRepository.deleteByPostId(postId);
+}
 
 }
