@@ -520,9 +520,6 @@ function scrollToCommentFromHash(){
 
         // 高亮评论
         el.classList.add('highlight-comment')
-        setTimeout(() => {
-          el.classList.remove('highlight-comment')
-        }, 3000)
       }
     })
   }
@@ -576,9 +573,9 @@ function handleOutsideClick(event) {
 
 
 // 初始化加载
-onMounted(() => {
-  loadPost()
-  loadComments()
+onMounted(async () => {
+  await loadPost()
+  await loadComments()
   scrollToCommentFromHash();
     document.addEventListener('click', handleOutsideClick)
 })

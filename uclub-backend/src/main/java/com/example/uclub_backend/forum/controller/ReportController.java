@@ -1,7 +1,5 @@
 package com.example.uclub_backend.forum.controller;
-import com.example.uclub_backend.forum.entity.Comment;
-import com.example.uclub_backend.forum.entity.Report;
-import com.example.uclub_backend.forum.entity.ReportStatus;
+import com.example.uclub_backend.forum.entity.*;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +13,6 @@ import com.example.uclub_backend.forum.vo.ReportVO;
 import com.example.uclub_backend.service.UserService;
 import com.example.uclub_backend.forum.service.*;
 
-import com.example.uclub_backend.forum.entity.TargetType;
 import org.springframework.beans.BeanUtils;
 
 
@@ -85,17 +82,45 @@ public class ReportController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getReport(@PathVariable Long id) {
-        try {
-            Report report = reportMapper.getReportById(id);
-            if (report == null) {
-                return ResponseEntity.status(404).body(Map.of("error", "举报记录不存在"));
-            }
-            return ResponseEntity.ok(report);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("error", "查询失败", "detail", e.getMessage()));
+    public ResponseEntity<?> getReportById(@PathVariable Long id) {
+        Report report = reportMapper.selectById(id);
+        if (report == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "举报不存在"));
         }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", report.getId());
+        result.put("reporter",userService.getUserById(report.getReporterId()));
+        result.put("targetType", report.getTargetType());
+        result.put("targetId", report.getTargetId());
+        result.put("reason", report.getReason());
+        result.put("status", report.getStatus());
+        result.put("createdAt", report.getCreatedAt());
+
+        // 如果是评论，获取其所属帖子ID
+        if (report.getTargetType() == TargetType.评论 ) {
+            try {
+                Comment comment = commentService.getCommentById(Long.valueOf(report.getTargetId()));
+                result.put("postId", comment.getPostId());
+                result.put("reportedUser",userService.getUserById(Math.toIntExact(comment.getUserId())));
+            } catch (RuntimeException e) {
+                result.put("postId", null);
+            }
+        }
+
+        // 如果是帖子，重新赋值reportedUser
+        if(report.getTargetType() == TargetType.帖子){
+            try{
+                Post post = postService.getPostById(Long.valueOf(report.getTargetId()));
+                result.put("reportedUser",userService.getUserById(Math.toIntExact(post.getUserId())));
+            }catch(RuntimeException e){
+                result.put("reportedUser",null);
+            }
+        }
+
+        return ResponseEntity.ok(result);
     }
+
 
     @GetMapping("/admin/list")
     public ResponseEntity<?> getAdminReportList(
