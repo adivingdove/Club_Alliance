@@ -5,8 +5,8 @@
             <img src="../assets/ABack.jpg" class="banner-img" />
             <div class="banner-content">
               <h1>2025年武汉大学社团活动开始啦</h1>
-              <p>丰富多彩的活动，让你的校院生活丰富多彩！</p>
-              <el-button type="primary" size="large" @click="handle">了解更多</el-button>
+             <p>欢迎关注武汉大学社团活动，这里将分享武汉大学社团近期的活动信息！</p>
+              <el-button type="primary" size="large" @click="handle">点击了解当下热门活动</el-button>
             </div>
         </div>
 
