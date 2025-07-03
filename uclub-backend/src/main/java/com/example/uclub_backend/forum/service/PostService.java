@@ -63,8 +63,12 @@ Page<Post> postPage = postRepository.findByFiltersWithClubName(
 
     // 填充社团名
     for (Post post : postPage.getContent()) {
-        forumClubRepository.findById(post.getClubId())
-                .ifPresent(club -> post.setClubName(club.getName()));
+        if (post.getClubId() != null) {
+            forumClubRepository.findById(post.getClubId())
+                    .ifPresent(club -> post.setClubName(club.getName()));
+        } else {
+            post.setClubName(""); // Set empty string for posts without a club
+        }
     }
 
     return postPage;

@@ -54,6 +54,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/activities/{id}").permitAll()
                         .requestMatchers("/api/activities/search").permitAll()
                         .requestMatchers("/api/activities/club/{clubId}/approved").permitAll()
+                        .requestMatchers("/api/posts").permitAll()
+                        .requestMatchers("/api/posts/**").permitAll()
                         .requestMatchers("/api/profile/**").authenticated()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/ai/ask").permitAll()
@@ -62,7 +64,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/announcements").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/clubs/*/members/*").authenticated()
                         .anyRequest().authenticated()
-                        
                 )
                  .csrf(csrf -> csrf.disable())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

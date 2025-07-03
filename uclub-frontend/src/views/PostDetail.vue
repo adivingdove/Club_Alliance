@@ -46,9 +46,9 @@
         </el-tooltip>
       </div>
 
-      <!-- 正文 Markdown + 加载中 -->
+      <!-- 正文 富文本渲染 -->
       <div class="post-content">
-        <vue3-markdown-it v-if="post.content" :source="post.content" />
+        <div v-if="post.content" v-html="post.content" />
         <div v-else>正文加载中...</div>
       </div>
 
@@ -627,7 +627,7 @@ onMounted(() => {
   font-size: 14px;
 }
 
-/* 正文 Markdown 样式 */
+/* 正文 富文本渲染 */
 .post-content {
   font-size: 16px;
   line-height: 1.8;

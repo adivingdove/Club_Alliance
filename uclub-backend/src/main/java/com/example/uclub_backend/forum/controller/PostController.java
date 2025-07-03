@@ -54,6 +54,9 @@ public Map<String, Object> getPosts(
         @RequestParam(defaultValue = "1") int page,
         @RequestParam(defaultValue = "10") int pageSize) {
 
+    System.out.println("接收到获取帖子列表请求");
+    System.out.println("参数: title=" + title + ", clubName=" + clubName + ", timeRange=" + timeRange + ", page=" + page + ", pageSize=" + pageSize);
+
     Map<String, String> filters = new HashMap<>();
     filters.put("title", title);
     filters.put("clubName", clubName);
@@ -62,8 +65,10 @@ public Map<String, Object> getPosts(
         filters.put("startTime", startTime);
     }
 
+    System.out.println("开始查询帖子");
     var postPage = postService.getPostPage(filters, page, pageSize);
     List<Post>posts = postPage.getContent();
+    System.out.println("查询到" + posts.size() + "条帖子");
 
     List<Map<String,Object>> postListWithUser = new ArrayList<>();
     for(Post post: posts){
@@ -82,7 +87,7 @@ public Map<String, Object> getPosts(
             postMap.put("startTime", startTime);
         }
 
-
+        System.out.println("处理帖子ID: " + post.getId());
         // 查询用户信息
         User user = userService.getUserById(post.getUserId().intValue());
         if (user != null) {
@@ -91,6 +96,9 @@ public Map<String, Object> getPosts(
             userMap.put("nickname", user.getNickname());
             userMap.put("avatarUrl", user.getHeadUrl());
             postMap.put("user", userMap); // 嵌入 user 信息
+            System.out.println("找到用户信息: " + user.getNickname());
+        } else {
+            System.out.println("未找到用户信息");
         }
 
         postListWithUser.add(postMap);
@@ -99,6 +107,7 @@ public Map<String, Object> getPosts(
     Map<String, Object> res = new HashMap<>();
     res.put("posts", postListWithUser);
     res.put("total", postPage.getTotalElements());
+    System.out.println("返回帖子列表，总数: " + postPage.getTotalElements());
     return res;
 }
 

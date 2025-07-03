@@ -266,25 +266,18 @@
               <div 
                 v-for="post in pagedPosts" 
                 :key="post.id" 
-                class="post-item"
+                class="history-item"
                 @click="goToPost(post.id)"
               >
-                <div class="post-content">
+                <div class="history-content">
                   <div class="post-title">{{ post.title }}</div>
                   <div class="post-meta">
                     <span class="club-name">社团: {{ post.clubName }}</span>
                     <span class="post-time">发布时间: {{ formatDate(post.createdAt) }}</span>
                   </div>
-                  <div class="post-preview">{{ post.content ? post.content.substring(0, 100) + '...' : '暂无内容' }}</div>
-                  <div class="post-stats">
-                    <span class="likes">👍 {{ post.likeCount }}</span>
-                    <span class="comments">💬 {{ post.commentCount }}</span>
-                    <span class="status" :class="getPostStatusClass(post.status)">
-                      {{ getPostStatusText(post.status) }}
-                    </span>
-                  </div>
+                  <div class="post-preview">{{ post.content ? post.content.replace(/<[^>]+>/g, '').substring(0, 100) + '...' : '暂无内容' }}</div>
                 </div>
-                <div class="post-actions">
+                <div class="history-actions">
                   <el-button 
                     type="danger" 
                     size="small" 
@@ -334,7 +327,7 @@
                     <span class="author">作者: {{ post.author }}</span>
                     <span class="browse-time">浏览时间: {{ formatBrowseTime(post.browseTime) }}</span>
                   </div>
-                  <div class="post-preview">{{ post.content ? post.content.substring(0, 100) + '...' : '暂无内容' }}</div>
+                  <div class="post-preview">{{ post.content ? post.content.replace(/<[^>]+>/g, '').substring(0, 100) + '...' : '暂无内容' }}</div>
                 </div>
                 <div class="history-actions">
                   <el-button 
@@ -1561,8 +1554,6 @@ onUnmounted(() => {
   line-height: 50px;
 }
 
-
-
 .profile-content {
   flex: 1;
   min-width: 0;
@@ -1858,96 +1849,47 @@ onUnmounted(() => {
 }
 
 .post-content {
-  flex: 1;
-  min-width: 0;
+  font-size: 15px;
+  color: #222;
+  line-height: 1.7;
+  background: #fafbfc;
+  padding: 18px 24px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow-x: auto;
 }
 
-.post-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.post-content h1,
+.post-content h2,
+.post-content h3,
+.post-content h4,
+.post-content h5,
+.post-content h6 {
+  font-size: 1.2em;
+  margin: 0.5em 0 0.3em 0;
+  font-weight: bold;
 }
-
-.post-meta {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 8px;
-  font-size: 12px;
-  color: #666;
+.post-content ol,
+.post-content ul {
+  margin: 0.5em 0 0.5em 1.5em;
+  padding-left: 1.5em;
 }
-
-.club-name {
-  color: #409EFF;
+.post-content li {
+  font-size: 1em;
+  margin: 0.2em 0;
 }
-
-.post-time {
-  color: #999;
+.post-content p {
+  margin: 0.4em 0;
 }
-
-.post-preview {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.4;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  margin-bottom: 8px;
-}
-
-.post-stats {
-  display: flex;
-  gap: 15px;
-  font-size: 12px;
-  color: #999;
-}
-
-.likes, .comments {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.status {
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 11px;
-}
-
-.status-active {
-  background-color: #f0f9ff;
-  color: #0ea5e9;
-}
-
-.status-deleted {
-  background-color: #fef2f2;
-  color: #ef4444;
-}
-
-.status-hidden {
-  background-color: #fef3c7;
-  color: #f59e0b;
-}
-
-.status-violated {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
-
-.status-unknown {
-  background-color: #f3f4f6;
-  color: #6b7280;
+.post-content a {
+  color: #409eff;
+  text-decoration: underline;
+  word-break: break-all;
 }
 
 .post-actions {
   margin-left: 15px;
   flex-shrink: 0;
 }
-
 
 </style>
