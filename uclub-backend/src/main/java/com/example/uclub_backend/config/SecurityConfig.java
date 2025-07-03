@@ -60,6 +60,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/ai/ask").permitAll()
                         .requestMatchers("/api/admin/**").permitAll()
                         .requestMatchers("/api/report/**").permitAll()
+                       .requestMatchers("/api/comments/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/announcements").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/clubs/*/members/*").authenticated()
                         .anyRequest().authenticated()

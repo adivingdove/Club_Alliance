@@ -128,26 +128,6 @@ public List<Map<String, Object>> getComments(@PathVariable Long postId, @Request
         ));
     }
 
-    @GetMapping("/api/comments/hot")
-public ResponseEntity<?> getHotComments(@RequestParam(defaultValue = "10") int limit) {
-    List<Comment> hotComments = commentService.getHotComments(limit);
-    List<Map<String, Object>> result = new ArrayList<>();
 
-    for (Comment comment : hotComments) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", comment.getId());
-        map.put("content", comment.getContent());
-        map.put("like_count", comment.getLikeCount());
-        map.put("postId", comment.getPostId());
-
-        // 附带帖子标题（可选）
-        String postTitle = postService.getPostTitleById(comment.getPostId());
-        map.put("postTitle", postTitle);
-
-        result.add(map);
-    }
-
-    return ResponseEntity.ok(result);
-}
 
 }

@@ -124,9 +124,10 @@ Page<Post> postPage = postRepository.findByFiltersWithClubName(
         return postRepository.getUserId(postId);
     }
 
-    public String getPostTitleById(Long postId) {
+   public String getPostTitle(Long postId) {
     Post post = postRepository.findById(postId).orElse(null);
     return post != null ? post.getTitle() : "";
-    }
+}
+
 
 }
