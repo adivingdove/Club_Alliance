@@ -211,14 +211,14 @@
         
         <el-form-item label="活动图片" prop="imageUrl">
           <el-upload
-            class="avatar-uploader"
+            class="avatar-uploader activity-upload-highlight"
             action="/api/upload"
             :show-file-list="false"
             :on-success="(res) => handleImageSuccess(res, activityForm)"
             :before-upload="beforeImageUpload"
           >
-            <img v-if="activityForm.imageUrl" :src="getImageUrl(activityForm.imageUrl)" class="activity-img activity-img--dialog" />
-            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+            <img v-if="activityForm.imageUrl" :src="getImageUrl(activityForm.imageUrl)" style="width: 100px; height: 100px; border-radius: 8px; border: 2px solid #409EFF; object-fit: cover; display: block; margin: 0 auto;" />
+            <i v-else class="el-icon-plus avatar-uploader-icon" style="font-size: 40px; color: #409EFF; width: 100px; height: 100px; line-height: 100px; text-align: center; border: 2px dashed #409EFF; border-radius: 8px; background: #f4faff; display: flex; align-items: center; justify-content: center; margin: 0 auto;"></i>
           </el-upload>
         </el-form-item>
         
@@ -370,14 +370,14 @@
         
         <el-form-item label="活动图片" prop="imageUrl">
           <el-upload
-            class="avatar-uploader"
+            class="avatar-uploader activity-upload-highlight"
             action="/api/upload"
             :show-file-list="false"
             :on-success="(res) => handleImageSuccess(res, editForm)"
             :before-upload="beforeImageUpload"
           >
-            <img v-if="editForm.imageUrl" :src="getImageUrl(editForm.imageUrl)" class="activity-img activity-img--dialog" />
-            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+            <img v-if="editForm.imageUrl" :src="getImageUrl(editForm.imageUrl)" style="width: 100px; height: 100px; border-radius: 8px; border: 2px solid #409EFF; object-fit: cover; display: block; margin: 0 auto;" />
+            <i v-else class="el-icon-plus avatar-uploader-icon" style="font-size: 40px; color: #409EFF; width: 100px; height: 100px; line-height: 100px; text-align: center; border: 2px dashed #409EFF; border-radius: 8px; background: #f4faff; display: flex; align-items: center; justify-content: center; margin: 0 auto;"></i>
           </el-upload>
         </el-form-item>
       </el-form>
@@ -1416,5 +1416,22 @@ const getImageUrl = (url) => {
   z-index: 10;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   gap: 4px;
+}
+
+.avatar-uploader.activity-upload-highlight {
+  border: 2px dashed #409EFF;
+  border-radius: 8px;
+  width: 104px;
+  height: 104px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4faff;
+  margin-bottom: 8px;
+  transition: border-color 0.2s;
+}
+.avatar-uploader.activity-upload-highlight:hover {
+  border-color: #66b1ff;
+  background: #e6f7ff;
 }
 </style>

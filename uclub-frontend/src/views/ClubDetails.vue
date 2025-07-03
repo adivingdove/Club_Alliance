@@ -149,21 +149,23 @@ const fetchClub = async (id) => {
       // 处理活动数据，转换为前端需要的格式
       if (Array.isArray(data.activities)) {
         console.log('处理活动数据，原始活动数量:', data.activities.length)
-        data.activities = data.activities.map(activity => {
-          return {
-            id: activity.id,
-            title: activity.title,
-            imageUrl: activity.imageUrl || activity.img || DEFAULT_IMG,
-            date: activity.startTime ? new Date(activity.startTime).toLocaleString('zh-CN') : '时间待定',
-            place: activity.location || '地点待定',
-            people: 0, // 暂时设为0，后续可以从后端获取实际参与人数
-            description: activity.description,
-            startTime: activity.startTime,
-            endTime: activity.endTime,
-            maxParticipants: activity.maxParticipants,
-            applyStatus: activity.status
-          }
-        })
+        data.activities = data.activities
+          .filter(activity => activity.status === '通过')
+          .map(activity => {
+            return {
+              id: activity.id,
+              title: activity.title,
+              imageUrl: activity.img || DEFAULT_IMG,
+              date: activity.startTime ? new Date(activity.startTime).toLocaleString('zh-CN') : '时间待定',
+              place: activity.location || '地点待定',
+              people: 0, // 暂时设为0，后续可以从后端获取实际参与人数
+              description: activity.description,
+              startTime: activity.startTime,
+              endTime: activity.endTime,
+              maxParticipants: activity.maxParticipants,
+              applyStatus: activity.status
+            }
+          })
         console.log('处理后的活动数据:', data.activities)
       } else {
         console.log('活动数据不是数组或为空:', data.activities)
@@ -561,6 +563,14 @@ const roleOrder = { '社长': 1, '副社长': 2, '干事': 3, '成员': 4 }
 const sortedMembers = computed(() => {
   return (club.value.members || []).slice().sort((a, b) => (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99))
 })
+
+const showActivityDetailDialog = ref(false)
+const selectedActivity = ref(null)
+
+function openActivityDetail(activity) {
+  selectedActivity.value = activity
+  showActivityDetailDialog.value = true
+}
 </script>
 
 <template>
@@ -636,9 +646,10 @@ const sortedMembers = computed(() => {
         <div v-if="activeTab === 'activities'" class="tab-content">
           <el-row :gutter="24">
             <el-col :span="8" v-for="activity in club.activities" :key="activity.id">
-              <el-card class="activity-card">
-                <div class="activity-img-wrapper">
-                  <img v-if="activity.imageUrl" :src="getImageUrl(activity.imageUrl)" class="activity-img" />
+              <el-card class="activity-card" @click="openActivityDetail(activity)" style="cursor: pointer;">
+                <div class="activity-img-wrapper activity-content--bg">
+                  <div>{{ activity.imageUrl }}</div>
+                  <img v-if="activity.imageUrl" :src="getImageUrl(activity.imageUrl)" class="activity-img-bg" />
                 </div>
                 <div class="activity-info">
                   <div class="activity-title">{{ activity.title }}</div>
@@ -814,6 +825,35 @@ const sortedMembers = computed(() => {
         <el-empty description="暂无公告" />
       </div>
     </el-drawer>
+
+    <el-dialog v-model="showActivityDetailDialog" title="活动详情" width="700px">
+      <div v-if="selectedActivity" class="activity-detail">
+        <div class="detail-header">
+          <h2>{{ selectedActivity.title }}</h2>
+          <div class="detail-status">
+            {{ getActivityStatusText(selectedActivity.applyStatus) }}
+          </div>
+        </div>
+        <div class="detail-content">
+          <img v-if="selectedActivity.imageUrl" :src="getImageUrl(selectedActivity.imageUrl)" class="activity-img activity-img--dialog" />
+          <p class="detail-description">{{ selectedActivity.description }}</p>
+          <div class="detail-info">
+            <div class="info-row">
+              <span class="label">活动时间：</span>
+              <span>{{ selectedActivity.date }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">活动地点：</span>
+              <span>{{ selectedActivity.place }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">参与人数：</span>
+              <span>{{ selectedActivity.people }}/{{ selectedActivity.maxParticipants ? selectedActivity.maxParticipants : '∞' }}人</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -847,20 +887,20 @@ const sortedMembers = computed(() => {
 .tab-content { padding: 0 20px 20px; }
 .activity-card { border-radius: 10px; overflow: hidden; transition: transform 0.3s ease; }
 .activity-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.activity-img-wrapper {
-  width: 100%;
-  height: 120px;
-  margin-bottom: 8px;
+.activity-img-wrapper.activity-content--bg {
+  position: relative;
   overflow: hidden;
+  min-height: 120px;
   border-radius: 12px;
+  margin-bottom: 8px;
 }
-.activity-img {
-  width: 100%;
-  height: 100%;
+.activity-img-bg {
+  position: absolute;
+  left: 0; top: 0; width: 100%; height: 100%;
   object-fit: cover;
-  display: block;
+  z-index: 1;
+  filter: brightness(1);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   background: #f8f8f8;
 }
 .activity-title { font-size: 16px; font-weight: bold; margin: 8px 0; color: #303133; }
@@ -918,5 +958,55 @@ const sortedMembers = computed(() => {
   border-radius: 8px 0 0 8px;
   font-weight: bold;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.activity-detail {
+  padding: 20px;
+}
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.detail-header h2 {
+  font-size: 24px;
+  font-weight: bold;
+}
+.detail-status {
+  font-size: 16px;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #e6a23c;
+  color: #fff;
+}
+.detail-content {
+  text-align: center;
+}
+.activity-img {
+  max-width: 100%;
+  max-height: 300px;
+  margin-bottom: 20px;
+}
+.activity-img--dialog {
+  max-width: 100%;
+  max-height: 300px;
+  margin-bottom: 20px;
+}
+.detail-description {
+  color: #606266;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+.detail-info {
+  text-align: left;
+}
+.info-row {
+  margin-bottom: 10px;
+}
+.label {
+  font-size: 14px;
+  font-weight: bold;
+  margin-right: 10px;
 }
 </style>
