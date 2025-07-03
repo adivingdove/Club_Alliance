@@ -128,7 +128,7 @@ Page<Post> postPage = postRepository.findByFiltersWithClubName(
             throw new IllegalArgumentException("无权限删除该帖子");
         }
 
-            // 删除该帖子的所有评论
+    // 删除该帖子的所有评论
     commentService.deleteCommentsByPostId(id);
 
     // 删除帖子本身
