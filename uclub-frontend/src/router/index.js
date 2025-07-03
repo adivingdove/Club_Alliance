@@ -30,6 +30,7 @@ import ClubListView from '../views/admin/ClubListView.vue'
 import ClubAdminView from '../views/admin/ClubAdminView.vue'
 import UserQueryView from '../views/admin/UserQueryView.vue'
 import SystemAnnouncementView from '../views/admin/SystemAnnouncementView.vue'
+import ActivitiesManagerView from '../views/ActivitesManagerView.vue'
 import ClubCreationReviewView from '../views/admin/ClubCreationReviewView.vue'
 import ActivityReviewView from '../views/admin/ActivityReviewView.vue'
 import ReportHandlingView from '../views/admin/ReportHandlingView.vue'
@@ -50,7 +51,7 @@ const routes = [
 
  // { path: '/applications', name: 'Applications', component: Applications },
   {path: '/chatroom',component: () => import('@/views/ChatRoom.vue')},
-
+{ path: '/ActivitiesManagerView', name:'ActivitiesManagerView',component: ActivitiesManagerView },
   // 新增页面
   { path: '/club/:id', name: 'ClubDetails', component: ClubDetails },
 

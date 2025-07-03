@@ -73,6 +73,7 @@
       <!-- 侧边栏 -->
       <el-col :span="6">
         <ForumSidebar />
+        
       </el-col>
     </el-row>
   </div>
@@ -81,12 +82,12 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Edit, EditPen } from '@element-plus/icons-vue'
+
 
 import PostCard from '../components/PostCard.vue'
 import ForumSidebar from '../components/ForumSidebar.vue'
 import { fetchPostList } from '../api/forum'
-import { useMotion } from '@vueuse/motion'
+
 
 const motionOptions = {
   initial: { opacity: 0, y: 30, scale: 0.95 },
@@ -179,7 +180,12 @@ const handleFilterSearch = () => {
   loadPosts()
 }
 
-onMounted(loadPosts)
+
+
+onMounted(() => {
+  loadPosts()
+ 
+})
 
 // 添加路由监听，当从发帖页面返回时自动刷新帖子列表
 watch(route, (newRoute, oldRoute) => {

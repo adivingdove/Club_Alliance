@@ -65,6 +65,10 @@
             :class="{ 'pending': activity.applyStatus === '待审核' }"
             @click="viewActivityDetail(activity)"
           >
+            <div class="activity-participants-badge">
+              <i class="el-icon-user"></i>
+              <span>{{ activity.currentParticipants || 0 }}/{{ activity.maxParticipants ? activity.maxParticipants : '∞' }}人</span>
+            </div>
             <div class="activity-header">
               <div class="activity-status" :class="getStatusClass(activity.applyStatus)">
                 {{ getStatusText(activity.applyStatus) }}
@@ -75,22 +79,9 @@
               </div>
             </div>
             
-            <div class="activity-content">
-              <h3 class="activity-title">{{ activity.title }}</h3>
-              <p class="activity-description">{{ activity.description }}</p>
-              
-              <div class="activity-info">
-                <div class="info-item">
-                  <i class="el-icon-location"></i>
-                  <span>{{ activity.location || '地点待定' }}</span>
-                </div>
-                <div class="info-item">
-                  <i class="el-icon-user"></i>
-                  <span>
-                    {{ activity.currentParticipants || 0 }}/{{ activity.maxParticipants ? activity.maxParticipants : '∞' }}人
-                  </span>
-                </div>
-              </div>
+            <div class="activity-content activity-content--bg">
+              <h3 class="activity-title" style="margin-top: 0; margin-bottom: 4px; text-align: center; position: relative; z-index: 3;">{{ activity.title }}</h3>
+              <img v-if="activity.imageUrl" :src="getImageUrl(activity.imageUrl)" class="activity-img-bg" />
             </div>
             
             <div class="activity-footer">
@@ -186,6 +177,7 @@
             placeholder="选择开始时间"
             format="YYYY-MM-DD HH:mm"
             value-format="YYYY-MM-DDTHH:mm:ss"
+            :disabled-date="disabledStartDate"
           />
         </el-form-item>
         
@@ -196,6 +188,7 @@
             placeholder="选择结束时间"
             format="YYYY-MM-DD HH:mm"
             value-format="YYYY-MM-DDTHH:mm:ss"
+            :disabled-date="disabledEndDate"
           />
         </el-form-item>
         
@@ -210,12 +203,25 @@
         <el-form-item label="所属社团" prop="clubId" v-if="userClubs.length > 0">
           <el-select v-model="activityForm.clubId" placeholder="请选择所属社团">
             <el-option 
-              v-for="club in userClubs" 
+              v-for="club in userClubs.filter(c => ['干事', '副社长', '社长'].includes(c.myRole))" 
               :key="club.id" 
               :label="club.name" 
               :value="club.id" 
             />
           </el-select>
+        </el-form-item>
+        
+        <el-form-item label="活动图片" prop="imageUrl">
+          <el-upload
+            class="avatar-uploader activity-upload-highlight"
+            action="/api/upload"
+            :show-file-list="false"
+            :on-success="(res) => handleImageSuccess(res, activityForm)"
+            :before-upload="beforeImageUpload"
+          >
+            <img v-if="activityForm.imageUrl" :src="getImageUrl(activityForm.imageUrl)" style="width: 100px; height: 100px; border-radius: 8px; border: 2px solid #409EFF; object-fit: cover; display: block; margin: 0 auto;" />
+            <i v-else class="el-icon-plus avatar-uploader-icon" style="font-size: 40px; color: #409EFF; width: 100px; height: 100px; line-height: 100px; text-align: center; border: 2px dashed #409EFF; border-radius: 8px; background: #f4faff; display: flex; align-items: center; justify-content: center; margin: 0 auto;"></i>
+          </el-upload>
         </el-form-item>
         
         <el-form-item v-if="userClubs.length === 0 && isLoggedIn">
@@ -245,17 +251,15 @@
     <el-dialog 
       v-model="showDetailDialog" 
       title="活动详情" 
-      width="700px"
+      width="420px"
     >
       <div v-if="selectedActivity" class="activity-detail">
         <div class="detail-header">
           <h2>{{ selectedActivity.title }}</h2>
-          <div class="detail-status" :class="getStatusClass(selectedActivity.applyStatus)">
-            {{ getStatusText(selectedActivity.applyStatus) }}
-          </div>
         </div>
         
         <div class="detail-content">
+          <img v-if="selectedActivity && selectedActivity.imageUrl" :src="getImageUrl(selectedActivity.imageUrl)" class="activity-img activity-img--dialog" />
           <p class="detail-description">{{ selectedActivity.description }}</p>
           
           <div class="detail-info">
@@ -272,8 +276,8 @@
               <span>{{ selectedActivity.currentParticipants || 0 }}/{{ selectedActivity.maxParticipants ? selectedActivity.maxParticipants : '∞' }}人</span>
             </div>
             <div class="info-row">
-              <span class="label">创建时间：</span>
-              <span>{{ formatDateTime(selectedActivity.createdAt) }}</span>
+              <span class="label">所属社团：</span>
+              <span>{{ getClubNameById(selectedActivity.clubId) }}</span>
             </div>
           </div>
         </div>
@@ -284,28 +288,20 @@
         </div>
         
         <div class="detail-actions" v-if="canEditActivity(selectedActivity)">
-          <el-button type="primary" @click="editActivity(selectedActivity)">编辑活动</el-button>
+          <el-button class="edit-activity-btn" @click="editActivity(selectedActivity)">编辑活动</el-button>
         </div>
         
         <div class="detail-actions" v-if="isLoggedIn && selectedActivity.applyStatus === '通过'">
           <el-button 
-            :type="selectedActivity.isParticipating ? 'danger' : 'success'"
-            @click="selectedActivity.isParticipating ? leaveActivityHandler(selectedActivity) : joinActivityHandler(selectedActivity)"
-            :disabled="!canJoinActivity(selectedActivity)"
-          >
-            {{ selectedActivity.isParticipating ? '退出活动' : '加入活动' }}
-          </el-button>
-        </div>
-        
-        <!-- 如果用户是活动创建者，显示提示 -->
-        <div v-if="isLoggedIn && canEditActivity(selectedActivity)" class="detail-actions">
-          <el-alert
-            title="您是活动创建者"
-            description="您可以编辑和管理这个活动"
-            type="info"
-            show-icon
-            :closable="false"
-          />
+            class="join-activity-btn"
+            v-if="!selectedActivity.isParticipating"
+            @click="joinActivityHandler(selectedActivity)"
+          >加入活动</el-button>
+          <el-button 
+            class="leave-activity-btn"
+            v-if="selectedActivity.isParticipating"
+            @click="leaveActivityHandler(selectedActivity)"
+          >退出活动</el-button>
         </div>
       </div>
     </el-dialog>
@@ -313,7 +309,7 @@
     <!-- 编辑活动对话框 -->
     <el-dialog 
       v-model="showEditDialog" 
-      :title="`编辑活动 (ID: ${currentEditActivityId || '未知'})`" 
+      title="编辑活动"
       width="600px"
     >
       <el-form 
@@ -366,6 +362,19 @@
             placeholder="不填表示人数不限"
           />
         </el-form-item>
+        
+        <el-form-item label="活动图片" prop="imageUrl">
+          <el-upload
+            class="avatar-uploader activity-upload-highlight"
+            action="/api/upload"
+            :show-file-list="false"
+            :on-success="(res) => handleImageSuccess(res, editForm)"
+            :before-upload="beforeImageUpload"
+          >
+            <img v-if="editForm.imageUrl" :src="getImageUrl(editForm.imageUrl)" style="width: 100px; height: 100px; border-radius: 8px; border: 2px solid #409EFF; object-fit: cover; display: block; margin: 0 auto;" />
+            <i v-else class="el-icon-plus avatar-uploader-icon" style="font-size: 40px; color: #409EFF; width: 100px; height: 100px; line-height: 100px; text-align: center; border: 2px dashed #409EFF; border-radius: 8px; background: #f4faff; display: flex; align-items: center; justify-content: center; margin: 0 auto;"></i>
+          </el-upload>
+        </el-form-item>
       </el-form>
       
       <template #footer>
@@ -410,6 +419,7 @@ const currentEditActivityId = ref(null)
 const activityFormRef = ref()
 const editFormRef = ref()
 const userClubs = ref([])
+const allClubs = ref([])
 
 // 活动表单
 const activityForm = ref({
@@ -419,7 +429,8 @@ const activityForm = ref({
   startTime: '',
   endTime: '',
   maxParticipants: null,
-  clubId: null
+  clubId: null,
+  imageUrl: ''
 })
 
 const editForm = ref({
@@ -429,7 +440,8 @@ const editForm = ref({
   startTime: '',
   endTime: '',
   maxParticipants: null,
-  clubId: null
+  clubId: null,
+  imageUrl: ''
 })
 
 // 表单验证规则
@@ -569,6 +581,18 @@ const fetchUserClubs = async () => {
   }
 }
 
+// 获取所有社团列表
+const fetchAllClubs = async () => {
+  try {
+    const response = await request.get('/api/clubs/all')
+    if (response.data.code === 0) {
+      allClubs.value = response.data.data || []
+    }
+  } catch (e) {
+    allClubs.value = []
+  }
+}
+
 // 处理标签页切换
 const handleTabChange = () => {
   fetchActivities()
@@ -600,7 +624,8 @@ const editActivity = (activity) => {
     startTime: activity.startTime,
     endTime: activity.endTime,
     maxParticipants: activity.maxParticipants,
-    clubId: activity.clubId
+    clubId: activity.clubId,
+    imageUrl: activity.imageUrl
   }
   
   // 关闭详情对话框，打开编辑对话框
@@ -691,7 +716,8 @@ const submitActivity = async () => {
         startTime: '',
         endTime: '',
         maxParticipants: null,
-        clubId: null
+        clubId: null,
+        imageUrl: ''
       }
       fetchActivities()
     }
@@ -841,6 +867,7 @@ onMounted(async () => {
   if (isLoggedIn.value) {
     await fetchUserClubs()
   }
+  await fetchAllClubs()
 })
 
 // 提交编辑
@@ -891,7 +918,11 @@ const joinActivityHandler = async (activity) => {
       ElMessage.error('请先登录')
       return
     }
-    
+    // 如果不是社团成员，弹窗但不跳转
+    if (!userClubs.value.find(c => c.id === activity.clubId)) {
+      ElMessage.error('您需要先加入对应社团！')
+      return
+    }
     const response = await joinActivity(activity.id, userInfo.value.id)
     if (response.data.code === 0) {
       ElMessage.success('成功加入活动')
@@ -946,6 +977,59 @@ const checkUserParticipation = async () => {
     }
   }
 }
+
+// 在<script setup>中添加图片上传相关方法
+const handleImageSuccess = (response, form) => {
+  // 兼容后端直接返回 {code, message, url}
+  const url = response.url || (response.data && response.data.url)
+  if (url) {
+    form.imageUrl = url
+    ElMessage.success('图片上传成功')
+  } else {
+    ElMessage.error('图片上传失败')
+  }
+}
+const beforeImageUpload = (file) => {
+  const isImage = file.type.startsWith('image/')
+  const isLt2M = file.size / 1024 / 1024 < 2
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件!')
+  }
+  if (!isLt2M) {
+    ElMessage.error('图片大小不能超过 2MB!')
+  }
+  return isImage && isLt2M
+}
+
+// 在<script setup>中添加图片URL拼接方法
+const getImageUrl = (url) => {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return 'http://localhost:8080' + url
+}
+
+function disabledStartDate(date) {
+  const now = new Date()
+  return date.getTime() < now.getTime() - 60000
+}
+function disabledEndDate(date) {
+  if (!activityForm.value.startTime) return false
+  return date.getTime() < new Date(activityForm.value.startTime).getTime()
+}
+
+// 修改 getClubNameById 方法
+const getClubNameById = (clubId) => {
+  // 1. 从 userClubs 查找
+  const club = userClubs.value.find(c => c.id === clubId)
+  if (club) return club.name
+  // 2. 从 activities 查找
+  const activity = activities.value.find(a => a.clubId === clubId && a.clubName)
+  if (activity) return activity.clubName
+  // 3. 从 allClubs 查找
+  const allClub = allClubs.value.find(c => c.id === clubId)
+  if (allClub) return allClub.name
+  return '未知社团'
+}
 </script>
 
 <style scoped>
@@ -984,9 +1068,8 @@ const checkUserParticipation = async () => {
 
 .activities-container {
   padding: 20px;
- 
   margin: 0 auto;
- background: #87CEEB;
+  background: #fff;
 }
 
 .page-header {
@@ -1051,6 +1134,7 @@ const checkUserParticipation = async () => {
   transition: all 0.3s ease;
   border-radius: 8px;
   overflow: hidden;
+  position: relative;
 }
 
 .activity-card:hover {
@@ -1097,11 +1181,11 @@ const checkUserParticipation = async () => {
 }
 
 .activity-content {
-  margin-bottom: 15px;
+  padding: 16px 12px 8px 12px;
 }
 
 .activity-title {
-  font-size: 16px;
+  font-size: 25px;
   font-weight: bold;
   color: #303133;
   margin-bottom: 8px;
@@ -1159,76 +1243,69 @@ const checkUserParticipation = async () => {
 /* 活动详情样式 */
 .activity-detail {
   padding: 20px 0;
-  background: #87CEEB;
+  background: #fff;
 }
 
 .detail-header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
   border-bottom: 1px solid #e4e7ed;
-  background: #87CEEB;
+  background: #fff;
 }
 
 .detail-header h2 {
-  margin: 0;
-  color: #303133;
-  background: #87CEEB;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 8px;
 }
 
-.detail-status {
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: bold;
-  background: #87CEEB;
+.detail-content {
+  text-align: center;
+  padding: 8px 0 0 0;
+  background: #fff;
+}
+
+.activity-img.activity-img--dialog {
+  width: 360px;
+  height: 180px;
+  max-width: 100%;
+  margin: 0 auto 10px auto;
+  border-radius: 10px;
 }
 
 .detail-description {
-  font-size: 16px;
-  line-height: 1.6;
   color: #606266;
-  margin-bottom: 20px;
-  background: #87CEEB;
+  font-size: 14px;
+  margin-bottom: 10px;
 }
 
 .detail-info {
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  background: #87CEEB;
+  text-align: center;
+  margin-top: 6px;
 }
 
 .info-row {
-  display: flex;
-  margin-bottom: 12px;
-  background: #87CEEB;
+  margin-bottom: 6px;
 }
 
-.info-row:last-child {
-  margin-bottom: 0;
-  background: #87CEEB;
-}
-
-.info-row .label {
+.label {
+  font-size: 13px;
   font-weight: bold;
-  color: #303133;
-  width: 100px;
-  flex-shrink: 0;
-  background: #87CEEB;
+  margin-right: 6px;
 }
 
 .detail-actions {
   margin-top: 20px;
   text-align: center;
-  background: #87CEEB;
+  background: #fff;
 }
 
 .detail-actions .el-button {
   margin: 0 10px;
-  background: #87CEEB;
+  background: #fff;
 }
 
 /* 编辑按钮样式 */
@@ -1267,5 +1344,117 @@ const checkUserParticipation = async () => {
     width: 50px;
     height: 50px;
   }
+}
+
+.activity-img-wrapper {
+  width: 100%;
+  height: 120px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.activity-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  background: #f8f8f8;
+}
+
+.activity-img--dialog {
+  width: 320px;
+  height: 180px;
+  max-width: 90%;
+}
+
+.avatar-uploader {
+  display: inline-block;
+}
+
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #ffffff;
+  width: 100px;
+  height: 100px;
+  line-height: 100px;
+  text-align: center;
+  border: 1px dashed #ffffff;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.activity-content--bg {
+  position: relative;
+  overflow: hidden;
+  min-height: 160px;
+  padding: 10px 10px 6px 10px;
+  border-radius: 12px;
+}
+.activity-img-bg {
+  position: absolute;
+  left: 0; top: 0; width: 100%; height: 95%;
+  object-fit: cover;
+  z-index: 1;
+  filter: brightness(1);
+}
+.activity-content-inner {
+  position: relative;
+  z-index: 2;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0);
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.activity-participants-badge {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: rgba(64,158,255,0.92);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  gap: 4px;
+}
+
+.avatar-uploader.activity-upload-highlight {
+  border: 2px dashed #409EFF;
+  border-radius: 8px;
+  width: 104px;
+  height: 104px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4faff;
+  margin-bottom: 8px;
+  transition: border-color 0.2s;
+}
+.avatar-uploader.activity-upload-highlight:hover {
+  border-color: #66b1ff;
+  background: #e6f7ff;
+}
+
+.detail-actions .el-button.edit-activity-btn {
+  background: #ffcc00 !important;
+  color: #222 !important;
+  border-color: #ffcc00 !important;
+}
+.detail-actions .el-button.join-activity-btn {
+  background: #409EFF !important;
+  color: #fff !important;
+  border-color: #409EFF !important;
+}
+.detail-actions .el-button.leave-activity-btn {
+  background: #f56c6c !important;
+  color: #fff !important;
+  border-color: #f56c6c !important;
 }
 </style>

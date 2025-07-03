@@ -73,7 +73,6 @@
         <!-- 帖子内容 -->
         <el-tab-pane label="帖子内容" name="post">
           <div v-if="selectedPost">
-            <p><strong>ID：</strong>{{ selectedPost.id }}</p>
             <p><strong>作者：</strong>{{ selectedPost.user?.nickname || '未知用户' }}</p>
             <p><strong>标题：</strong>{{ selectedPost.title }}</p>
             <div class="markdown-content">
@@ -234,7 +233,7 @@ const viewPost = async (id) => {
 const deletePost = async (id) => {
   try {
     await axios.delete(`/posts/${id}`, {
-      params: { userId: 5 }, // 当前用户ID，替换成实际登录用户ID
+      params: { userId: currentUserId.value }, 
     })
     ElMessage.success('删除成功')
     fetchPosts(currentPage.value)
