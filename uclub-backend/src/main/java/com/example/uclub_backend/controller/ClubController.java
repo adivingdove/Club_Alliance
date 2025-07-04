@@ -19,6 +19,8 @@ import java.util.stream.Collectors;
 
 import com.example.uclub_backend.vo.ClubResponse;
 import java.util.Optional;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @RestController
 @RequestMapping("/api/clubs")
@@ -482,6 +484,27 @@ public Page<ClubResponse> getClubsPage(@RequestParam int page, @RequestParam int
             return Result.success(clubs);
         } catch (Exception e) {
             return Result.error(e.getMessage());
+        }
+    }
+
+    @GetMapping("/management")
+    public Result<List<Club>> getManagementClubs(@AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Integer userId = Integer.parseInt(userDetails.getUsername());
+            List<Club> clubs = clubService.getManagementClubs(userId);
+            return Result.success(clubs);
+        } catch (Exception e) {
+            return Result.error("获取管理社团列表失败: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/user/{userId}")
+    public Result<List<Map<String, Object>>> getUserClubs(@PathVariable Integer userId) {
+        try {
+            List<Map<String, Object>> userClubs = clubService.getUserClubsWithRoles(userId);
+            return Result.success(userClubs);
+        } catch (Exception e) {
+            return Result.error("获取用户社团列表失败: " + e.getMessage());
         }
     }
 

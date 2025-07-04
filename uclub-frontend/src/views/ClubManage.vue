@@ -403,7 +403,7 @@
 
 <script setup>
 import ActivitiesAnnouncementView from '@/views/ActivitiesAnnouncementView.vue'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from '@/utils/axios'
 import request from '../utils/request'
@@ -412,7 +412,8 @@ import {
   createActivity,
   deleteActivity,
   updateActivity,
-  getActivitiesByCreatorId
+  getActivitiesByCreatorId,
+  getUserManagementClubs
 } from '@/api/activityApi'
 
 
@@ -447,12 +448,17 @@ const editActivityFormRef = ref()
 
 // 表单验证规则
 const activityRules = {
-  title: [{ required: true, message: '请输入活动标题', trigger: 'blur' }],
+  clubId: [
+    { required: true, message: '请选择所属社团', trigger: 'change' }
+  ],
+  title: [
+    { required: true, message: '请输入活动标题', trigger: 'blur' },
+    { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
+  ],
   description: [{ required: true, message: '请输入活动描述', trigger: 'blur' }],
   location: [{ required: true, message: '请输入活动地点', trigger: 'blur' }],
   startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
-  endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }],
-  clubId: [{ required: true, message: '请选择所属社团', trigger: 'change' }]
+  endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }]
 }
 
 const statusMap = {

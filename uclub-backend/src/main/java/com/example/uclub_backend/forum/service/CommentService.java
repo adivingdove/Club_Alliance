@@ -1,9 +1,12 @@
 package com.example.uclub_backend.forum.service;
 
+import com.example.uclub_backend.entity.User;
 import com.example.uclub_backend.forum.entity.Comment;
 import com.example.uclub_backend.forum.entity.CommentStatus;
 
 import com.example.uclub_backend.forum.repository.CommentRepository;
+import com.example.uclub_backend.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 
 import org.springframework.stereotype.Service;
@@ -15,6 +18,8 @@ public class CommentService {
 
    private final CommentRepository commentRepository;
 
+   @Autowired
+   private UserRepository userRepository;
    
 
    private final PostService postService;
@@ -59,10 +64,13 @@ public void updateStatus(Long commentId, CommentStatus status) {
     Comment comment = commentRepository.findById(commentId)
         .orElseThrow(() -> new RuntimeException("评论不存在"));
 
+    User user = userRepository.findById(Math.toIntExact(userId))
+            .orElseThrow(() ->new RuntimeException("用户不存在"));
+
     if (!comment.getPostId().equals(postId)) {
         throw new RuntimeException("评论与帖子不匹配");
     }
-    if (!comment.getUserId().equals(userId)) {
+    if (!comment.getUserId().equals(userId) && user.getRole() != User.UserRole.系统管理员) {
         throw new IllegalArgumentException("无权限删除该评论");
     }
 

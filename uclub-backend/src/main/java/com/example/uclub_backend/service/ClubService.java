@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.Map;
+import java.util.Arrays;
+import java.util.HashMap;
 
 import com.example.uclub_backend.service.AnnouncementService;
 import com.example.uclub_backend.entity.Announcement;
@@ -283,5 +285,29 @@ public class ClubService {
         List<Club> clubs = clubRepository.findAllById(clubIds);
         return clubs.stream()
             .collect(Collectors.toMap(Club::getId, Club::getName));
+    }
+
+    public List<Club> getManagementClubs(Integer userId) {
+        List<ClubMember> memberships = clubMemberRepository.findByUserId(userId);
+        return memberships.stream()
+                .filter(member -> Arrays.asList("社长", "副社长", "干事").contains(member.getRole()))
+                .map(member -> clubRepository.findById(member.getClubId())
+                        .orElseThrow(() -> new RuntimeException("社团不存在")))
+                .collect(Collectors.toList());
+    }
+
+    public List<Map<String, Object>> getUserClubsWithRoles(Integer userId) {
+        List<ClubMember> memberships = clubMemberRepository.findByUserId(userId);
+        return memberships.stream()
+                .map(member -> {
+                    Club club = clubRepository.findById(member.getClubId())
+                            .orElseThrow(() -> new RuntimeException("社团不存在"));
+                    Map<String, Object> clubInfo = new HashMap<>();
+                    clubInfo.put("id", club.getId());
+                    clubInfo.put("name", club.getName());
+                    clubInfo.put("role", member.getRole());
+                    return clubInfo;
+                })
+                .collect(Collectors.toList());
     }
 }
