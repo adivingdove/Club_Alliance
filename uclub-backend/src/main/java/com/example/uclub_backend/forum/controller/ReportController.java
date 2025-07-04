@@ -86,6 +86,7 @@ public class ReportController {
             return ResponseEntity.status(404).body(Map.of("error", "举报不存在"));
         }
 
+
         Map<String, Object> result = new HashMap<>();
         result.put("id", report.getId());
         result.put("reporter",userService.getUserById(report.getReporterId()));
@@ -94,15 +95,35 @@ public class ReportController {
         result.put("reason", report.getReason());
         result.put("status", report.getStatus());
         result.put("createdAt", report.getCreatedAt());
-
-        // 如果是评论，获取其所属帖子ID
         if (report.getTargetType() == TargetType.评论 ) {
             try {
                 Comment comment = commentService.getCommentById(Long.valueOf(report.getTargetId()));
-                result.put("postId", comment.getPostId());
-                result.put("reportedUser",userService.getUserById(Math.toIntExact(comment.getUserId())));
-            } catch (RuntimeException e) {
+                if (comment != null) {
+                    result.put("postId", comment.getPostId());
+                    result.put("reportedUser", userService.getUserById(comment.getUserId().intValue()));
+                } else {
+                    result.put("postId", null);
+                    result.put("reportedUser", null);
+                }
+            } catch (Exception e) {
                 result.put("postId", null);
+                result.put("reportedUser", null);
+            }
+        }
+
+        if (report.getTargetType() == TargetType.评论 ) {
+            try {
+                Comment comment = commentService.getCommentById(Long.valueOf(report.getTargetId()));
+                if (comment != null) {
+                    result.put("postId", comment.getPostId());
+                    result.put("reportedUser", userService.getUserById(comment.getUserId().intValue()));
+                } else {
+                    result.put("postId", null);
+                    result.put("reportedUser", null);
+                }
+            } catch (Exception e) {
+                result.put("postId", null);
+                result.put("reportedUser", null);
             }
         }
 
@@ -146,8 +167,9 @@ public class ReportController {
 
                 // 如果举报对象是评论，补充 postId 字段
                 vo.setPostId(report.getTargetType() == TargetType.评论
-                        ? commentService.getCommentById(report.getTargetId().longValue()).getPostId().intValue()
+                        ? safeGetPostIdFromComment(report.getTargetId().longValue())
                         : report.getTargetId());
+
 
                 return vo;
             }).collect(Collectors.toList());
@@ -157,6 +179,16 @@ public class ReportController {
             return ResponseEntity.status(500).body(Map.of("error", "查询失败", "detail", e.getMessage()));
         }
     }
+
+    private Integer safeGetPostIdFromComment(Long commentId) {
+        try {
+            Comment comment = commentService.getCommentById(commentId);
+            return comment != null ? comment.getPostId().intValue() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
 
     // 根据目标类型获取被举报人ID（可扩展）
     private Integer getReportedUserIdByTarget(TargetType type, Integer targetId) {

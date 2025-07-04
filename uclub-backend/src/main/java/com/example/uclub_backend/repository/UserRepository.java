@@ -42,7 +42,5 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
 
     Page<User> findByEmailContainingAndNicknameContainingAndRoleAndStatus(
             String email, String nickname, User.UserRole role, User.UserStatus status, Pageable pageable);
-
-
 }
 
