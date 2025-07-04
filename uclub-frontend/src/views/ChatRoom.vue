@@ -206,6 +206,24 @@ const socket = new SockJS(`http://localhost:8080/ws-chat?token=${token}`)
   stompClient.activate()
 }
 
+// 切换聊天室
+const switchRoom = (roomId) => {
+  const oldRoomLabel = currentRoomLabel.value
+  currentRoom.value = roomId
+  messages.value = []
+ messages.value.push({
+    sender: '系统',
+    content: `🚪 你已离开「${oldRoomLabel.replace('🟢 ', '')}」聊天室`,
+    time: new Date().toISOString(),
+    role: '系统'
+  })
+  if (stompClient?.connected) {
+    subscribeToRoom(roomId)
+    fetchOnlineUsers()
+  }
+
+ 
+}
 
 // 订阅聊天室
 const subscribeToRoom = (roomId) => {
@@ -227,18 +245,6 @@ const subscribeToRoom = (roomId) => {
     time: new Date().toISOString(),
     role: '系统'
   })
-}
-
-
-
-// 切换聊天室
-const switchRoom = (roomId) => {
-  currentRoom.value = roomId
-  messages.value = []
-  if (stompClient && stompClient.connected) {
-    subscribeToRoom(roomId)
-    fetchOnlineUsers()
-  }
 }
 
 
@@ -359,6 +365,7 @@ onUnmounted(() => {
 
 
 
+
 <style scoped>
 .chatroom-wrapper {
   display: flex;
@@ -374,13 +381,24 @@ onUnmounted(() => {
   padding: 20px;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
 }
-.online-users {
-  margin-top: 20px;
-}
 .sidebar h3 {
   font-size: 18px;
   margin-bottom: 20px;
   color: #333;
+}
+
+.online-users {
+  margin-top: 20px;
+}
+
+.online-user {
+  padding: 4px 0;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+.online-user:hover {
+  background-color: #f5faff;
+  cursor: pointer;
 }
 
 .chatroom-menu {
@@ -391,6 +409,9 @@ onUnmounted(() => {
   padding-left: 16px !important;
   border-radius: 6px;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .chatroom-menu .el-menu-item:hover {
@@ -400,6 +421,22 @@ onUnmounted(() => {
 .chatroom-menu .el-menu-item.is-active {
   background-color: #cceeff;
   font-weight: bold;
+}
+
+.dot {
+  display: inline-block;
+  margin-left: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ff4d4f;
+  animation: pulse 1.2s infinite;
+  vertical-align: middle;
+}
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .chatroom-container {
@@ -414,6 +451,14 @@ onUnmounted(() => {
   margin-bottom: 15px;
   font-size: 20px;
   color: #007acc;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(to right, #e0f7fa, #f0faff);
+  padding: 10px 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 .chat-log {
@@ -424,6 +469,16 @@ onUnmounted(() => {
   border-radius: 12px;
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.03);
   margin-bottom: 20px;
+}
+.chat-log::-webkit-scrollbar {
+  width: 8px;
+}
+.chat-log::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+.chat-log::-webkit-scrollbar-thumb:hover {
+  background-color: #999;
 }
 
 .chat-message {
@@ -440,23 +495,24 @@ onUnmounted(() => {
 }
 
 .chat-bubble {
+  position: relative;
   max-width: 65%;
-  background-color: #e6f7ff;
+  background-color: #f4faff;
   padding: 12px 18px;
   border-radius: 18px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   word-break: break-word;
-  position: relative;
+  transition: all 0.2s ease-in-out;
 }
 
 .my-message .chat-bubble {
-  background-color: #d1ffd6;
+  background-color: #dcfce7;
   text-align: right;
-  border-top-right-radius: 4px;
+  border-top-right-radius: 6px;
 }
 
 .other-message .chat-bubble {
-  border-top-left-radius: 4px;
+  border-top-left-radius: 6px;
 }
 
 .user-info .nickname {
@@ -473,7 +529,9 @@ onUnmounted(() => {
 
 .time {
   font-size: 12px;
-  color: #999;
+  color: #bbb;
+  text-align: right;
+  margin-top: 4px;
 }
 
 .chat-inputs {
@@ -481,19 +539,31 @@ onUnmounted(() => {
   align-items: center;
   gap: 10px;
   margin-top: 10px;
+  background-color: #fff;
+  border-top: 1px solid #e0e0e0;
+  padding: 12px 16px;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.03);
 }
 
 .el-input {
   font-size: 15px;
+  border-radius: 8px;
+}
+
+.el-button {
+  border-radius: 6px;
 }
 
 .emoji-picker-wrapper {
   margin-top: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
   max-width: 320px;
   background-color: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+  z-index: 10;
 }
 
 emoji-picker {
@@ -517,19 +587,19 @@ emoji-picker {
 .chat-message.system-message {
   text-align: center;
   margin: 12px 0;
+  font-style: italic;
+  opacity: 0.7;
+  font-size: 13px;
 }
 
 .chat-message.system-message .chat-bubble {
-  background: none;
-  color: #666;
-  font-style: italic;
-  display: inline-block;
+  background: transparent;
   padding: 0;
   box-shadow: none;
 }
 
 .chat-message.system-message .user-info {
-  display: none; /* 隐藏头像和昵称 */
+  display: none;
 }
 
 .chat-message.system-message .content {
@@ -537,5 +607,26 @@ emoji-picker {
   font-size: 14px;
 }
 
+/* 响应式支持 */
+@media screen and (max-width: 768px) {
+  .chatroom-wrapper {
+    flex-direction: column;
+  }
 
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .chatroom-container {
+    padding: 16px;
+  }
+
+  .chat-log {
+    padding: 12px;
+  }
+}
 </style>
+
+

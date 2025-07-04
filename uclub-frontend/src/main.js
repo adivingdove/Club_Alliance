@@ -6,6 +6,10 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import { MotionPlugin } from '@vueuse/motion'
 import 'emoji-picker-element'
+import { Quill } from '@vueup/vue-quill'
+import ImageResize from 'quill-image-resize-module-plus'
+
+Quill.register('modules/imageResize', ImageResize)
 
 const app = createApp(App)
 

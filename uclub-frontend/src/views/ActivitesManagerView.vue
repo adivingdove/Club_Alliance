@@ -1,12 +1,6 @@
 <template>
   <div class="p-6">
     <el-card>
-      <template #header>
-        <div class="flex justify-between items-center">
-          <h1 style="font-family:楷体;font-size:50px;">社团活动</h1>        
-        </div>
-      </template>
-
     <div class="sidebar">
       <el-card class=".card">
         <div style="font-size:20px;color:red;">
@@ -30,11 +24,21 @@
         <el-table-column prop="endTime" label="结束时间" width="180" align="center" sortable/>
         <el-table-column prop="maxParticipants" label="参加活动人数限额" width="180" align="center" sortable/>
         <el-table-column prop="currentParticipants" label="参加活动人数" width="180" align="center" sortable/>
-        <el-table-column label="活动参与率" width="200" align="center">
-            <template slot-scope="scope" >
-    
+        <el-table-column label="剩余名额" width="120" align="center">
+            <template v-slot="scope" >
+                <div style="color:#3A5FCD">
+                    {{ (scope.row.maxParticipants - scope.row.currentParticipants) || 'N/A' }}
+                </div>
             </template>
         </el-table-column>
+        <el-table-column label="活动参与率" width="120" align="center">
+            <template v-slot="scope" >
+                <div style="color:red;">
+                    {{ (scope.row.currentParticipants / scope.row.maxParticipants) || 'N/A' }}
+                </div>
+            </template>
+        </el-table-column>
+
       </el-table>
       <el-pagination
         background
@@ -74,11 +78,11 @@ const fetchAdmins = async () => {
     if (searchName.value.trim() !== '') {
       params.clubName = searchName.value.trim()
     }
-
     const res = await axios.get('/activities', { params }) 
-       adminList.value = res.data
-      
-    } catch (err) {
+    res.data.sort((a,b) => b.currentParticipants - a.currentParticipants)
+    adminList.value = res.data
+    } 
+    catch (err) {
     ElMessage.error('查询失败，请检查网络或接口')
   } finally {
     loading.value = false
@@ -92,8 +96,6 @@ onMounted(() => {
 
 
 </script>
-
-
 
 <style scoped>
 .sidebar {
