@@ -2,7 +2,8 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import request from '../utils/request' // 你的 axios 封装
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Delete } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const club = ref({})
@@ -571,6 +572,78 @@ function openActivityDetail(activity) {
   selectedActivity.value = activity
   showActivityDetailDialog.value = true
 }
+
+// 删除公告
+const deleteAnnouncement = async (announcement) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除公告"${announcement.title}"吗？`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
+    // 显示加载状态
+    const loading = ElMessage({
+      message: '正在删除公告...',
+      type: 'info',
+      duration: 0,
+      showClose: false
+    })
+    
+    const clubId = route.params.id
+    const response = await request.delete(`/api/announcements/${announcement.id}`, {
+      params: { userId: safeUserId.value }
+    })
+    
+    // 关闭加载状态
+    loading.close()
+    
+    if (response.data.code === 0) {
+      ElMessage.success('公告删除成功')
+      // 立即从本地状态中移除公告
+      if (club.value.announcements) {
+        const index = club.value.announcements.findIndex(a => a.id === announcement.id)
+        if (index > -1) {
+          club.value.announcements.splice(index, 1)
+        }
+      }
+      // 同时刷新公告列表以确保数据同步
+      await refreshAnnouncements()
+    } else {
+      ElMessage.error(response.data.message || '删除失败')
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除公告失败:', error)
+      ElMessage.error('删除失败，请重试')
+    }
+  }
+}
+
+// 检查当前用户是否可以删除公告
+const canDeleteAnnouncement = computed(() => {
+  const userId = safeUserId.value
+  if (!userId || !club.value.members) return false
+  const me = club.value.members.find(m => Number(m.userId) === userId)
+  return me && ['社长', '副社长', '干事'].includes(me.role)
+})
+
+// 刷新公告列表
+const refreshAnnouncements = async () => {
+  try {
+    const clubId = route.params.id
+    const response = await request.get(`/api/announcements/club/${clubId}`)
+    if (response.data.code === 0) {
+      club.value.announcements = response.data.data
+    }
+  } catch (error) {
+    console.error('刷新公告列表失败:', error)
+  }
+}
 </script>
 
 <template>
@@ -816,8 +889,22 @@ function openActivityDetail(activity) {
             :timestamp="a.createdAt ? new Date(a.createdAt).toLocaleString('zh-CN') : ''"
             placement="top"
           >
-            <h4>{{ a.title }}</h4>
-            <div style="white-space: pre-line;">{{ a.content }}</div>
+            <div class="announcement-item">
+              <div class="announcement-header">
+                <h4>{{ a.title }}</h4>
+                <el-button
+                  v-if="canDeleteAnnouncement"
+                  type="danger"
+                  size="small"
+                  circle
+                  @click.stop="deleteAnnouncement(a)"
+                  class="delete-announcement-btn"
+                >
+                  <el-icon><Delete /></el-icon>
+                </el-button>
+              </div>
+              <div style="white-space: pre-line;">{{ a.content }}</div>
+            </div>
           </el-timeline-item>
         </el-timeline>
       </div>
@@ -1008,5 +1095,32 @@ function openActivityDetail(activity) {
   font-size: 14px;
   font-weight: bold;
   margin-right: 10px;
+}
+
+.announcement-item {
+  position: relative;
+}
+
+.announcement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.announcement-header h4 {
+  margin: 0;
+  flex: 1;
+  margin-right: 8px;
+}
+
+.delete-announcement-btn {
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.delete-announcement-btn:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
 }
 </style>

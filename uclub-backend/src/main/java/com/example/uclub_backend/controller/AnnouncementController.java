@@ -120,9 +120,9 @@ public class AnnouncementController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<Void> deleteAnnouncement(@PathVariable Integer id) {
+    public Result<Void> deleteAnnouncement(@PathVariable Integer id, @RequestParam Integer userId) {
         try {
-            announcementService.deleteAnnouncement(id);
+            announcementService.deleteAnnouncement(id, userId);
             return Result.success();
         } catch (Exception e) {
             return Result.error(e.getMessage());
