@@ -11,7 +11,7 @@ import Search from '../views/Search.vue'
 import ClubDetails from '../views/ClubDetails.vue'
 import AiChat from '../views/AiChat.vue'
 import ClubManage from '../views/ClubManage.vue'
-//import ActivitiesAnnouncementView from '../views/admin/ActivitiesAnnouncementView.vue'
+import ActivitiesAnnouncementView from '../views/ActivitiesAnnouncementView.vue'
 
 
 

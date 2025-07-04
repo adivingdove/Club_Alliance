@@ -66,10 +66,7 @@ export function getApprovedActivitiesByClubId(clubId) {
 
 // 根据创建者ID获取活动
 export function getActivitiesByCreatorId(creatorId) {
-    return request({
-        url: `/api/activities/creator/${creatorId}`,
-        method: 'get'
-    })
+    return request.get(`/api/activities/creator/${creatorId}`)
 }
 
 // 获取即将到来的活动
@@ -198,4 +195,9 @@ export function getActivityParticipantCount(activityId) {
         url: `/api/activities/${activityId}/participant-count`,
         method: 'get'
     })
+}
+
+// 获取我参与的活动
+export function getActivitiesByParticipantId(userId) {
+    return request.get(`/api/activities/participant/${userId}`)
 } 

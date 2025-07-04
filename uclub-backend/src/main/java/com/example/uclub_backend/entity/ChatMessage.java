@@ -8,5 +8,6 @@ public class ChatMessage {
     private String content;
     private String time;
     private String role; 
+    private String room;
     // Getters and Setters
 }

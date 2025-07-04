@@ -1,77 +1,53 @@
 <template>
   <div class="chatroom-wrapper">
-    <!-- 左侧侧边栏 -->
+    <!-- 左侧侧边栏：聊天室列表 + 在线成员 -->
     <div class="sidebar">
       <h3>聊天室列表</h3>
-      <el-menu
-        class="chatroom-menu"
-        :default-active="currentRoom"
-        @select="switchRoom"
-      >
-        <el-menu-item index="public">🌐 通用聊天室</el-menu-item>
+      <el-menu class="chatroom-menu" :default-active="currentRoom" @select="switchRoom">
+        <!-- 通用聊天室 -->
+        <el-menu-item index="public">
+          🌐 通用聊天室
+          <span v-if="unreadMap['public']" class="dot"></span>
+        </el-menu-item>
+        <!-- 社团聊天室 -->
         <el-menu-item
           v-for="club in myClubs"
           :key="club.id"
           :index="'club-' + club.id"
         >
           🏷 {{ club.name }}
+          <span v-if="unreadMap['club-' + club.id]" class="dot"></span>
         </el-menu-item>
       </el-menu>
 
-      <!-- 在线用户列表 -->
       <div class="online-users">
         <h3>在线成员</h3>
         <div v-if="onlineUsers.length === 0">暂无成员在线</div>
-        <div
-          v-for="(user, idx) in onlineUsers"
-          :key="idx"
-          class="online-user"
-          style="display: flex; align-items: center; margin-bottom: 8px;"
-        >
-          <el-avatar
-            :src="formatAvatar(user.avatar)"
-            :size="24"
-            style="margin-right: 8px"
-          />
+        <div v-for="user in onlineUsers" :key="user.id" class="online-user">
+          <el-avatar :src="formatAvatar(user.avatar)" :size="24" />
           <span>{{ user.nickname }}</span>
         </div>
       </div>
     </div>
 
-    <!-- 聊天区域 -->
+    <!-- 聊天内容区域 -->
     <div class="chatroom-container">
       <h2>{{ currentRoomLabel }}</h2>
 
-      <!-- 聊天记录 -->
       <div class="chat-log">
         <div
           v-for="(msg, idx) in messages"
           :key="idx"
-          :class="[
-            'chat-message',
-            msg.role === '系统'
-              ? 'system-message'
-              : msg.sender === currentUser.nickname
-              ? 'my-message'
-              : 'other-message'
-          ]"
+          :class="['chat-message',
+            msg.role === '系统' ? 'system-message' :
+            msg.sender === currentUser.nickname ? 'my-message' : 'other-message']"
         >
           <div class="chat-bubble">
-            <div
-              class="user-info"
-              style="display: flex; align-items: center; margin-bottom: 5px;"
-              v-if="msg.role !== '系统'"
-            >
-              <el-avatar
-                :src="formatAvatar(msg.avatar) || defaultAvatar"
-                :size="30"
-                style="margin-right: 8px"
-              />
+            <div v-if="msg.role !== '系统'" class="user-info">
+              <el-avatar :src="formatAvatar(msg.avatar)" :size="30" />
               <span class="nickname" :class="msg.role">
                 {{ msg.sender }}
-                <span v-if="msg.role !== '成员'" class="badge">
-                  {{ roleMap[msg.role] }}
-                </span>
+                <span v-if="msg.role !== '成员'" class="badge">{{ roleMap[msg.role] }}</span>
               </span>
             </div>
             <div class="content" v-html="formatMessage(msg.content)"></div>
@@ -80,20 +56,12 @@
         </div>
       </div>
 
-      <!-- 输入区域 -->
       <div class="chat-inputs">
-        <el-input
-          ref="inputRef"
-          v-model="message"
-          placeholder="说点什么..."
-          @keyup.enter="sendMessage"
-          style="flex: 1; margin: 0 10px"
-        />
+        <el-input ref="inputRef" v-model="message" @keyup.enter="sendMessage" placeholder="说点什么..." />
         <el-button type="primary" @click="sendMessage">发送</el-button>
         <el-button @click="showEmoji = !showEmoji">😊</el-button>
       </div>
 
-      <!-- Emoji 选择器 -->
       <div v-if="showEmoji" class="emoji-picker-wrapper">
         <emoji-picker @emoji-click="addEmoji" />
       </div>
@@ -101,165 +69,140 @@
   </div>
 </template>
 
-
 <script setup>
-import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
-import SockJS from 'sockjs-client/dist/sockjs.min.js'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watchEffect } from 'vue'
 import { Client } from '@stomp/stompjs'
+import SockJS from 'sockjs-client/dist/sockjs.min.js'
 import { getMyClubs, getProfileInfo } from '@/api/profileApi'
-
 import 'emoji-picker-element'
 import axios from 'axios'
 
+// 当前状态
+const currentUser = ref({})
+const currentRoom = ref('public')
+const myClubs = ref([])
 const onlineUsers = ref([])
-
-const fetchOnlineUsers = async () => {
-  const room = currentRoom.value
-  const url = `${apiBaseUrl}/api/chat/online/${room}`
-  const token = localStorage.getItem('token')
-
-  console.log(`[Chat]  正在请求房间 ${room} 的在线用户...`, url)
-
-  try {
-    const res = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-
-    console.log(`[Chat]  成功获取在线用户 (${res.data.length}人):`, res.data)
-
-    onlineUsers.value = res.data
-  } catch (err) {
-    console.error(`[Chat]  获取房间 ${room} 的在线用户失败:`, err)
-    if (err.response) {
-      console.error('[Chat] 服务器响应:', err.response.status, err.response.data)
-    } else if (err.request) {
-      console.error('[Chat] 无服务器响应，请检查网络或后端:', err.request)
-    } else {
-      console.error('[Chat] 请求配置错误:', err.message)
-    }
-  }
-}
-
-
-// 当前用户信息
-const currentUser = ref({ nickname: '', avatarUrl: '' })
-// 消息相关
 const messages = ref([])
 const message = ref('')
 const inputRef = ref(null)
 const showEmoji = ref(false)
-const defaultAvatar = 'https://cdn-icons-png.flaticon.com/512/149/149071.png' // 默认头像地址
+const unreadMap = reactive({ public: false })
 
-// 当前聊天室标识
-const currentRoom = ref('public') // 默认通用聊天室
+const apiBaseUrl = 'http://localhost:8080'
+const defaultAvatar = 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
+
+// 用户角色徽章
+const roleMap = {
+  '社长': '👑 社长',
+  '副社长': '⭐ 副社长',
+  '干事': '🛠 干事',
+  '成员': ''
+}
+
+let stompClient = null
+let intervalId = null
+
+// 聊天室名称标签
 const currentRoomLabel = computed(() =>
   currentRoom.value === 'public'
     ? '🟢 通用聊天室'
     : '🟢 ' + (myClubs.value.find(c => 'club-' + c.id === currentRoom.value)?.name || '')
 )
 
-// 示例社团列表（应从后端动态获取）
-const myClubs = ref([])
-
-let stompClient = null
-let currentSubscription = null
-let intervalId = null
-const apiBaseUrl = 'http://localhost:8080' 
-
-const formatAvatar = (avatar) => {
-  if (!avatar) return defaultAvatar
-  return avatar.startsWith('http') ? avatar : apiBaseUrl + avatar
+// 获取用户信息
+const fetchCurrentUser = async () => {
+  const res = await getProfileInfo()
+  currentUser.value = res.data.data
 }
 
-const roleMap = {
-  '社长': '👑 社长',
-  '副社长': '⭐ 副社长',
-  '干事': '🛠 干事',
-  '成员': ''  // 成员不显示徽章
+// 获取社团信息
+const fetchMyClubs = async () => {
+  const res = await getMyClubs()
+  myClubs.value = res.data.data.map(c => ({ id: c.id, name: c.name }))
+  myClubs.value.forEach(c => unreadMap['club-' + c.id] = false)
+}
+
+// 获取在线用户
+const fetchOnlineUsers = async () => {
+  try {
+    const res = await axios.get(`${apiBaseUrl}/api/chat/online/${currentRoom.value}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    })
+    onlineUsers.value = res.data
+  } catch (err) {
+    console.error('获取在线用户失败:', err)
+  }
+}
+
+// 格式化函数
+const formatTime = (iso) => {
+  const d = new Date(iso)
+  return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`
+}
+const formatMessage = (text) => text.replace(/\n/g, '<br>')
+const formatAvatar = (url) => url?.startsWith('http') ? url : (apiBaseUrl + url) || defaultAvatar
+
+// 接收消息回调
+const handleIncomingMessage = (msg, roomId) => {
+  const parsed = JSON.parse(msg.body)
+  if (roomId === currentRoom.value) {
+    messages.value.push(parsed)
+  } else {
+    unreadMap[roomId] = true
+    console.log(`[📩 未读消息] 来自房间 ${roomId}`, parsed)
+  }
 }
 
 // 连接 WebSocket
 const connect = () => {
-  const token = localStorage.getItem('token')
-const socket = new SockJS(`http://localhost:8080/ws-chat?token=${token}`)
+  const socket = new SockJS(`${apiBaseUrl}/ws-chat?token=${localStorage.getItem('token')}`)
   stompClient = new Client({
     webSocketFactory: () => socket,
-    reconnectDelay: 5000,
-    debug: (str) => console.log('[STOMP DEBUG]', str),
-    connectHeaders: {
-      token: localStorage.getItem('token')  
-    },
+    connectHeaders: { token: localStorage.getItem('token') },
     onConnect: () => {
-      console.log(' WebSocket Connected')
+      console.log('[ 已连接 WebSocket]')
+      subscribeAllRooms()
       subscribeToRoom(currentRoom.value)
       fetchOnlineUsers()
-    },
-    onStompError: (frame) => {
-      console.error(' STOMP error:', frame)
-    },
-    onWebSocketError: (err) => {
-      console.error(' WebSocket error:', err)
     }
   })
   stompClient.activate()
 }
 
-// 切换聊天室
-const switchRoom = (roomId) => {
-  const oldRoomLabel = currentRoomLabel.value
-  currentRoom.value = roomId
-  messages.value = []
- messages.value.push({
-    sender: '系统',
-    content: `🚪 你已离开「${oldRoomLabel.replace('🟢 ', '')}」聊天室`,
-    time: new Date().toISOString(),
-    role: '系统'
+// 订阅所有房间
+const subscribeAllRooms = () => {
+  stompClient.subscribe('/topic/public', (msg) => handleIncomingMessage(msg, 'public'))
+  myClubs.value.forEach(club => {
+    const roomId = 'club-' + club.id
+    stompClient.subscribe(`/topic/${roomId}`, (msg) => handleIncomingMessage(msg, roomId))
   })
-  if (stompClient?.connected) {
-    subscribeToRoom(roomId)
-    fetchOnlineUsers()
-  }
-
- 
 }
 
-// 订阅聊天室
+// 切换房间
 const subscribeToRoom = (roomId) => {
-  if (currentSubscription) {
-    currentSubscription.unsubscribe()
-  }
-
-  const topic = '/topic/' + roomId
-  currentSubscription = stompClient.subscribe(topic, (msg) => {
-    console.log('收到消息:', msg.body)
-    messages.value.push(JSON.parse(msg.body))
-  })
-
-  // 系统提示：你已进入房间
+  messages.value = [{
+    sender: '系统',
+    content: `🎉 欢迎来到「${currentRoomLabel.value.replace('🟢 ', '')}」聊天室！`,
+    time: new Date().toISOString(),
+    role: '系统'
+  }]
+  unreadMap[roomId] = false
+}
+const switchRoom = (roomId) => {
   messages.value.push({
     sender: '系统',
-    avatar: '', 
-     content: `🎉 欢迎来到「${currentRoomLabel.value.replace('🟢 ', '')}」聊天室！`,
+    content: `🚪 离开「${currentRoomLabel.value.replace('🟢 ', '')}」聊天室`,
     time: new Date().toISOString(),
     role: '系统'
   })
+  currentRoom.value = roomId
+  subscribeToRoom(roomId)
+  fetchOnlineUsers()
 }
-
 
 // 发送消息
 const sendMessage = () => {
-  if (!message.value.trim()) {
-    console.warn(' 空消息，忽略发送')
-    return
-  }
-  if (!stompClient || !stompClient.connected) {
-    console.error(' STOMP 未连接，无法发送消息')
-    return
-  }
-
-  const destination = '/app/chat.send.' + currentRoom.value
+  if (!message.value.trim()) return
   const payload = {
     sender: currentUser.value.nickname,
     avatar: currentUser.value.headUrl || '',
@@ -267,102 +210,44 @@ const sendMessage = () => {
     time: new Date().toISOString(),
     role: ''
   }
-
-  try {
-    stompClient.publish({
-  destination,
-  body: JSON.stringify(payload),
-  headers: {
-    token: localStorage.getItem('token')  // 从本地 token 添加进 header
-  }
-})
-    console.log(' 发送消息成功:', payload)
-    message.value = ''
-  } catch (err) {
-    console.error(' 消息发送失败:', err)
-  }
+  stompClient.publish({
+    destination: `/app/chat.send.${currentRoom.value}`,
+    body: JSON.stringify(payload),
+    headers: { token: localStorage.getItem('token') }
+  })
+  message.value = ''
 }
 
-
-// 插入 Emoji
-const addEmoji = (event) => {
-  const emoji = event.detail.unicode
+// 插入 emoji
+const addEmoji = (e) => {
+  const emoji = e.detail.unicode
   const inputEl = inputRef.value?.input
-
-  if (inputEl) {
-    const start = inputEl.selectionStart
-    const end = inputEl.selectionEnd
-    const currentValue = message.value
-    message.value = currentValue.slice(0, start) + emoji + currentValue.slice(end)
-    nextTick(() => {
-      inputEl.selectionStart = inputEl.selectionEnd = start + emoji.length
-      inputEl.focus()
-    })
-  } else {
-    message.value += emoji
-  }
-}
-const formatTime = (isoString) => {
-  if (!isoString) return ''
-  const date = new Date(isoString)
-  const pad = (n) => (n < 10 ? '0' + n : n)
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+  const start = inputEl?.selectionStart || 0
+  const end = inputEl?.selectionEnd || 0
+  message.value = message.value.slice(0, start) + emoji + message.value.slice(end)
+  nextTick(() => {
+    inputEl.selectionStart = inputEl.selectionEnd = start + emoji.length
+    inputEl.focus()
+  })
 }
 
-// 获取用户社团列表
-const fetchMyClubs = async () => {
-  try {
-    const res = await getMyClubs()
-
-    myClubs.value = res.data.data.map(club =>({
-      id:club.id,
-      name: `${club.name}`
-    }))
-    console.log('获取社团列表成功:', myClubs.value)
-  } catch (err) {
-    console.error('获取社团列表失败:', err)
-   
-  }
-}
-
-// 获取当前登录用户信息
-const fetchCurrentUser = async () => {
-  try {
-    const res = await getProfileInfo()
-    console.log('获取用户信息',res)
-    currentUser.value = res.data.data
-   
-  } catch (err) {
-    console.error('获取当前用户信息失败:', err)
-  }
-}
-
-// 格式化消息换行
-const formatMessage = (text) => {
-  return text.replace(/(?:\r\n|\r|\n)/g, '<br>')
-}
-
+// 生命周期
 onMounted(async () => {
   await fetchCurrentUser()
   await fetchMyClubs()
   connect()
+  intervalId = setInterval(fetchOnlineUsers, 10000)
 })
-
 onUnmounted(() => {
   stompClient?.deactivate()
-})
-
-onMounted(() => {
-  intervalId = setInterval(() => {
-    fetchOnlineUsers()
-  }, 10000) // 每 10 秒刷新一次
-})
-
-onUnmounted(() => {
   clearInterval(intervalId)
 })
-</script>
 
+// 调试 unreadMap
+watchEffect(() => {
+  console.log('unreadMap 状态更新:', JSON.stringify(unreadMap))
+})
+</script>
 
 
 

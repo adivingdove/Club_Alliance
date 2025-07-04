@@ -82,6 +82,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { EditPen } from '@element-plus/icons-vue'
 
 
 import PostCard from '../components/PostCard.vue'
