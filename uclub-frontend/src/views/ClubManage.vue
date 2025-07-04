@@ -241,6 +241,16 @@
         ref="activityFormRef" 
         label-width="100px"
       >
+        <el-form-item label="所属社团" prop="clubId">
+          <el-select v-model="activityForm.clubId" placeholder="请选择所属社团">
+            <el-option
+              v-for="club in managementClubs"
+              :key="club.id"
+              :label="club.name"
+              :value="club.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="活动标题" prop="title">
           <el-input v-model="activityForm.title" placeholder="请输入活动标题" />
         </el-form-item>
@@ -281,16 +291,6 @@
             :min="1" 
             placeholder="不填表示人数不限"
           />
-        </el-form-item>
-        <el-form-item label="所属社团" prop="clubId">
-          <el-select v-model="activityForm.clubId" placeholder="请选择所属社团">
-            <el-option 
-              v-for="club in clubList.filter(c => ['干事', '副社长', '社长'].includes(c.myRole))" 
-              :key="club.id" 
-              :label="club.name" 
-              :value="club.id" 
-            />
-          </el-select>
         </el-form-item>
         <el-form-item label="活动图片" prop="imageUrl">
           <el-upload
@@ -474,7 +474,7 @@
 
 <script setup>
 import ActivitiesAnnouncementView from '@/views/ActivitiesAnnouncementView.vue'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from '@/utils/axios'
 import request from '../utils/request'
@@ -482,7 +482,8 @@ import {
   createActivity,
   deleteActivity,
   updateActivity,
-  getActivitiesByCreatorId
+  getActivitiesByCreatorId,
+  getUserManagementClubs
 } from '@/api/activityApi'
 
 
@@ -512,13 +513,13 @@ const editActivityFormRef = ref()
 
 // 活动表单
 const activityForm = ref({
+  clubId: '',
   title: '',
   description: '',
   location: '',
   startTime: '',
   endTime: '',
-  maxParticipants: null,
-  clubId: null,
+  maxParticipants: '',
   imageUrl: ''
 })
 
@@ -533,12 +534,17 @@ const editActivityForm = ref({
 
 // 表单验证规则
 const activityRules = {
-  title: [{ required: true, message: '请输入活动标题', trigger: 'blur' }],
+  clubId: [
+    { required: true, message: '请选择所属社团', trigger: 'change' }
+  ],
+  title: [
+    { required: true, message: '请输入活动标题', trigger: 'blur' },
+    { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
+  ],
   description: [{ required: true, message: '请输入活动描述', trigger: 'blur' }],
   location: [{ required: true, message: '请输入活动地点', trigger: 'blur' }],
   startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
-  endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }],
-  clubId: [{ required: true, message: '请选择所属社团', trigger: 'change' }]
+  endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }]
 }
 
 const statusMap = {
@@ -785,13 +791,13 @@ const submitActivity = async () => {
       ElMessage.success('发布活动成功')
       showCreateActivityDialog.value = false
       activityForm.value = {
+        clubId: '',
         title: '',
         description: '',
         location: '',
         startTime: '',
         endTime: '',
-        maxParticipants: null,
-        clubId: null,
+        maxParticipants: '',
         imageUrl: ''
       }
       fetchActivities()
@@ -1107,6 +1113,40 @@ const beforeImageUpload = (file) => {
     return false
   }
   return true
+}
+
+const managementClubs = ref([])
+
+// 获取用户有管理权限的社团列表
+const fetchManagementClubs = async () => {
+  try {
+    const response = await getUserManagementClubs()
+    managementClubs.value = response.data
+  } catch (error) {
+    ElMessage.error('获取社团列表失败')
+    console.error('获取社团列表失败:', error)
+  }
+}
+
+// 在对话框打开时获取社团列表
+watch(showCreateActivityDialog, (newVal) => {
+  if (newVal) {
+    fetchManagementClubs()
+  }
+})
+
+// 重置表单时也要重置社团选择
+const resetActivityForm = () => {
+  activityForm.value = {
+    clubId: '',
+    title: '',
+    description: '',
+    location: '',
+    startTime: '',
+    endTime: '',
+    maxParticipants: '',
+    imageUrl: ''
+  }
 }
 
 onMounted(() => {

@@ -66,7 +66,14 @@
             
             <div class="activity-content">
               <h3 class="activity-title">{{ activity.title }}</h3>
-              <p class="activity-description">{{ activity.description }}</p>
+              
+              <!-- 活动图片 -->
+              <div v-if="activity.imageUrl" class="activity-image">
+                <img :src="getImageUrl(activity.imageUrl)" :alt="activity.title" />
+              </div>
+              
+              <!-- 活动描述 -->
+              <div class="activity-description" v-html="stripHtmlExceptImg(activity.description)"></div>
               
               <div class="activity-info">
                 <div class="info-item">
@@ -257,7 +264,7 @@
         
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="所属社团" prop="clubId" v-if="clubList.length > 0" class="form-item-highlight">
+            <el-form-item label="所属社团" prop="clubId" class="form-item-highlight">
               <el-select 
                 v-model="activityForm.clubId" 
                 placeholder="请选择所属社团"
@@ -266,12 +273,15 @@
                 style="width: 100%"
               >
                 <el-option 
-                  v-for="club in (clubList.value || []).filter(c => ['干事', '副社长', '社长'].includes(c.myRole))" 
+                  v-for="club in clubList" 
                   :key="club.id" 
                   :label="club.name" 
                   :value="club.id" 
                 />
               </el-select>
+              <div v-if="clubList.length === 0" style="color: #f56c6c; font-size: 12px; margin-top: 5px;">
+                您没有可以发布活动的社团（需要担任社长、副社长或干事）
+              </div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -708,17 +718,45 @@ const fetchActivities = async () => {
 
 // 获取用户社团列表
 const fetchUserClubs = async () => {
-  if (!isLoggedIn.value) return
+  if (!isLoggedIn.value) {
+    console.log('用户未登录')
+    return
+  }
+  
+  console.log('开始获取社团列表，用户信息:', userInfo.value)
+  
   try {
-    const response = await request.get(`/api/clubs/creator/${userInfo.value.id}`)
+    // 获取用户所有的社团（包括担任干事、副社长、社长的社团）
+    const token = localStorage.getItem('token')
+    console.log('当前token:', token)
+    
+    const response = await request({
+      url: `/api/clubs/user/${userInfo.value.id}`,
+      method: 'get',
+      baseURL: 'http://localhost:8080',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    
+    console.log('获取社团列表响应:', response)
+    
     if (response.data.code === 0) {
-      clubList.value = (response.data.data || []).map(c => ({
-        ...c,
-        myRole: c.role || c.rol
-      }))
+      // 过滤出用户有管理权限的社团
+      clubList.value = (response.data.data || [])
+        .filter(c => ['干事', '副社长', '社长'].includes(c.role))
+        .map(c => ({
+          ...c,
+          myRole: c.role
+        }))
+      console.log('处理后的社团列表:', clubList.value)
     }
   } catch (error) {
+    console.error('获取社团列表失败:', error)
+    console.error('错误配置:', error.config)
+    console.error('错误响应:', error.response)
     clubList.value = []
+    ElMessage.error('获取社团列表失败')
   }
 }
 
@@ -726,6 +764,13 @@ const fetchUserClubs = async () => {
 const handleTabChange = () => {
   fetchActivities()
 }
+
+// 监听创建对话框的显示状态
+watch(showCreateDialog, (newVal) => {
+  if (newVal) {
+    fetchUserClubs()
+  }
+})
 
 // 处理搜索
 const handleSearch = () => {
@@ -1098,11 +1143,15 @@ const beforeImageUpload = (file) => {
 }
 
 // 在<script setup>中添加图片URL拼接方法
-const getImageUrl = (url) => {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  return 'http://localhost:8080' + url
-}
+const getImageUrl = (imageUrl) => {
+  if (!imageUrl) return '';
+  // 如果是完整的URL，直接返回
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  // 否则拼接后端基础URL
+  return `${import.meta.env.VITE_API_BASE_URL}${imageUrl}`;
+};
 
 function disabledStartDate(date) {
   const now = new Date()
@@ -1206,6 +1255,48 @@ const router = useRouter()
 const handle = () => {
   router.push('/ActivitiesManagerView')
 }
+
+// 添加在 script 部分的其他函数旁边
+const stripHtmlExceptImg = (html) => {
+  if (!html) return '';
+  
+  // 如果是纯文本（不包含HTML标签），直接返回
+  if (!html.includes('<') && !html.includes('>')) {
+    return html;
+  }
+
+  try {
+    // 创建一个临时的 div 来解析 HTML
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+
+    // 递归处理节点
+    const processNode = (node) => {
+      if (node.nodeType === 3) { // 文本节点
+        return node.textContent;
+      }
+      if (node.nodeName === 'IMG') { // 保留图片标签
+        return node.outerHTML;
+      }
+      if (node.nodeType === 1) { // 元素节点
+        return Array.from(node.childNodes)
+          .map(child => processNode(child))
+          .join('');
+      }
+      return '';
+    };
+
+    // 处理所有子节点
+    const result = Array.from(temp.childNodes)
+      .map(node => processNode(node))
+      .join('');
+
+    return result;
+  } catch (e) {
+    console.error('处理HTML时出错:', e);
+    return html.replace(/<[^>]*>/g, ''); // 降级处理：移除所有HTML标签
+  }
+};
 </script>
 
 <style scoped>
@@ -1282,100 +1373,110 @@ const handle = () => {
 }
 
 .activity-card {
-  margin-bottom: 20px;
+  height: 100%;
+  transition: transform 0.3s;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.activity-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.activity-card.pending {
-  border-left: 4px solid #e6a23c;
-}
-
-.activity-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.activity-status {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
-}
-
-.status-approved {
-  background-color: #f0f9ff;
-  color: #67c23a;
-}
-
-.status-pending {
-  background-color: #fdf6ec;
-  color: #e6a23c;
-}
-
-.status-rejected {
-  background-color: #fef0f0;
-  color: #f56c6c;
-}
-
-.activity-time {
-  font-size: 12px;
-  color: #909399;
+  flex-direction: column;
 }
 
 .activity-content {
-  margin-bottom: 15px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.activity-title {
-  font-size: 16px;
-  font-weight: bold;
-  color: #303133;
-  margin-bottom: 8px;
-  line-height: 1.4;
+.activity-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.activity-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .activity-description {
+  color: #666;
   font-size: 14px;
-  color: #606266;
-  line-height: 1.5;
-  margin-bottom: 12px;
-  display: -webkit-box;
-  -webkit-line-clamp: 8;
-  -webkit-box-orient: vertical;
+  line-height: 1.6;
+  margin: 10px 0;
   overflow: hidden;
-  min-height: 80px;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.activity-description img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+.activity-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+  color: #333;
 }
 
 .activity-info {
-  margin-bottom: 15px;
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  color: #666;
+  font-size: 14px;
 }
 
 .info-item {
   display: flex;
   align-items: center;
-  margin-bottom: 5px;
-  font-size: 12px;
-  color: #909399;
+  gap: 4px;
 }
 
 .info-item i {
-  margin-right: 5px;
+  font-size: 16px;
 }
 
-.activity-footer {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
+/* 悬停效果 */
+.activity-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* 待审核状态样式 */
+.activity-card.pending {
+  opacity: 0.8;
+}
+
+/* 状态标签样式 */
+.activity-status {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: white;
+}
+
+.status-pending {
+  background-color: #e6a23c;
+}
+
+.status-approved {
+  background-color: #67c23a;
+}
+
+.status-rejected {
+  background-color: #f56c6c;
 }
 
 .empty-state {

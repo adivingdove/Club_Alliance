@@ -200,4 +200,12 @@ export function getActivityParticipantCount(activityId) {
 // 获取我参与的活动
 export function getActivitiesByParticipantId(userId) {
     return request.get(`/api/activities/participant/${userId}`)
+}
+
+// 获取用户有管理权限的社团列表（社长、副社长、干事）
+export function getUserManagementClubs() {
+    return request({
+        url: '/api/clubs/management',
+        method: 'get'
+    })
 } 
