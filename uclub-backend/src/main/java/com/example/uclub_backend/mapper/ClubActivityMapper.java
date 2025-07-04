@@ -1,6 +1,6 @@
 package com.example.uclub_backend.mapper;
 
-import com.example.uclub_backend.entity.Club;
+
 import com.example.uclub_backend.entity.ClubActivity;
 import org.apache.ibatis.annotations.*;
 

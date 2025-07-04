@@ -20,7 +20,7 @@ public class CommentQueryController {
     // 新增接口：通过评论ID获取评论及所属帖子信息
     @GetMapping("/api/comments/{commentId}/with-post")
     public ResponseEntity<?> getCommentWithPost(@PathVariable Long commentId) {
-        Comment comment = commentService.findById(commentId);
+        Comment comment = commentService.getCommentById(commentId);
         if (comment == null) {
             return ResponseEntity.status(404).body(Map.of("message", "评论不存在"));
         }

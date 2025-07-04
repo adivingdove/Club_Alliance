@@ -11,7 +11,7 @@ import Search from '../views/Search.vue'
 import ClubDetails from '../views/ClubDetails.vue'
 import AiChat from '../views/AiChat.vue'
 import ClubManage from '../views/ClubManage.vue'
-import ActivitiesAnnouncementView from '../views/ActivitiesAnnouncementView.vue'
+import ActivitiesAnnouncementView from '../views/admin/ActivitiesAnnouncementView.vue'
 
 
 
@@ -69,7 +69,7 @@ const routes = [
       { path: 'club-admin', component: ClubAdminView },
       { path: 'user-query', component: UserQueryView },
       { path: 'system-announcement', component: SystemAnnouncementView },
-      { path: 'activities-announcement', component: ActivitiesAnnouncementView },
+     // { path: 'activities-announcement', component: ActivitiesAnnouncementView },
       { path: 'club-creation-review', component: ClubCreationReviewView },
       { path: 'activity-review', component: ActivityReviewView },
       { path: 'report-handling', component: ReportHandlingView },

@@ -3,8 +3,12 @@ import com.example.uclub_backend.entity.User;
 import com.example.uclub_backend.forum.entity.Post;
 import com.example.uclub_backend.forum.repository.ForumClubRepository;
 import com.example.uclub_backend.forum.repository.PostRepository;
+
 import com.example.uclub_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+
+
+
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,19 +18,24 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class PostService {
     private final PostRepository postRepository;
     private final ForumClubRepository forumClubRepository;
+    private final CommentService commentService;
 
     @Autowired
     private UserRepository userRepository;
+    public PostService(PostRepository postRepository,
+                   ForumClubRepository forumClubRepository,
+                   CommentService commentService) {
+    this.postRepository = postRepository;
+    this.forumClubRepository = forumClubRepository;
+    this.commentService = commentService;
+}
 
-    public PostService(PostRepository postRepository, ForumClubRepository forumClubRepository) {
-        this.postRepository = postRepository;
-        this.forumClubRepository = forumClubRepository;
-    }
 
     //  分页查询
 
@@ -115,11 +124,15 @@ Page<Post> postPage = postRepository.findByFiltersWithClubName(
 
         System.out.println("当前用户的角色为："+user.getRole());
 
-        if (!post.getUserId().equals(userId) && user.getRole() != User.UserRole.系统管理员) {
+        if (!Objects.equals(post.getUserId(), Long.valueOf(userId)) && user.getRole() != User.UserRole.系统管理员) {
             throw new IllegalArgumentException("无权限删除该帖子");
         }
 
-        postRepository.deleteById(id);
+    // 删除该帖子的所有评论
+    commentService.deleteCommentsByPostId(id);
+
+    // 删除帖子本身
+    postRepository.deleteById(id);
     }
 
     @Transactional
