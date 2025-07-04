@@ -210,8 +210,8 @@ export default {
 }
 .ai-sidebar {
   width: 220px;
-  background: #fff;
-  border-right: 1px solid #e4e7ed;
+  background: linear-gradient(120deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-right: none;
   min-height: 100vh;
   height: 100vh;
   padding: 18px 0 0 0;
@@ -220,42 +220,54 @@ export default {
   top: 0;
   left: 0;
   overflow-y: auto;
+  border-top-right-radius: 24px;
+  border-bottom-right-radius: 24px;
+  box-shadow: 2px 0 16px 0 rgba(25, 118, 210, 0.10), 0 0 0 1px #233044;
+  transition: background 0.4s;
 }
-.sidebar-header {
+.ai-sidebar .sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 18px 12px 18px;
   font-weight: bold;
   font-size: 16px;
+  color: #222;
+  text-shadow: none;
 }
-.new-chat-btn {
-  background: #409EFF;
-  color: #fff;
+.ai-sidebar .new-chat-btn {
+  background: linear-gradient(90deg, #42a5f5 0%, #1976d2 100%);
+  color: #222;
   border: none;
-  border-radius: 6px;
-  padding: 4px 12px;
-  font-size: 14px;
+  border-radius: 8px;
+  padding: 4px 16px;
+  font-size: 15px;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(25,118,210,0.10);
+  transition: background 0.2s, box-shadow 0.2s;
   cursor: pointer;
-  transition: background 0.2s;
 }
-.new-chat-btn:hover {
-  background: #1976d2;
+.ai-sidebar .new-chat-btn:hover {
+  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
+  box-shadow: 0 4px 16px rgba(25,118,210,0.18);
 }
-.chat-list {
+.ai-sidebar .chat-list {
   list-style: none;
   padding: 0 0 0 0;
   margin: 0;
 }
-.chat-list li {
+.ai-sidebar .chat-list li {
   padding: 0;
 }
-.chat-list-row {
+.ai-sidebar .chat-list-row {
   display: flex;
   align-items: center;
   padding: 10px 18px;
+  border-radius: 8px;
+  margin: 2px 6px;
+  transition: background 0.18s;
 }
-.chat-title {
+.ai-sidebar .chat-title {
   flex: 1 1 auto;
   white-space: nowrap;
   overflow: hidden;
@@ -263,10 +275,23 @@ export default {
   max-width: 140px;
   display: inline-block;
   cursor: pointer;
+  color: #222;
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: 1px;
+  transition: color 0.18s;
 }
-.delete-chat-btn {
-  background: #f56c6c;
-  color: #fff;
+.ai-sidebar .chat-list li.active .chat-title {
+  color: #1976d2;
+  font-weight: bold;
+  text-shadow: 0 2px 8px #1976d2;
+}
+.ai-sidebar .chat-list-row:hover {
+  background: rgba(25, 118, 210, 0.13);
+}
+.ai-sidebar .delete-chat-btn {
+  background: #263238;
+  color: #90caf9;
   border: none;
   margin-left: 8px;
   font-size: 15px;
@@ -280,8 +305,8 @@ export default {
   transition: background 0.2s, color 0.2s;
   vertical-align: middle;
 }
-.delete-chat-btn:hover {
-  background: #d32f2f;
+.ai-sidebar .delete-chat-btn:hover {
+  background: #1976d2;
   color: #fff;
 }
 .ai-main {

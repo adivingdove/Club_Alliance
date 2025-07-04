@@ -211,6 +211,20 @@ CREATE TABLE `user` (
   UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+CREATE TABLE `chat_message` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `room` VARCHAR(50) NOT NULL COMMENT '聊天室 ID，如 public 或 club-1',
+  `sender_id` BIGINT NOT NULL COMMENT '发送者 user_id',
+  `sender_name` VARCHAR(100) DEFAULT NULL COMMENT '昵称',
+  `avatar_url` VARCHAR(255) DEFAULT NULL COMMENT '头像 URL',
+  `content` TEXT NOT NULL COMMENT '消息内容',
+  `role` VARCHAR(20) DEFAULT NULL COMMENT '角色，如 社长',
+  `time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '发送时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

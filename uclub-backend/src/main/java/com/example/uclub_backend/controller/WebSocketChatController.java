@@ -3,9 +3,11 @@ package com.example.uclub_backend.controller;
 import com.example.uclub_backend.entity.ChatMessage;
 import com.example.uclub_backend.entity.ClubMember;
 import com.example.uclub_backend.entity.User;
+import com.example.uclub_backend.repository.ChatMessageRepository;
 import com.example.uclub_backend.repository.ClubMemberRepository;
 import com.example.uclub_backend.repository.UserRepository;
 import com.example.uclub_backend.service.OnlineUserService;
+import com.example.uclub_backend.repository.ChatMessageRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 @Controller
@@ -31,57 +34,62 @@ public class WebSocketChatController {
     @Autowired
     private ClubMemberRepository clubMemberRepository;
 
-    @MessageMapping("/chat.send.{roomId}")
-    public void sendMessage(@DestinationVariable String roomId,
-                            Principal principal,  //  从这里获取用户名
-                            ChatMessage message) {
+    @Autowired
+    private ChatMessageRepository chatMessageRepository;
 
-        message.setRoom(roomId);
-        message.setTime(LocalDateTime.now().toString());
+ 
+@MessageMapping("/chat.send.{roomId}")
+public void sendMessage(@DestinationVariable String roomId,
+                        Principal principal,
+                        Map<String, Object> payload) {
 
-        if (principal == null || principal.getName() == null) {
-            System.out.println(" Principal 为空，未登录用户");
-            return;
-        }
+    System.out.println("✅ WebSocket 方法已被触发");
 
-        String account = principal.getName();  // token 里的用户名
-        onlineUserService.addUserToRoom(roomId, account);
-        Optional<User> optionalUser = userRepository.findByAccount(account);
-        if (optionalUser.isEmpty()) {
-            System.out.println(" 用户不存在: " + account);
-            return;
-        }
-
-        User user = optionalUser.get();
-        message.setSender(user.getNickname());
-        message.setAvatar(user.getHeadUrl() != null ? user.getHeadUrl() : "");
-
-        String role = "成员"; // 默认身份
-
-        if (!roomId.equals("public") && roomId.startsWith("club-")) {
-            try {
-                Integer clubId = Integer.parseInt(roomId.substring(5));
-                Optional<ClubMember> clubMemberOpt = clubMemberRepository.findByUserIdAndClubId(user.getId(), clubId);
-
-                if (clubMemberOpt.isPresent()) {
-                    ClubMember member = clubMemberOpt.get();
-                    if ("已通过".equals(member.getJoinStatus().name())) {
-                        role = member.getRole().name();
-                    } else {
-                        System.out.println(" 用户未通过审核: " + member.getJoinStatus().name());
-                    }
-                } else {
-                    System.out.println(" 用户未加入该社团");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println(" roomId 格式错误：" + roomId);
-            }
-        }
-
-        message.setRole(role);
-
-        System.out.println(" 发送消息：" + message.getSender() + " (" + role + ") : " + message.getContent());
-
-        messagingTemplate.convertAndSend("/topic/" + roomId, message);
+    if (principal == null || principal.getName() == null) {
+        System.out.println("❌ Principal 为空");
+        return;
     }
+
+    Optional<User> optionalUser = userRepository.findByAccount(principal.getName());
+    if (optionalUser.isEmpty()) {
+        System.out.println("❌ 用户不存在: " + principal.getName());
+        return;
+    }
+
+    User user = optionalUser.get();
+
+    String content = (String) payload.get("content");
+    if (content == null || content.isBlank()) {
+        System.out.println("❌ 消息内容为空");
+        return;
+    }
+
+    ChatMessage message = new ChatMessage();
+    message.setRoom(roomId);
+    message.setTime(LocalDateTime.now());
+    message.setContent(content);
+    message.setSender(user.getNickname());
+    message.setAvatar(user.getHeadUrl());
+    message.setSenderId(user.getId());
+    
+    String role = "成员";
+    if (roomId.startsWith("club-")) {
+        try {
+            Integer clubId = Integer.parseInt(roomId.substring(5));
+            Optional<ClubMember> cm = clubMemberRepository.findByUserIdAndClubId(user.getId(), clubId);
+            if (cm.isPresent() && "已通过".equals(cm.get().getJoinStatus().name())) {
+                role = cm.get().getRole().name();
+            }
+        } catch (Exception e) {
+            System.out.println("⚠️ clubId 格式错误");
+        }
+    }
+    message.setRole(role);
+
+    chatMessageRepository.save(message);
+    messagingTemplate.convertAndSend("/topic/" + roomId, message);
+    System.out.println("✅ 消息已发送并存储：" + content);
+}
+
+
 }

@@ -33,13 +33,23 @@
         </div>
       </div>
       <!-- Banner -->
-      <div class="banner">
-        <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=1200&q=80" class="banner-img" />
-        <div class="banner-content">
-          <h1>2025 年武汉大学社团招新季</h1>
-          <p>百团大战，等你来选！3月15日-3月30日，武汉大学桂操，不见不散</p>
-        </div>
-      </div>
+      <el-carousel
+        class="banner-carousel"
+        height="260px"
+        indicator-position="outside"
+        arrow="always"
+        interval="10000"
+      >
+        <el-carousel-item v-for="(item, idx) in banners" :key="idx">
+          <div class="banner-img-wrapper">
+            <img :src="item.img" class="banner-img" />
+            <div class="banner-content">
+              <h1>{{ item.title }}</h1>
+              <p>{{ item.desc }}</p>
+            </div>
+          </div>
+        </el-carousel-item>
+      </el-carousel>
       <!-- 分类Tab -->
       <el-tabs v-model="activeTab" class="club-tabs" @tab-click="filterClubs">
         <el-tab-pane label="全部社团" name="all" class="tab-left"></el-tab-pane>
@@ -92,21 +102,41 @@
       <span style="font-size: 32px;">+</span>
     </el-button>
     <!-- 新建社团弹窗表单 -->
-    <el-dialog v-model="showCreateDialog" title="新建社团" width="500px" :close-on-click-modal="false">
-      <el-form :model="createForm" :rules="createRules" ref="createFormRef" label-width="100px">
-        <el-form-item label="社团名称" prop="name">
-          <el-input v-model="createForm.name" placeholder="请输入社团名称" />
+    <el-dialog v-model="showCreateDialog" title="☀️ 新建社团" width="500px" :close-on-click-modal="false" class="create-club-dialog" 
+      :modal-append-to-body="false"
+      :lock-scroll="false"
+      :top="'8vh'"
+    >
+      <el-form :model="createForm" :rules="createRules" ref="createFormRef" label-width="120px" class="create-club-form">
+        <el-form-item label="⭐ 社团名称" prop="name">
+          <el-input v-model="createForm.name" placeholder="请输入社团名称">
+            <template #prefix>
+              <el-icon><i class="el-icon-office-building"></i></el-icon>
+            </template>
+          </el-input>
         </el-form-item>
-        <el-form-item label="建立理由" prop="reason">
-          <el-input v-model="createForm.reason" type="textarea" placeholder="请填写建立理由" />
+        <el-form-item label="✍️ 建立理由" prop="reason">
+          <el-input v-model="createForm.reason" type="textarea" placeholder="请填写建立理由">
+            <template #prefix>
+              <el-icon><i class="el-icon-edit"></i></el-icon>
+            </template>
+          </el-input>
         </el-form-item>
-        <el-form-item label="基础活动" prop="activity">
-          <el-input v-model="createForm.activity" placeholder="如：定期讲座、兴趣小组等" />
+        <el-form-item label="📚 基础活动" prop="activity">
+          <el-input v-model="createForm.activity" placeholder="如：定期讲座、兴趣小组等">
+            <template #prefix>
+              <el-icon><i class="el-icon-notebook"></i></el-icon>
+            </template>
+          </el-input>
         </el-form-item>
-        <el-form-item label="个人信息" prop="personal">
-          <el-input v-model="createForm.personal" type="textarea" placeholder="请填写你的姓名、联系方式等" />
+        <el-form-item label="👤 个人信息" prop="personal">
+          <el-input v-model="createForm.personal" type="textarea" placeholder="请填写你的姓名、联系方式等">
+            <template #prefix>
+              <el-icon><i class="el-icon-user"></i></el-icon>
+            </template>
+          </el-input>
         </el-form-item>
-        <el-form-item label="社团主页图片" prop="logoUrl">
+        <el-form-item label="🖼️ 社团主页图" prop="logoUrl">
           <el-upload
             action="http://localhost:8080/api/upload"
             :headers="uploadHeaders"
@@ -115,34 +145,36 @@
             :before-upload="beforeUpload"
             :show-file-list="false"
           >
-            <el-button type="primary">上传图片</el-button>
+            <el-button type="primary" icon="el-icon-picture">上传图片</el-button>
           </el-upload>
           <!-- 图片预览 -->
-          <div v-if="createForm.logoUrl" style="margin-top: 10px;">
+          <div v-if="createForm.logoUrl" class="club-img-preview">
             <img 
               :src="getImageUrl(createForm.logoUrl)" 
-              style="max-width: 200px; max-height: 150px; border-radius: 8px; border: 1px solid #ddd;"
+              class="club-img-preview-img"
               alt="社团图片预览"
             />
-            <p style="margin-top: 5px; font-size: 12px; color: #666;">图片预览</p>
+            <p class="club-img-preview-tip">图片预览</p>
           </div>
         </el-form-item>
-        <el-form-item label="社团分类" prop="type">
+        <el-form-item label="🏷️ 社团分类" prop="type">
           <el-select v-model="createForm.type" placeholder="请选择社团分类">
-            <el-option v-for="item in clubTypes" :key="item.value" :label="item.label" :value="item.value" />
+            <el-option v-for="item in clubTypes" :key="item.value" :label="item.emoji + ' ' + item.label" :value="item.value" />
           </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showCreateDialog = false">取消</el-button>
-        <el-button type="primary" @click="submitCreateClub">提交</el-button>
+        <el-button type="primary" @click="submitCreateClub" class="create-club-submit-btn">
+          <el-icon style="margin-right:4px;"><i class="el-icon-plus"></i></el-icon>提交
+        </el-button>
       </template>
     </el-dialog>
   </el-container>
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import request from '../utils/request'
 import { ElMessage } from 'element-plus'
@@ -156,11 +188,11 @@ const clubId = route.params.id
 const showCreateDialog = ref(false)
 const createFormRef = ref()
 const clubTypes = [
-  { label: '学术科技', value: 1 },
-  { label: '文化艺术', value: 2 },
-  { label: '体育竞技', value: 3 },
-  { label: '公益实践', value: 4 },
-  { label: '创新创业', value: 5 }
+  { label: '学术科技', value: 1, emoji: '🧪' },
+  { label: '文化艺术', value: 2, emoji: '🎨' },
+  { label: '体育竞技', value: 3, emoji: '🏅' },
+  { label: '公益实践', value: 4, emoji: '🤝' },
+  { label: '创新创业', value: 5, emoji: '🚀' }
 ]
 
 const createForm = ref({
@@ -407,6 +439,44 @@ const joinClub = async (club) => {
     ElMessage.error('网络错误，申请失败')
   }
 }
+
+// Banner 轮播图数据
+const banners = [
+  {
+    img: 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=1200&q=80',
+    title: '2025 年武汉大学社团招新季',
+    desc: '百团大战，等你来选！3月15日-3月30日，武汉大学桂操，不见不散'
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
+    title: '创新创业社团等你加入',
+    desc: '激发你的创造力，和志同道合的伙伴一起成长'
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=1200&q=80',
+    title: '丰富多彩的文体活动',
+    desc: '体育、艺术、公益，总有一款适合你'
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80',
+    title: '结识新朋友',
+    desc: '在社团中遇见志同道合的伙伴，开启大学新生活'
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1465101178521-c1a9136a3fdc?auto=format&fit=crop&w=1200&q=80',
+    title: '展示自我，成就未来',
+    desc: '参与社团活动，提升自我能力，收获成长与荣誉'
+  }
+]
+
+// 禁止弹窗出现时页面滚动
+watch(showCreateDialog, (val) => {
+  if (val) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+})
 </script>
 
 <style scoped>
@@ -442,13 +512,40 @@ const joinClub = async (club) => {
   padding-left: 0;
   padding-right: 0;
 }
-.banner {
+.banner-carousel {
+  margin: 32px 0 24px 0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.banner-img-wrapper {
+  position: relative;
   width: 100%;
-  max-width: none;
-  margin-left: 0;
-  margin-right: 0;
-  border-radius: 0;
-  background: #fff;
+  height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.7);
+}
+.banner-content {
+  position: absolute;
+  left: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #fff;
+}
+.banner-content h1 {
+  font-size: 32px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+.banner-content p {
+  font-size: 16px;
+  margin-bottom: 18px;
 }
 .club-tabs {
   width: 100%;
@@ -605,38 +702,6 @@ const joinClub = async (club) => {
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
 }
-.banner {
-  position: relative;
-  margin: 32px 0 24px 0;
-  border-radius: 16px;
-  overflow: hidden;
-  height: 260px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.banner-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: brightness(0.7);
-}
-.banner-content {
-  position: absolute;
-  left: 40px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #fff;
-}
-.banner-content h1 {
-  font-size: 32px;
-  font-weight: bold;
-  margin-bottom: 12px;
-}
-.banner-content p {
-  font-size: 16px;
-  margin-bottom: 18px;
-}
 .club-tabs {
   margin: 0 0 24px 0;
   background: transparent;
@@ -741,5 +806,73 @@ const joinClub = async (club) => {
   font-weight: bold;
   letter-spacing: 1px;
   padding: 0 55px !important;
+}
+.create-club-dialog >>> .el-dialog {
+  position: fixed !important;
+  top: 8vh !important;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  z-index: 2000;
+  max-width: 500px;
+}
+.create-club-dialog >>> .el-dialog__body {
+  background: linear-gradient(135deg, #f4faff 0%, #e3f0ff 100%);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(64,158,255,0.13);
+}
+.create-club-form {
+  padding: 10px 0 0 0;
+}
+.create-club-form .el-form-item {
+  border-radius: 10px;
+  background: #fff;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(64,158,255,0.06);
+  padding: 12px 16px 6px 16px;
+}
+.create-club-form .el-input,
+.create-club-form .el-textarea {
+  border-radius: 8px;
+  background: #f8fbff;
+}
+.create-club-form .el-input__inner,
+.create-club-form .el-textarea__inner {
+  background: #f8fbff;
+  border-radius: 8px;
+}
+.create-club-form .el-input__prefix {
+  color: #409EFF;
+}
+.create-club-form .el-input__icon {
+  color: #409EFF;
+}
+.create-club-submit-btn {
+  background: linear-gradient(90deg, #409EFF 0%, #66b1ff 100%);
+  border: none;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(64,158,255,0.13);
+  transition: background 0.2s;
+}
+.create-club-submit-btn:hover {
+  background: linear-gradient(90deg, #66b1ff 0%, #409EFF 100%);
+}
+.club-img-preview {
+  margin-top: 10px;
+  text-align: center;
+}
+.club-img-preview-img {
+  max-width: 200px;
+  max-height: 150px;
+  border-radius: 12px;
+  border: 2px solid #409EFF;
+  box-shadow: 0 4px 16px rgba(64,158,255,0.13);
+}
+.club-img-preview-tip {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #666;
 }
 </style>

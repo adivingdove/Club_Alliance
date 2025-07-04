@@ -32,7 +32,39 @@
 
     <!-- 聊天内容区域 -->
     <div class="chatroom-container">
-      <h2>{{ currentRoomLabel }}</h2>
+      <h2>
+  {{ currentRoomLabel }}
+<el-button
+  size="small"
+  type="text"
+  style="margin-left: auto; font-size: 13px;"
+  @click="toggleHistory"
+>
+  {{ showHistory ? ' 收起历史消息' : ' 查看历史消息' }}
+</el-button>
+
+</h2>
+  <div v-if="showHistory" class="chat-history">
+  <h4 class="history-title">📜 历史消息</h4>
+
+  <div
+    v-for="(msg, idx) in historyMessages"
+    :key="'history-' + idx"
+    class="chat-message other-message"
+  >
+    <div class="chat-bubble">
+      <div class="user-info">
+        <el-avatar :src="formatAvatar(msg.avatar)" :size="28" />
+        <span class="nickname" :class="msg.role">
+          {{ msg.sender }}
+          <span v-if="msg.role !== '成员'" class="badge">{{ roleMap[msg.role] }}</span>
+        </span>
+      </div>
+      <div class="content" v-html="formatMessage(msg.content)"></div>
+      <div class="time">{{ formatTime(msg.time) }}</div>
+    </div>
+  </div>
+</div>
 
       <div class="chat-log">
         <div
@@ -90,6 +122,8 @@ const unreadMap = reactive({ public: false })
 
 const apiBaseUrl = 'http://localhost:8080'
 const defaultAvatar = 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
+const historyMessages = ref([])
+const showHistory = ref(false)
 
 // 用户角色徽章
 const roleMap = {
@@ -203,13 +237,15 @@ const switchRoom = (roomId) => {
 // 发送消息
 const sendMessage = () => {
   if (!message.value.trim()) return
-  const payload = {
-    sender: currentUser.value.nickname,
-    avatar: currentUser.value.headUrl || '',
-    content: message.value,
-    time: new Date().toISOString(),
-    role: ''
-  }
+ const payload = {
+  sender: currentUser.value.nickname,
+  avatar: currentUser.value.headUrl || '',
+  content: message.value,
+  role: '',
+  room: currentRoom.value,
+  time: new Date().toISOString()
+}
+
   stompClient.publish({
     destination: `/app/chat.send.${currentRoom.value}`,
     body: JSON.stringify(payload),
@@ -230,6 +266,30 @@ const addEmoji = (e) => {
     inputEl.focus()
   })
 }
+
+const loadHistory = async () => {
+  try {
+    const res = await axios.get(`${apiBaseUrl}/api/chat/history/${currentRoom.value}`, {
+      params: {
+        page: 0,
+        size: 30
+      },
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+    historyMessages.value = res.data.reverse()
+  } catch (err) {
+    console.error('加载历史消息失败:', err)
+  }
+}
+const toggleHistory = async () => {
+  showHistory.value = !showHistory.value
+  if (showHistory.value && historyMessages.value.length === 0) {
+    await loadHistory()
+  }
+}
+
 
 // 生命周期
 onMounted(async () => {
@@ -490,6 +550,33 @@ emoji-picker {
 .chat-message.system-message .content {
   display: inline;
   font-size: 14px;
+}
+.chat-history {
+  margin-bottom: 20px;
+  background-color: #f9f9f9;
+  padding: 12px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.03);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.history-title {
+  margin-bottom: 8px;
+  color: #888;
+  font-size: 13px;
+  font-weight: 500;
+  padding-left: 4px;
+}
+
+
+
+.chat-history::-webkit-scrollbar {
+  width: 6px;
+}
+.chat-history::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 3px;
 }
 
 /* 响应式支持 */
