@@ -84,8 +84,7 @@ const editorOptions = {
       [{ 'font': [] }],                                // 字体系列
       [{ 'align': [] }],                               // 对齐方式
       ['clean'],                                        // 清除格式
-      ['link'],                                         // 链接
-      ['image']                                         // 图片
+      ['link', 'image']                                // 链接和图片
     ],
     imageResize: {
       displaySize: true,   // 显示图片尺寸
@@ -247,12 +246,6 @@ onMounted(() => {
 
 .editor-container :deep(.ql-container) {
   height: 300px;
-}
-
-.editor-container :deep(.ql-toolbar) {
-  border-top: none;
-  border-left: none;
-  border-right: none;
 }
 
 /* 图片和视频调整相关样式 */
