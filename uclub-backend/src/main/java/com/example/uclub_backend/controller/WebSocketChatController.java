@@ -36,6 +36,7 @@ public class WebSocketChatController {
                             Principal principal,  //  从这里获取用户名
                             ChatMessage message) {
 
+        message.setRoom(roomId);
         message.setTime(LocalDateTime.now().toString());
 
         if (principal == null || principal.getName() == null) {
