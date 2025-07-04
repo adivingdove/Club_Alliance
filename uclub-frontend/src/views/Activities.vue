@@ -526,10 +526,8 @@
         </div>
       </template>
     </el-dialog>
-  
+  </div>
 </template>
-
-
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
@@ -555,8 +553,6 @@ import {
 import request from '@/utils/request'
 import QuillEditor from '@/components/QuillEditor.vue'
 import { useRouter } from 'vue-router'
-
-
 
 // 响应式数据
 const activities = ref([])
@@ -1246,13 +1242,9 @@ const handle = () => {
   margin-bottom: 18px;
 }
 
-
-
-
 .activities-container {
   padding: 20px;
   background: #87CEEB;
-
 }
 
 .page-header {
@@ -1444,7 +1436,6 @@ const handle = () => {
   padding: 20px;
   border-radius: 8px;
   background: #87CEEB;
-
 }
 
 .info-row {
