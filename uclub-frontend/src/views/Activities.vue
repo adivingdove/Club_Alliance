@@ -1,143 +1,142 @@
 <template>
   <div class="activities-container">
-     <!-- Banner -->
-        <div class="banner">
-            <img src="../assets/ABack.jpg" class="banner-img" />
-            <div class="banner-content">
-              <h1>2025年武汉大学社团活动开始啦</h1>
-             <p>欢迎关注武汉大学社团活动，这里将分享武汉大学社团近期的活动信息！</p>
-              <el-button type="primary" size="large" @click="handle">点击了解当下热门活动</el-button>
-            </div>
-        </div>
-
-      <div class="search-box">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索活动标题或描述"
-          clearable
-          @input="handleSearch"
-          @clear="handleSearch"
-        >
-          <template #suffix>
-            <span style="font-size: 22px; margin-right: 8px; cursor: pointer;">🔍</span>
-          </template>
-        </el-input>
+    <!-- Banner -->
+    <div class="banner">
+      <img src="../assets/ABack.jpg" class="banner-img" />
+      <div class="banner-content">
+        <h1>2025年武汉大学社团活动开始啦</h1>
+        <p>欢迎关注武汉大学社团活动，这里将分享武汉大学社团近期的活动信息！</p>
+        <el-button type="primary" size="large" @click="handle">点击了解当下热门活动</el-button>
       </div>
+    </div>
 
-      <div class="filter-tabs">
-        <el-tabs v-model="activeTab" class="club-tabs" @tab-click="handleTabChange">
-          <el-tab-pane label="全部活动" name="all" :disabled="tabLoading"></el-tab-pane>
-          <el-tab-pane label="即将开始" name="upcoming" :disabled="tabLoading"></el-tab-pane>
-        </el-tabs>
-      </div>
+    <div class="search-box">
+      <el-input
+        v-model="searchKeyword"
+        placeholder="搜索活动标题或描述"
+        clearable
+        @input="handleSearch"
+        @clear="handleSearch"
+      >
+        <template #suffix>
+          <span style="font-size: 22px; margin-right: 8px; cursor: pointer;">🔍</span>
+        </template>
+      </el-input>
+    </div>
+
+    <div class="filter-tabs">
+      <el-tabs v-model="activeTab" class="club-tabs" @tab-click="handleTabChange">
+        <el-tab-pane label="全部活动" name="all" :disabled="tabLoading"></el-tab-pane>
+        <el-tab-pane label="即将开始" name="upcoming" :disabled="tabLoading"></el-tab-pane>
+      </el-tabs>
     </div>
 
     <!-- 活动列表 -->
     <div class="activities-list">
-        <!-- 调试信息：显示当前活动列表状态 -->
-        <div v-if="isAdmin" style="font-size: 12px; color: #666; margin-bottom: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px;">
-          调试信息: 当前标签页={{activeTab}}, 活动总数={{activities.length}}, 过滤后数量={{filteredActivities.length}}
-          <br>
-          活动状态列表: {{activities.map(a => `${a.id}:${a.title}:${a.applyStatus}`).join(', ')}}
-        </div>
-      
-        <el-row :gutter="24">
-          <el-col 
-            :xs="24" 
-            :sm="12" 
-            :md="8" 
-            :lg="6" 
-            v-for="activity in filteredActivities" 
-            :key="activity.id"
+      <!-- 调试信息：显示当前活动列表状态 -->
+      <div v-if="isAdmin" style="font-size: 12px; color: #666; margin-bottom: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px;">
+        调试信息: 当前标签页={{activeTab}}, 活动总数={{activities.length}}, 过滤后数量={{filteredActivities.length}}
+        <br>
+        活动状态列表: {{activities.map(a => `${a.id}:${a.title}:${a.applyStatus}`).join(', ')}}
+      </div>
+    
+      <el-row :gutter="24">
+        <el-col 
+          :xs="24" 
+          :sm="12" 
+          :md="8" 
+          :lg="6" 
+          v-for="activity in filteredActivities" 
+          :key="activity.id"
+        >
+          <el-card 
+            class="activity-card" 
+            :class="{ 'pending': activity.applyStatus === '待审核' }"
+            @click="viewActivityDetail(activity)"
           >
-            <el-card 
-              class="activity-card" 
-              :class="{ 'pending': activity.applyStatus === '待审核' }"
-              @click="viewActivityDetail(activity)"
-            >
-              <div class="activity-header">
-                <div class="activity-status" :class="getStatusClass(activity.applyStatus)">
-                  {{ getStatusText(activity.applyStatus) }}
+            <div class="activity-header">
+              <div class="activity-status" :class="getStatusClass(activity.applyStatus)">
+                {{ getStatusText(activity.applyStatus) }}
+              </div>
+              <div class="activity-time">
+                <i class="el-icon-time"></i>
+                {{ formatDate(activity.startTime) }}
+              </div>
+            </div>
+            
+            <div class="activity-content">
+              <h3 class="activity-title">{{ activity.title }}</h3>
+              <p class="activity-description">{{ activity.description }}</p>
+              
+              <div class="activity-info">
+                <div class="info-item">
+                  <i class="el-icon-location"></i>
+                  <span>{{ activity.location || '地点待定' }}</span>
                 </div>
-                <div class="activity-time">
-                  <i class="el-icon-time"></i>
-                  {{ formatDate(activity.startTime) }}
+                <div class="info-item">
+                  <i class="el-icon-user"></i>
+                  <span>
+                    {{ activity.currentParticipants || 0 }}/{{ activity.maxParticipants ? activity.maxParticipants : '∞' }}人
+                  </span>
                 </div>
+              </div>
+            </div>
+            
+            <div class="activity-footer">
+              <el-button 
+                type="primary" 
+                size="small" 
+                @click.stop="viewActivityDetail(activity)"
+              >
+                查看详情
+              </el-button>
+              
+              <!-- 参与/退出按钮 -->
+              <el-button 
+                v-if="isLoggedIn && activity.applyStatus === '通过' && !canEditActivity(activity)"
+                :type="activity.isParticipating ? 'danger' : 'success'"
+                size="small" 
+                @click.stop="activity.isParticipating ? leaveActivityHandler(activity) : joinActivityHandler(activity)"
+                :disabled="!canJoinActivity(activity)"
+              >
+                {{ activity.isParticipating ? '退出活动' : '加入活动' }}
+              </el-button>
+              
+              <!-- 如果活动状态不是"通过"，显示状态信息 -->
+              <div v-if="isLoggedIn && activity.applyStatus !== '通过'" style="font-size: 12px; color: #999; margin-top: 5px;">
+                活动状态: {{ getStatusText(activity.applyStatus) }}
               </div>
               
-              <div class="activity-content">
-                <h3 class="activity-title">{{ activity.title }}</h3>
-                <p class="activity-description">{{ activity.description }}</p>
-                
-                <div class="activity-info">
-                  <div class="info-item">
-                    <i class="el-icon-location"></i>
-                    <span>{{ activity.location || '地点待定' }}</span>
-                  </div>
-                  <div class="info-item">
-                    <i class="el-icon-user"></i>
-                    <span>
-                      {{ activity.currentParticipants || 0 }}/{{ activity.maxParticipants ? activity.maxParticipants : '∞' }}人
-                    </span>
-                  </div>
-                </div>
+              <!-- 如果用户是活动创建者，显示提示 -->
+              <div v-if="isLoggedIn && canEditActivity(activity)" style="font-size: 12px; color: #409EFF; margin-top: 5px;">
+                您是活动创建者
               </div>
               
-              <div class="activity-footer">
-                <el-button 
-                  type="primary" 
-                  size="small" 
-                  @click.stop="viewActivityDetail(activity)"
-                >
-                  查看详情
-                </el-button>
-                
-                <!-- 参与/退出按钮 -->
-                <el-button 
-                  v-if="isLoggedIn && activity.applyStatus === '通过' && !canEditActivity(activity)"
-                  :type="activity.isParticipating ? 'danger' : 'success'"
-                  size="small" 
-                  @click.stop="activity.isParticipating ? leaveActivityHandler(activity) : joinActivityHandler(activity)"
-                  :disabled="!canJoinActivity(activity)"
-                >
-                  {{ activity.isParticipating ? '退出活动' : '加入活动' }}
-                </el-button>
-                
-                <!-- 如果活动状态不是"通过"，显示状态信息 -->
-                <div v-if="isLoggedIn && activity.applyStatus !== '通过'" style="font-size: 12px; color: #999; margin-top: 5px;">
-                  活动状态: {{ getStatusText(activity.applyStatus) }}
-                </div>
-                
-                <!-- 如果用户是活动创建者，显示提示 -->
-                <div v-if="isLoggedIn && canEditActivity(activity)" style="font-size: 12px; color: #409EFF; margin-top: 5px;">
-                  您是活动创建者
-                </div>
-                
-                <el-button 
-                  v-if="canEditActivity(activity)" 
-                  type="warning" 
-                  size="small" 
-                  @click.stop="editActivity(activity)"
-                >
-                  编辑
-                </el-button>
-                <el-button 
-                  v-if="canDeleteActivity(activity)" 
-                  type="danger" 
-                  size="small" 
-                  @click.stop="deleteActivityHandler(activity)"
-                >
-                  删除
-                </el-button>
-              </div>
-            </el-card>
-          </el-col>
-        </el-row>
-      
-          <!-- 空状态 -->
-          <div v-if="filteredActivities.length === 0" class="empty-state">
-            <el-empty description="暂无活动" />
-          </div>
+              <el-button 
+                v-if="canEditActivity(activity)" 
+                type="warning" 
+                size="small" 
+                @click.stop="editActivity(activity)"
+              >
+                编辑
+              </el-button>
+              <el-button 
+                v-if="canDeleteActivity(activity)" 
+                type="danger" 
+                size="small" 
+                @click.stop="deleteActivityHandler(activity)"
+              >
+                删除
+              </el-button>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
+    
+      <!-- 空状态 -->
+      <div v-if="filteredActivities.length === 0" class="empty-state">
+        <el-empty description="暂无活动" />
+      </div>
     </div>
 
     <!-- 悬浮创建按钮 -->
