@@ -34,26 +34,19 @@
 
     <div class="report-row">
       <span class="label">举报链接：</span>
-      <a
-        v-if="selectedReport.targetType === '帖子'"
-        href="#"
-        @click.prevent="goToPost(selectedReport.targetId)"
-        class="link-btn"
-        target="_blank"
-      >查看帖子</a>
-      <a
-        v-else-if="selectedReport.targetType === '评论'"
-        href="#"
-        @click.prevent="goToComment(selectedReport.postId, selectedReport.targetId)"
-        class="link-btn"
-        target="_blank"
-      >查看评论</a>
-  <span v-else class="value">无链接</span>
-</div>
+      <a v-if="selectedReport.targetType === '帖子'" href="#" @click.prevent="goToPost(selectedReport.targetId)" class="link-btn" target="_blank">查看帖子</a>
+      <a v-else-if="selectedReport.targetType === '评论'" href="#" @click.prevent="goToComment(selectedReport.postId, selectedReport.targetId)" class="link-btn" target="_blank">查看评论</a>
+      <span v-else class="value">无链接</span>
+    </div>
     <div class="report-row"><span class="label">状态：</span>
       <el-tag :type="selectedReport.status === '待处理' ? 'warning' : 'success'">{{ selectedReport.status }}</el-tag>
     </div>
     <div class="report-row"><span class="label">创建时间：</span>{{ formatTime(selectedReport.createdAt) }}</div>
+    <div class="report-row">
+      <span class="label">操作：</span>
+      <el-button type="danger" size="small" @click="banUser(selectedReport.reportedUser.id)">封禁用户</el-button>
+      <el-button type="danger" size="small" @click="deleteContent(selectedReport.id)">删除内容</el-button>
+    </div>
   </div>
   <div v-else>加载中...</div>
 </el-dialog>
@@ -68,12 +61,15 @@ import axios from '@/utils/axios'
 import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
 import { useRouter } from 'vue-router'
+import { useStore} from 'vuex'
 
 const reports = ref([])
 const statusFilter = ref('')
 const showDetail = ref(false)
 const selectedReport = ref(null)
 const router = useRouter()
+const store = useStore()
+const currentUserId = store.state.user.id
 
 
 const formatTime = (time) => {
@@ -85,6 +81,7 @@ const fetchReports = async () => {
     params: { status: statusFilter.value }
   })
   reports.value = data
+  console.log('查询到的举报记录:', data)
 }
 
 const viewDetail = async (report) => {
@@ -123,6 +120,57 @@ const goToPost = (postId) => {
 
 const goToComment = (postId, commentId) => {
   router.push(`/post/${postId}#comment/${commentId}`)
+}
+
+const banUser = async (userId) => {
+  try {
+    const res = await axios.put(`/user/${userId}/status`, {
+      status: '封禁'
+    });
+    console.log('封禁接口返回:', res);
+    if (res && res.code === 200) {
+      showDetail.value = false;
+      changeStatus(selectedReport.value.id, '已处理');
+      ElMessage.success('用户已封禁');
+      
+      fetchReports();
+    } else {
+      ElMessage.error(res.data?.message || '封禁用户失败');
+    }
+  } catch (error) {
+    console.error('封禁用户出错:', error);
+    ElMessage.error('封禁用户失败，请稍后再试');
+  }
+}
+
+
+const deleteContent = async () => {
+  if (!selectedReport.value) return;
+
+  const { targetType, targetId } = selectedReport.value;
+  
+  try {
+    if (targetType === '帖子') {
+      await axios.delete(`/posts/${targetId}`, {
+        params: {
+          userId: currentUserId
+        }
+      });
+      ElMessage.success('帖子已删除');
+    } else if (targetType === '评论') {
+      await axios.delete(`/posts/${selectedReport.value.postId}/comments/${targetId}`, {
+        params: {
+          userId: currentUserId
+        }
+      });
+      ElMessage.success('评论已删除');
+    }
+    showDetail.value = false;
+    changeStatus(selectedReport.value.id, '已处理');
+    fetchReports();
+  } catch (error) {
+    ElMessage.error('删除内容失败，请稍后再试');
+  }
 }
 
 onMounted(fetchReports)

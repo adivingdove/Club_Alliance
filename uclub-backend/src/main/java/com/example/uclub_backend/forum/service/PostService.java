@@ -28,6 +28,8 @@ public class PostService {
 
     @Autowired
     private UserRepository userRepository;
+
+
     public PostService(PostRepository postRepository,
                    ForumClubRepository forumClubRepository,
                    CommentService commentService) {
