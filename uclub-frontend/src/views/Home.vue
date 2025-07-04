@@ -1,4 +1,31 @@
 <template>
+  <!-- 悬浮AI助手 -->
+  <div class="floating-ai" style="position: fixed; right: 40px; bottom: 120px; z-index: 1000;">
+    <el-avatar size="large" class="ai-avatar-icon" @click="goToAiChat" title="点击进入 AI 助手" style="cursor: pointer; box-shadow: 0 2px 12px rgba(0,0,0,0.1);">🤖</el-avatar>
+  </div>
+
+  <!-- 艺术渐变装饰 -->
+  <svg class="art-blob" width="320" height="180" viewBox="0 0 320 180" fill="none" style="position:absolute;top:-60px;left:-60px;z-index:0;">
+    <ellipse cx="160" cy="90" rx="160" ry="90" fill="url(#paint0_linear)" fill-opacity="0.5"/>
+    <defs>
+      <linearGradient id="paint0_linear" x1="0" y1="0" x2="320" y2="180" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#a18cd1"/>
+        <stop offset="1" stop-color="#fbc2eb"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- 顶部波浪装饰 -->
+  <svg class="top-wave" viewBox="0 0 1440 180" style="position:absolute;top:0;left:0;width:100vw;height:180px;z-index:0;">
+    <path fill="url(#waveGradient)" fill-opacity="1" d="M0,64L80,80C160,96,320,128,480,133.3C640,139,800,117,960,117.3C1120,117,1280,139,1360,149.3L1440,160L1440,0L1360,0C1280,0,1120,0,960,0C800,0,640,0,480,0C320,0,160,0,80,0L0,0Z"></path>
+    <defs>
+      <linearGradient id="waveGradient" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#a18cd1"/>
+        <stop offset="100%" stop-color="#fbc2eb"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
   <el-container class="main-container no-header-layout">
     <div class="center-content">
       <!-- 搜索栏 -->
@@ -50,8 +77,27 @@
           </div>
         </el-carousel-item>
       </el-carousel>
-      <!-- 分类Tab -->
-      <el-tabs v-model="activeTab" class="club-tabs" @tab-click="filterClubs">
+      <!-- 分栏 -->
+      <el-row :gutter="20" class="three-column-layout" style="margin-top:20px">
+        <!-- 左侧 -->
+        <el-col :xs="0" :sm="0" :md="6" :lg="6">
+          <div class="card-unified">
+            <div class="card-title"><el-icon><i class="el-icon-trophy"></i></el-icon> 社团热度榜</div>
+            <div class="rank-list">
+              <div v-for="(club, idx) in top5Clubs" :key="club.id" class="rank-card" @click="goToDetail(club.id)">
+                <span class="rank-badge">{{ idx+1 }}</span>
+                <div class="rank-info">
+                  <div class="rank-title">{{ club.name }}</div>
+                  <div class="rank-desc">{{ club.memberCount }}人</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-col>
+        <!-- 中间 -->
+        <el-col :xs="24" :sm="24" :md="12" :lg="12"> 
+        <!-- 社团筛选标签 -->
+         <el-tabs v-model="activeTab" class="club-tabs club-tabs-title" @tab-click="filterClubs">
         <el-tab-pane label="全部社团" name="all" class="tab-left"></el-tab-pane>
         <el-tab-pane :label="typeMap.tech.label" name="tech"></el-tab-pane>
         <el-tab-pane :label="typeMap.art.label" name="art"></el-tab-pane>
@@ -59,37 +105,42 @@
         <el-tab-pane :label="typeMap.public.label" name="public"></el-tab-pane>
         <el-tab-pane :label="typeMap.innovate.label" name="innovate"></el-tab-pane>
       </el-tabs>
-      <!-- 社团卡片区 -->
-      <el-main>
-        <el-row :gutter="24" class="club-list">
-          <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="club in filteredClubs" :key="club.id">
-            <el-card
-              class="club-card clickable-card"
-              @click="goToDetail(club.id)"
-            >
-              <img :src="club.img" class="club-img" />
-              <div class="club-info">
-                <div class="club-title-row">
-                  <span class="club-title">{{ club.name }}</span>
-                  <span class="club-num">{{ club.memberCount }}人</span>
+         <el-main>
+          <el-row :gutter="24" class="club-list">
+            <el-col :xs="24" :sm="12" :md="12" :lg="12" v-for="club in filteredClubs" :key="club.id">
+              <div class="card-unified club-card clickable-card" @click="goToDetail(club.id)">
+                <img :src="club.img" class="club-img" />
+                <div class="club-info">
+                  <div class="club-title-row">
+                    <span class="club-title">{{ club.name }}</span>
+                    <span class="club-num">{{ club.memberCount }}人</span>
+                  </div>
+                  <div class="club-desc">{{ club.description }}</div>
+                  <div class="club-members">
+                    <img v-for="(avatar, idx) in club.avatars" :key="idx" :src="avatar" class="member-avatar" />
+                  </div>
+                  <el-button type="primary" size="small" class="join-btn">查看详情</el-button>
                 </div>
-                <div class="club-desc">{{ club.description }}</div>
-                <div class="club-members">
-                  <img v-for="(avatar, idx) in club.avatars" :key="idx" :src="avatar" class="member-avatar" />
-                </div>
-                <el-button
-                  type="primary"
-                  size="small"
-                  class="join-btn"
-                  @click.stop="goToDetail(club.id)"
-                >
-                  查看详情
-                </el-button>
               </div>
-            </el-card>
-          </el-col>
-        </el-row>
-      </el-main>
+            </el-col>
+          </el-row>
+         </el-main>
+        </el-col>
+        <!-- 右侧 -->
+        <el-col :xs="0" :sm="6" :md="6" :lg="6">
+          <div class="card-unified">
+            <div class="card-title"><el-icon><i class="el-icon-chat-dot-round"></i></el-icon> 论坛热帖</div>
+            <div class="rank-list">
+              <div v-for="(post, idx) in hotTopics" :key="post.id" class="rank-card" @click="goToPost(post.id)">
+                <span class="rank-badge">{{ idx+1 }}</span>
+                <div class="rank-info">
+                  <div class="rank-title">{{ post.title }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-col>
+      </el-row>
     </div>
     <!-- 悬浮建立社团按钮 -->
     <el-button
@@ -173,12 +224,16 @@
   </el-container>
 </template>
 
-<script setup>
-import { ref, computed, nextTick, watch } from 'vue'
+<script setup lang="ts">
+import { ref, computed, nextTick, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import request from '../utils/request'
 import { ElMessage } from 'element-plus'
 import { useStore } from 'vuex'
+import axios from 'axios'
+
+const top5Clubs = ref([])
+const hotTopics = ref([])
 
 const activeTab = ref('all')
 const router = useRouter()
@@ -194,6 +249,11 @@ const clubTypes = [
   { label: '公益实践', value: 4, emoji: '🤝' },
   { label: '创新创业', value: 5, emoji: '🚀' }
 ]
+
+
+const goToAiChat = ()=>{
+  router.push('/ai-chat')
+}
 
 const createForm = ref({
   name: '',
@@ -477,9 +537,122 @@ watch(showCreateDialog, (val) => {
     document.body.style.overflow = ''
   }
 })
+
+// 热门社团和帖子数据
+
+const fetchHotClubs = async () => {
+  try {
+    const res = await axios.get('/api/clubs/hot')
+    // 如果后端返回的是 { code: 200, data: [...], message: "" }
+    top5Clubs.value = res.data.data?.slice(0, 5) || []
+  } catch (err) {
+    console.error('获取热门社团失败：', err)
+  }
+}
+
+const fetchHotPosts = async () => {
+  try {
+    const res = await axios.get('/api/posts/hot')
+    // res.data 是帖子列表
+    hotTopics.value = res.data?.slice(0, 5) || []
+  } catch (err) {
+    console.error('获取热门帖子失败：', err)
+  }
+}
+
+const goToPost = (id: number) => {
+  router.push(`/post/${id}`)
+}
+onMounted(() =>{
+  fetchHotClubs()
+  fetchHotPosts()
+})
+
 </script>
 
 <style scoped>
+body, .main-container {
+  min-height: 100vh;
+  background: linear-gradient(120deg, #a18cd1 0%, #fbc2eb 100%);
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  position: relative;
+}
+
+/* 艺术渐变装饰SVG */
+.art-blob {
+  pointer-events: none;
+}
+.top-wave {
+  pointer-events: none;
+}
+
+/* 玻璃拟态卡片风格 */
+.card-unified, .club-card, .rank-card {
+  background: rgba(255,255,255,0.7);
+  border-radius: 32px;
+  box-shadow: 0 8px 32px 0 rgba(161,140,209,0.10);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  padding: 18px 16px;
+  margin-bottom: 24px;
+  transition: box-shadow 0.18s, transform 0.18s;
+}
+.card-unified:hover, .club-card:hover, .rank-card:hover {
+  box-shadow: 0 16px 40px 0 rgba(251,194,235,0.18);
+  transform: translateY(-4px) scale(1.03);
+}
+
+/* 玻璃拟态搜索栏 */
+.main-search-input.beautify-input {
+  width: 100%;
+  max-width: 420px;
+  height: 40px;
+  border-radius: 32px;
+  background: rgba(255,255,255,0.7);
+  border: 1.5px solid #e0c3fc;
+  box-shadow: 0 2px 12px 0 rgba(161,140,209,0.08);
+  font-size: 18px;
+  color: #333;
+  padding: 0 20px;
+  backdrop-filter: blur(8px);
+  transition: border 0.2s, background 0.2s;
+}
+.main-search-input.beautify-input:focus-within {
+  border: 1.5px solid #fbc2eb;
+  background: rgba(255,255,255,0.85);
+}
+
+/* 搜索icon主色为紫蓝渐变 */
+.emoji-search-btn, .clear-btn {
+  font-size: 20px;
+  color: #a18cd1;
+  margin-right: 2px;
+  transition: color 0.18s;
+}
+.emoji-search-btn:hover, .clear-btn:hover {
+  color: #fbc2eb;
+}
+
+/* tab激活色呼应主色 */
+.club-tabs-title .el-tabs__item.is-active {
+  color: #a18cd1 !important;
+}
+.club-tabs-title .el-tabs__item.is-active::after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -8px;
+  width: 48px;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
+}
+.club-tabs-title .el-tabs__item:not(.is-active):hover {
+  color: #fbc2eb !important;
+}
+
 .main-container.no-header-layout {
   background: #fff;
   min-height: 100vh;
@@ -498,7 +671,7 @@ watch(showCreateDialog, (val) => {
 .search-bar-wrapper {
   width: 100%;
   background: transparent;
-  padding: 32px 0 16px 0;
+  padding: 16px 0 8px 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -514,8 +687,9 @@ watch(showCreateDialog, (val) => {
 }
 .banner-carousel {
   margin: 32px 0 24px 0;
-  border-radius: 16px;
+  border-radius: 24px;
   overflow: hidden;
+  box-shadow: 0 8px 32px 0 rgba(64,158,255,0.13);
 }
 .banner-img-wrapper {
   position: relative;
@@ -539,14 +713,16 @@ watch(showCreateDialog, (val) => {
   color: #fff;
 }
 .banner-content h1 {
-  font-size: 32px;
-  font-weight: bold;
-  margin-bottom: 12px;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-shadow: 0 4px 24px rgba(0,0,0,0.18);
 }
 .banner-content p {
   font-size: 16px;
   margin-bottom: 18px;
 }
+/* 社团列表 */
 .club-tabs {
   width: 100%;
   max-width: none;
@@ -599,7 +775,7 @@ watch(showCreateDialog, (val) => {
 .search-bar-wrapper {
   width: 100%;
   background: transparent;
-  padding: 32px 0 16px 0;
+  padding: 16px 0 8px 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -607,7 +783,7 @@ watch(showCreateDialog, (val) => {
 }
 .search-bar-center {
   width: 100%;
-  max-width: 600px;
+  max-width: 420px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -615,31 +791,29 @@ watch(showCreateDialog, (val) => {
 }
 .main-search-input.beautify-input {
   width: 100%;
-  height: 56px;
-  border-radius: 0;
-  box-shadow: 0 4px 24px 0 rgba(64,158,255,0.13);
-  background: #fff;
-  font-size: 22px;
-  padding: 0 18px 0 18px;
-  transition: box-shadow 0.25s, background 0.25s;
-  line-height: 56px;
+  max-width: 420px;
+  height: 40px;
+  border-radius: 20px;
+  background: #f6f8fa;
+  border: 1px solid #e0e6ed;
+  box-shadow: none;
+  font-size: 16px;
+  color: #333;
+  padding: 0 14px;
+  transition: border 0.2s, background 0.2s;
 }
 .main-search-input.beautify-input:focus-within {
-  box-shadow: 0 8px 32px 0 rgba(64,158,255,0.22);
-  background: #f4faff;
+  border: 1.5px solid #b3d8fd;
+  background: #fafdff;
 }
-.emoji-search-btn {
-  font-size: 30px;
-  cursor: pointer;
+.emoji-search-btn, .clear-btn {
+  font-size: 20px;
+  color: #b0b8c9;
   margin-right: 2px;
-  user-select: none;
-  transition: transform 0.15s;
-  display: flex;
-  align-items: center;
+  transition: color 0.18s;
 }
-.emoji-search-btn:hover {
-  transform: scale(1.18) rotate(-8deg);
-  filter: brightness(1.2);
+.emoji-search-btn:hover, .clear-btn:hover {
+  color: #409EFF;
 }
 .suggest-list {
   position: absolute;
@@ -711,25 +885,102 @@ watch(showCreateDialog, (val) => {
 .club-list {
   margin-top: 0;
 }
-.club-card {
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 24px;
+.card-unified {
   background: #fff;
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.06);
-  transition: box-shadow 0.2s;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px 0 rgba(64,158,255,0.10);
+  padding: 18px 16px;
+  margin-bottom: 24px;
+  transition: box-shadow 0.18s, transform 0.18s;
 }
-.club-card:hover {
-  box-shadow: 0 6px 24px 0 rgba(0,0,0,0.12);
+.card-unified:hover {
+  box-shadow: 0 12px 32px 0 rgba(64,158,255,0.18);
+  transform: translateY(-4px) scale(1.03);
 }
-.club-img {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
+.card-title {
+  display: flex;
+  align-items: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 16px;
+}
+.card-title .el-icon {
+  font-size: 22px;
+  margin-right: 8px;
+  color: #a18cd1;
+}
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+}
+.rank-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px 0 rgba(64,158,255,0.10);
+  padding: 16px;
+  margin-bottom: 0;
+  transition: box-shadow 0.18s, transform 0.18s;
   cursor: pointer;
 }
+.rank-card:hover {
+  box-shadow: 0 12px 32px 0 rgba(64,158,255,0.18);
+  transform: translateY(-4px) scale(1.03);
+}
+.rank-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14px;
+  color: #fff;
+  background: linear-gradient(135deg, #6a82fb 0%, #fc5c7d 100%);
+}
+.rank-info {
+  flex: 1;
+  text-align: left;
+}
+.rank-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+.rank-desc {
+  font-size: 13px;
+  color: #888;
+  margin-top: 2px;
+}
+.club-card {
+  display: flex;
+  align-items: flex-start;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px 0 rgba(64,158,255,0.10);
+  padding: 0;
+  margin-bottom: 18px;
+  transition: box-shadow 0.18s, transform 0.18s;
+}
+.club-card:hover {
+  box-shadow: 0 12px 32px 0 rgba(64,158,255,0.18);
+  transform: translateY(-4px) scale(1.03);
+}
+.club-img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 16px;
+  margin: 16px;
+}
 .club-info {
-  padding: 16px 8px 8px 8px;
+  flex: 1;
+  padding: 16px 8px 6px 0;
 }
 .club-title-row {
   display: flex;
@@ -738,18 +989,14 @@ watch(showCreateDialog, (val) => {
   margin-bottom: 6px;
 }
 .club-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
-}
-.club-num {
-  color: #909399;
-  font-size: 14px;
 }
 .club-desc {
   color: #606266;
-  font-size: 14px;
+  font-size: 13px;
   margin-bottom: 8px;
-  min-height: 36px;
+  min-height: 32px;
 }
 .club-members {
   margin-bottom: 8px;
@@ -759,20 +1006,31 @@ watch(showCreateDialog, (val) => {
   height: 28px;
   border-radius: 50%;
   border: 2px solid #fff;
-  margin-right: -8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  margin-right: -10px;
+  box-shadow: 0 2px 8px rgba(64,158,255,0.10);
 }
-.join-btn {
+.join-btn, .el-button, .create-club-submit-btn {
+  background: linear-gradient(90deg, #6a82fb 0%, #fc5c7d 100%);
+  border: none;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(161,140,209,0.13);
+  transition: background 0.2s;
   width: 100%;
   margin-top: 4px;
 }
-.clickable-card {
-  cursor: pointer;
-  transition: box-shadow 0.2s;
+.join-btn:hover, .el-button:hover, .create-club-submit-btn:hover {
+  background: linear-gradient(90deg, #fc5c7d 0%, #6a82fb 100%);
 }
-.clickable-card:hover {
-  box-shadow: 0 6px 24px 0 rgba(0,0,0,0.12);
+.floating-ai {
+  position: fixed;
+  right: 40px;
+  bottom: 120px;
+  z-index: 1000;
 }
+
+/* 创建社团 */
 .fab-create-club {
   position: fixed;
   right: 40px;
@@ -781,31 +1039,15 @@ watch(showCreateDialog, (val) => {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  box-shadow: 0 4px 16px rgba(64,158,255,0.2);
+  box-shadow: 0 8px 32px 0 rgba(64,158,255,0.18);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 36px;
+  transition: transform 0.2s;
 }
-.clear-btn {
-  font-size: 22px;
-  color: #bbb;
-  cursor: pointer;
-  margin-right: 6px;
-  user-select: none;
-  transition: color 0.18s, transform 0.15s;
-  display: inline-flex;
-  align-items: center;
-}
-.clear-btn:hover {
-  color: #ff4d4f;
-  transform: scale(1.18) rotate(10deg);
-}
-:deep(.club-tabs .el-tabs__item) {
-  font-size: 20px !important;
-  font-weight: bold;
-  letter-spacing: 1px;
-  padding: 0 55px !important;
+.fab-create-club:hover {
+  transform: scale(1.12) rotate(-8deg);
 }
 .create-club-dialog >>> .el-dialog {
   position: fixed !important;
@@ -848,16 +1090,16 @@ watch(showCreateDialog, (val) => {
   color: #409EFF;
 }
 .create-club-submit-btn {
-  background: linear-gradient(90deg, #409EFF 0%, #66b1ff 100%);
+  background: linear-gradient(90deg, #6a82fb 0%, #fc5c7d 100%);
   border: none;
   color: #fff;
   font-weight: bold;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(64,158,255,0.13);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(161,140,209,0.13);
   transition: background 0.2s;
 }
 .create-club-submit-btn:hover {
-  background: linear-gradient(90deg, #66b1ff 0%, #409EFF 100%);
+  background: linear-gradient(90deg, #fc5c7d 0%, #6a82fb 100%);
 }
 .club-img-preview {
   margin-top: 10px;
@@ -875,4 +1117,204 @@ watch(showCreateDialog, (val) => {
   font-size: 12px;
   color: #666;
 }
+
+/* AI图像 */
+.floating-ai {
+  position: fixed;
+  z-index: 999;
+  cursor: move;
+  user-select: none;
+}
+
+.ai-avatar-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #6a82fb 0%, #fc5c7d 100%);
+  color: white;
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 32px 0 rgba(161,140,209,0.18);
+  transition: transform 0.2s, background 0.2s;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.ai-avatar-icon:hover {
+  transform: scale(1.15) rotate(8deg);
+  background: linear-gradient(135deg, #fc5c7d 0%, #6a82fb 100%);
+}
+
+.left-sidebar, .right-sidebar {
+  background: #fff;
+  padding: 16px;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px 0 rgba(64,158,255,0.08);
+  min-height: 320px;
+}
+
+.sidebar-list {
+  list-style: none;
+  padding-left: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.sidebar-list li {
+  padding: 10px 0;
+  border-radius: 8px;
+  transition: background 0.18s;
+}
+.sidebar-list li:hover {
+  background: #f4faff;
+}
+.sidebar-list li::before {
+  content: attr(data-rank);
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #409EFF 0%, #66b1ff 100%);
+  color: #fff;
+  border-radius: 50%;
+  text-align: center;
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+h3 {
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+h4 {
+  margin: 8px 0 6px;
+  font-size: 15px;
+  font-weight: normal;
+  color: #666;
+}
+
+.clickable-item {
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #409EFF;
+}
+
+.clickable-item:hover {
+  text-decoration: underline;
+  color: #66b1ff;
+}
+
+.sidebar-card {
+  background: linear-gradient(135deg, #f4faff 0%, #e3f0ff 100%);
+  border-radius: 20px;
+  box-shadow: 0 4px 24px 0 rgba(64,158,255,0.10);
+  padding: 24px 18px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 18px;
+}
+.rank-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(64,158,255,0.08);
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: box-shadow 0.18s, transform 0.18s;
+}
+.rank-card:hover {
+  box-shadow: 0 8px 24px rgba(64,158,255,0.18);
+  transform: translateY(-2px) scale(1.03);
+}
+.rank-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14px;
+  color: #fff;
+}
+.rank-1 { background: linear-gradient(135deg, #FFD700 0%, #FFB300 100%); }
+.rank-2 { background: linear-gradient(135deg, #C0C0C0 0%, #B0B0B0 100%); }
+.rank-3 { background: linear-gradient(135deg, #CD7F32 0%, #B87333 100%); }
+.rank-4, .rank-5 { background: linear-gradient(135deg, #6a82fb 0%, #fc5c7d 100%); }
+.rank-info {
+  flex: 1;
+  text-align: left;
+}
+.rank-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+.rank-desc {
+  font-size: 13px;
+  color: #888;
+  margin-top: 2px;
+}
+.floating-ai {
+  position: fixed;
+  right: 40px;
+  bottom: 120px;
+  z-index: 1000;
+}
+
+.club-num {
+  color: #909399;
+  font-size: 14px;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+/* 美化中间社团部分顶部title */
+.club-tabs-title .el-tabs__header {
+  background: transparent;
+  border-bottom: none;
+  margin-bottom: 18px;
+}
+.club-tabs-title .el-tabs__nav {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  border-bottom: none;
+}
+.club-tabs-title .el-tabs__item {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: #222 !important;
+  letter-spacing: 2px;
+  padding: 0 32px !important;
+  background: transparent;
+  transition: color 0.2s;
+  position: relative;
+}
+.club-tabs-title .el-tabs__item.is-active {
+  color: #409EFF !important;
+}
+.club-tabs-title .el-tabs__item.is-active::after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -8px;
+  width: 48px;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #409EFF 0%, #66b1ff 100%);
+}
+.club-tabs-title .el-tabs__item:not(.is-active):hover {
+  color: #66b1ff !important;
+}
+
 </style>

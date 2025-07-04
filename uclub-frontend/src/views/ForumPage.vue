@@ -1,4 +1,14 @@
 <template>
+  <!-- 顶部渐变波浪装饰 -->
+  <svg class="top-wave" viewBox="0 0 1440 120" style="position:absolute;top:0;left:0;width:100vw;height:120px;z-index:0;">
+    <path fill="url(#waveGradient)" fill-opacity="1" d="M0,32L80,53.3C160,75,320,117,480,117.3C640,117,800,75,960,64C1120,53,1280,75,1360,85.3L1440,96L1440,0L1360,0C1280,0,1120,0,960,0C800,0,640,0,480,0C320,0,160,0,80,0L0,0Z"></path>
+    <defs>
+      <linearGradient id="waveGradient" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#a18cd1"/>
+        <stop offset="100%" stop-color="#fbc2eb"/>
+      </linearGradient>
+    </defs>
+  </svg>
   <div class="forum-container">
     <!-- 标题 + 发帖按钮 -->
     <div class="forum-header">
@@ -199,48 +209,64 @@ watch(route, (newRoute, oldRoute) => {
 </script>
 
 <style scoped>
-/* 主容器 */
-.forum-container {
-  padding: 24px;
-  background-color: #f5f7fa;
-  border-radius: 10px;
-  min-height: 100vh;
+.top-wave {
+  pointer-events: none;
 }
 
-/* 标题 + 发布按钮区域 */
+.forum-container {
+  padding: 48px 7vw 32px 7vw;
+  background: #f7f8fa;
+  border-radius: 18px;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+@media (max-width: 1200px) {
+  .forum-container {
+    padding: 32px 3vw 24px 3vw;
+  }
+}
+@media (max-width: 768px) {
+  .forum-container {
+    padding: 12px 2vw 8px 2vw;
+  }
+}
+
 .forum-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 28px;
 }
 
 .forum-header h2 {
   display: flex;
   align-items: center;
-  font-size: 24px;
-  font-weight: bold;
-  color: #303133;
+  font-size: 28px;
+  font-weight: 800;
+  color: #a18cd1;
+  letter-spacing: 1px;
 }
 
 .forum-header el-icon {
   margin-left: 8px;
+  color: #a18cd1;
 }
 
-/* 筛选卡片样式 */
 .filter-card {
-  margin-bottom: 24px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 32px;
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(161,140,209,0.08);
+  background: #fff;
+  border: 1.5px solid #f3eaff;
 }
 
-/* 筛选表单 */
 .filter-form {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
   align-items: center;
-  padding: 10px;
+  padding: 10px 0 10px 0;
 }
 
 .filter-form .el-form-item {
@@ -252,33 +278,46 @@ watch(route, (newRoute, oldRoute) => {
   width: 200px;
 }
 
-/* 帖子列表标题 */
 .post-list-title {
   display: flex;
   align-items: center;
-  font-size: 20px;
-  font-weight: bold;
-  color: #409eff;
-  margin-bottom: 16px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #a18cd1;
+  margin-bottom: 18px;
 }
-
 .post-list-title el-icon {
   margin-left: 6px;
+  color: #a18cd1;
 }
 
-/* 分页样式 */
 .pagination {
-  margin-top: 30px;
+  margin-top: 36px;
   text-align: center;
 }
-
-/* 侧边栏卡片样式（需配合 ForumSidebar.vue） */
-.el-col > .el-card {
+.pagination .el-pager li.active {
+  background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
+  color: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.pagination .el-pager li {
+  color: #a18cd1;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+.pagination .el-pager li:hover {
+  background: #f3eaff;
+  color: #a18cd1;
 }
 
-/* 动画过渡（若启用 transition-group） */
+.el-col > .el-card {
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(161,140,209,0.08);
+  background: #fff;
+  border: 1.5px solid #f3eaff;
+}
+
 .fade-enter-active, .fade-leave-active {
   transition: all 0.3s ease;
 }
@@ -287,7 +326,6 @@ watch(route, (newRoute, oldRoute) => {
   transform: translateY(10px);
 }
 
-/* 按钮组间隔 */
 .el-button + .el-button {
   margin-left: 10px;
 }
@@ -295,6 +333,54 @@ watch(route, (newRoute, oldRoute) => {
 .forum-actions {
   display: flex;
   gap: 12px;
+}
+
+.el-button[type="primary"], .el-button[type="success"] {
+  background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
+  color: #fff;
+  border: none;
+  font-weight: bold;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(161,140,209,0.06);
+  transition: background 0.2s, color 0.2s;
+}
+.el-button[type="primary"]:hover, .el-button[type="success"]:hover {
+  background: linear-gradient(90deg, #fbc2eb 0%, #a18cd1 100%);
+  color: #fff;
+}
+.el-button:not([type="primary"]):not([type="success"]) {
+  background: #fff;
+  color: #a18cd1;
+  border: 1.5px solid #a18cd1;
+  border-radius: 12px;
+  font-weight: bold;
+  transition: background 0.2s, color 0.2s;
+}
+.el-button:not([type="primary"]):not([type="success"]):hover {
+  background: #a18cd1;
+  color: #fff;
+}
+
+/* icon主色统一 */
+.el-icon, .el-icon svg {
+  color: #a18cd1 !important;
+  font-size: 20px !important;
+}
+
+.filter-form .el-input__wrapper, .filter-form .el-select__wrapper {
+  border-radius: 8px;
+  border: 1.5px solid #e0c3fc;
+  background: #fafbfc;
+  box-shadow: none;
+}
+.filter-form .el-input__inner, .filter-form .el-select__selected {
+  color: #444;
+}
+
+/* 其它细节优化 */
+.filter-form .el-form-item__label {
+  color: #a18cd1;
+  font-weight: 600;
 }
 
 </style>

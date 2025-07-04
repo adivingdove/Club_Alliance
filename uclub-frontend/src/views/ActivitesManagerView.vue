@@ -1,22 +1,17 @@
 <template>
-  <div class="p-6">
-    <el-card>
-    <div class="sidebar">
-      <el-card class=".card">
-        <div style="font-size:20px;color:red;">
-              热门活动:
+  <div class="manager-bg">
+    <el-card class="manager-card">
+      <div class="sidebar hot-activity-card">
+        <div class="hot-title">🔥 热门活动</div>
+        <div class="hot-content">
+          <span v-if="adminList[0]">
+            <span class="hot-activity-name">社团活动“{{ adminList[0].title }}”</span> 目前是最受欢迎的活动，<br>
+            参加活动总人数为 <span class="hot-activity-num">{{ adminList[0].currentParticipants }}</span> 人，欢迎尚未参加该活动的同学们踊跃报名。
+          </span>
+          <span v-else>暂无热门活动数据</span>
         </div>
-        <div style="font-size:15px;color:red;">
-            &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
-            社团活动“{{ adminList[0] ? adminList[0].title : '无数据' }}”目前是最受欢迎的活动，
-            参加活动总人数为{{ adminList[0] ? adminList[0].currentParticipants : '无数据' }}人，
-            欢迎尚未参加该活动的同学们涌跃报名。
-                    
-        </div>
-      </el-card>       
-    </div>
-      <el-table :data="adminList" border stripe style="width: 100%" v-loading="loading">
-      
+      </div>
+      <el-table :data="adminList" border stripe class="manager-table" v-loading="loading">
         <el-table-column prop="title" label="活动名称" width="150" align="center" sortable/>
         <el-table-column prop="description" label="活动描述" width="200" align="center"/>
         <el-table-column prop="location" label="活动地点" width="200" align="center"/>
@@ -25,20 +20,19 @@
         <el-table-column prop="maxParticipants" label="参加活动人数限额" width="180" align="center" sortable/>
         <el-table-column prop="currentParticipants" label="参加活动人数" width="180" align="center" sortable/>
         <el-table-column label="剩余名额" width="120" align="center">
-            <template v-slot="scope" >
-                <div style="color:#3A5FCD">
-                    {{ (scope.row.maxParticipants - scope.row.currentParticipants) || 'N/A' }}
-                </div>
-            </template>
+          <template v-slot="scope" >
+            <div class="remain-num">
+              {{ (scope.row.maxParticipants - scope.row.currentParticipants) || 'N/A' }}
+            </div>
+          </template>
         </el-table-column>
         <el-table-column label="活动参与率" width="120" align="center">
-            <template v-slot="scope" >
-                <div style="color:red;">
-                    {{ (scope.row.currentParticipants / scope.row.maxParticipants) || 'N/A' }}
-                </div>
-            </template>
+          <template v-slot="scope" >
+            <div class="rate-num">
+              {{ (scope.row.currentParticipants / scope.row.maxParticipants) || 'N/A' }}
+            </div>
+          </template>
         </el-table-column>
-
       </el-table>
       <el-pagination
         background
@@ -47,10 +41,9 @@
         :page-size="pageSize"
         :current-page="currentPage"
         @current-change="handlePageChange"
-        style="margin-top: 20px; text-align: right;"
+        class="manager-pagination"
       />
     </el-card>
-    
   </div>
 </template>
 
@@ -98,85 +91,108 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.sidebar {
-  padding: 0 10px;
+.manager-bg {
+  min-height: 100vh;
+  background: #f7f8fa;
+  padding: 40px 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
-.card-title {
-  font-weight: bold;
-  font-color:red;
+.manager-card {
+  max-width: 1200px;
+  margin: 0 auto;
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(161,140,209,0.10);
+  border: none;
+  padding: 36px 32px 32px 32px;
+  background: #fff;
+}
+.hot-activity-card {
+  background: linear-gradient(90deg, #f3eaff 0%, #fbc2eb 100%);
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(161,140,209,0.08);
+  padding: 24px 24px 18px 24px;
+  margin-bottom: 32px;
+}
+.hot-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #a18cd1;
   margin-bottom: 10px;
 }
-.tag {
-  margin: 5px 5px 0 0;
+.hot-content {
+  font-size: 16px;
+  color: #555;
+  line-height: 1.7;
 }
-.hot-posts {
-  padding-left: 0;
-  list-style: none;
+.hot-activity-name {
+  color: #a18cd1;
+  font-weight: 600;
 }
-.hot-posts li {
-  font-size: 14px;
-  line-height: 24px;
+.hot-activity-num {
+  color: #fc5c7d;
+  font-weight: 700;
 }
-.hot-posts li:hover {
-  background-color: #f5f7fa;
+.manager-table {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(161,140,209,0.06);
+  margin-bottom: 24px;
+  border: 1.5px solid #f3eaff;
 }
-
-.title {
-  color: #333;
-  text-decoration: none;
+.manager-table .el-table__header th {
+  background: #fafbfc;
+  color: #a18cd1;
+  font-weight: 700;
+  font-size: 15px;
+  border-bottom: 1.5px solid #e0c3fc;
 }
-.index {
-  color: #f56c6c;
-  margin-right: 5px;
+.manager-table .el-table__row {
+  font-size: 15px;
+  color: #444;
 }
-
-.post-list-title {
-  display: flex;
-  align-items: center;
-  font-size: 18px;
-  font-code:red;
-  font-weight: bold;
-  margin-bottom: 15px;
+.manager-table .el-table__row:hover {
+  background: #f3eaff;
 }
-
-.pagination {
-  margin-top: 20px;
-  text-align: center;
+.remain-num {
+  color: #6a82fb;
+  font-weight: 600;
 }
-
-
-.forum-container {
-  padding: 20px;
+.rate-num {
+  color: #fc5c7d;
+  font-weight: 700;
 }
-
-.forum-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
+.manager-pagination {
+  margin-top: 24px;
+  text-align: right;
 }
-
-.filter-card {
-  margin-bottom: 20px;
+.manager-pagination .el-pager li.active {
+  background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
+  color: #fff;
+  border-radius: 8px;
 }
-
-.filter-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.manager-pagination .el-pager li {
+  color: #a18cd1;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
 }
-
-.post-list-title {
-  display: flex;
-  align-items: center;
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 15px;
+.manager-pagination .el-pager li:hover {
+  background: #f3eaff;
+  color: #a18cd1;
 }
-
-.pagination {
-  margin-top: 20px;
-  text-align: center;
+@media (max-width: 900px) {
+  .manager-card {
+    padding: 16px 4vw 16px 4vw;
+    border-radius: 12px;
+  }
+  .hot-activity-card {
+    padding: 14px 8px 10px 8px;
+    border-radius: 10px;
+  }
+  .manager-table {
+    border-radius: 8px;
+  }
 }
-
 </style>

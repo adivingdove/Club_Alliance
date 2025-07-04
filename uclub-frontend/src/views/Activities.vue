@@ -55,7 +55,7 @@
             @click="viewActivityDetail(activity)"
           >
             <div class="activity-header">
-              <div class="activity-status" :class="getStatusClass(activity.applyStatus)">
+              <div class="activity-status">
                 {{ getStatusText(activity.applyStatus) }}
               </div>
               <div class="activity-time">
@@ -90,51 +90,46 @@
             </div>
             
             <div class="activity-footer">
-              <el-button 
-                type="primary" 
-                size="small" 
-                @click.stop="viewActivityDetail(activity)"
-              >
-                查看详情
-              </el-button>
-              
-              <!-- 参与/退出按钮 -->
-              <el-button 
-                v-if="isLoggedIn && activity.applyStatus === '通过' && !canEditActivity(activity)"
-                :type="activity.isParticipating ? 'danger' : 'success'"
-                size="small" 
-                @click.stop="activity.isParticipating ? leaveActivityHandler(activity) : joinActivityHandler(activity)"
-                :disabled="!canJoinActivity(activity)"
-              >
-                {{ activity.isParticipating ? '退出活动' : '加入活动' }}
-              </el-button>
-              
-              <!-- 如果活动状态不是"通过"，显示状态信息 -->
-              <div v-if="isLoggedIn && activity.applyStatus !== '通过'" style="font-size: 12px; color: #999; margin-top: 5px;">
+              <div class="footer-btn-group">
+                <el-button 
+                  type="primary" 
+                  size="small" 
+                  @click.stop="viewActivityDetail(activity)"
+                >
+                  查看详情
+                </el-button>
+                <el-button 
+                  v-if="isLoggedIn && activity.applyStatus === '通过' && !canEditActivity(activity)"
+                  :type="activity.isParticipating ? 'danger' : 'success'"
+                  size="small" 
+                  @click.stop="activity.isParticipating ? leaveActivityHandler(activity) : joinActivityHandler(activity)"
+                  :disabled="!canJoinActivity(activity)"
+                >
+                  {{ activity.isParticipating ? '退出活动' : '加入活动' }}
+                </el-button>
+                <el-button 
+                  v-if="canEditActivity(activity)" 
+                  type="warning" 
+                  size="small" 
+                  @click.stop="editActivity(activity)"
+                >
+                  编辑
+                </el-button>
+                <el-button 
+                  v-if="canDeleteActivity(activity)" 
+                  type="danger" 
+                  size="small" 
+                  @click.stop="deleteActivityHandler(activity)"
+                >
+                  删除
+                </el-button>
+              </div>
+              <div v-if="isLoggedIn && activity.applyStatus !== '通过'" class="footer-tip">
                 活动状态: {{ getStatusText(activity.applyStatus) }}
               </div>
-              
-              <!-- 如果用户是活动创建者，显示提示 -->
-              <div v-if="isLoggedIn && canEditActivity(activity)" style="font-size: 12px; color: #409EFF; margin-top: 5px;">
+              <div v-if="isLoggedIn && canEditActivity(activity)" class="footer-tip">
                 您是活动创建者
               </div>
-              
-              <el-button 
-                v-if="canEditActivity(activity)" 
-                type="warning" 
-                size="small" 
-                @click.stop="editActivity(activity)"
-              >
-                编辑
-              </el-button>
-              <el-button 
-                v-if="canDeleteActivity(activity)" 
-                type="danger" 
-                size="small" 
-                @click.stop="deleteActivityHandler(activity)"
-              >
-                删除
-              </el-button>
             </div>
           </el-card>
         </el-col>
@@ -1300,6 +1295,29 @@ const stripHtmlExceptImg = (html) => {
 </script>
 
 <style scoped>
+.top-wave {
+  pointer-events: none;
+}
+
+.activities-container {
+  padding: 48px 7vw 32px 7vw;
+  background: #f7f8fa;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 1200px) {
+  .activities-container {
+    padding: 32px 3vw 24px 3vw;
+  }
+}
+@media (max-width: 768px) {
+  .activities-container {
+    padding: 16px 2vw 12px 2vw;
+  }
+}
+
 .banner {
   position: relative;
   margin: 32px 0 24px 0;
@@ -1333,39 +1351,62 @@ const stripHtmlExceptImg = (html) => {
   margin-bottom: 18px;
 }
 
-.activities-container {
-  padding: 20px;
-  background: #87CEEB;
-}
-
-.page-header {
-  margin-bottom: 30px;
-}
-
-.page-header h1 {
-  font-size: 2.5rem;
-  color: #303133;
-  margin-bottom: 10px;
-}
-
-.page-header p {
-  font-size: 1.1rem;
-  color: #606266;
-}
-
-.search-filter-section {
-  margin-bottom: 30px;
-}
-
 .search-box {
-  width: 600px;
+  width: 520px;
   margin: 24px auto 20px auto;
   display: flex;
   justify-content: center;
+  background: #f3f4f7;
+  border-radius: 12px;
+  box-shadow: none;
+  border: 1.5px solid #f0f0f0;
+  padding: 0 18px;
+}
+.search-box .el-input__wrapper {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+.search-box .el-input__inner {
+  background: transparent;
+  color: #444;
+}
+.search-box .el-input__suffix {
+  color: #bbb;
 }
 
 .filter-tabs {
   border-bottom: 1px solid #e4e7ed;
+}
+
+.filter-tabs .el-tabs__item {
+  font-size: 17px;
+  font-weight: 600;
+  color: #888;
+  padding: 0 32px 12px 32px;
+  background: transparent;
+  border: none;
+  transition: color 0.2s;
+}
+.filter-tabs .el-tabs__item.is-active {
+  color: #a18cd1;
+  font-weight: 700;
+  position: relative;
+}
+.filter-tabs .el-tabs__item.is-active::after {
+  content: '';
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -6px;
+  width: 60%;
+}
+.filter-tabs .el-tabs__active-bar {
+  display: none;
 }
 
 .activities-list {
@@ -1374,10 +1415,168 @@ const stripHtmlExceptImg = (html) => {
 
 .activity-card {
   height: 100%;
-  transition: transform 0.3s;
+  transition: transform 0.3s, box-shadow 0.2s;
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 4px 24px rgba(161,140,209,0.08);
+  margin-bottom: 16px;
+  padding: 24px 18px 18px 18px;
+  border: 1px solid #f0f0f0;
+}
+@media (max-width: 768px) {
+  .activity-card {
+    padding: 10px 4px 8px 4px;
+    margin-bottom: 10px;
+    border-radius: 14px;
+  }
+}
+
+.activity-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  color: #222;
+  letter-spacing: 0.5px;
+}
+
+.activity-description {
+  color: #888;
+  font-size: 15px;
+  line-height: 1.7;
+  margin: 10px 0 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.activity-info {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-start;
+  gap: 24px;
+  color: #888;
+  font-size: 14px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.info-item i {
+  font-size: 17px;
+  color: #a18cd1;
+}
+
+.activity-footer {
+  margin-top: 8px;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  justify-content: flex-end;
+}
+@media (max-width: 768px) {
+  .activity-footer {
+    gap: 2px;
+  }
+  .activity-footer .footer-btn-group {
+    gap: 4px;
+  }
+}
+
+.activity-footer .footer-btn-group {
+  display: flex;
+  gap: 10px;
+}
+
+.activity-footer .footer-tip {
+  font-size: 12px;
+  color: #409EFF;
+  margin-top: 0;
+  white-space: normal;
+  word-break: normal;
+  width: auto;
+  text-align: right;
+}
+
+.fab-create-activity {
+  position: fixed;
+  right: 40px;
+  bottom: 40px;
+  width: 60px;
+  height: 60px;
+  box-shadow: 0 4px 16px rgba(161,140,209,0.13);
+  z-index: 1000;
+  background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+  color: #fff;
+  border: none;
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.fab-create-activity:hover {
+  background: linear-gradient(135deg, #fbc2eb 0%, #a18cd1 100%);
+  box-shadow: 0 8px 32px rgba(161,140,209,0.18);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 0;
+}
+
+/* 其它原有结构和细节样式保持不变 */
+.activity-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 0;
+  border-bottom: none;
+  background: none;
+  gap: 10px;
+}
+
+.activity-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #a18cd1;
+  background: none;
+  padding: 0;
+  border-radius: 50px;
+}
+.activity-status::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+}
+
+.activity-time {
+  font-size: 13px;
+  color: #b0b0b0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 12px;
+}
+.activity-time i {
+  color: #a18cd1;
+  font-size: 15px;
 }
 
 .activity-content {
@@ -1401,593 +1600,112 @@ const stripHtmlExceptImg = (html) => {
   object-fit: cover;
 }
 
-.activity-description {
-  color: #666;
-  font-size: 14px;
-  line-height: 1.6;
-  margin: 10px 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+.activity-footer {
+  margin-top: 18px;
+  text-align: right;
 }
 
-.activity-description img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 4px;
-  margin: 8px 0;
+.activity-footer .el-button[type="primary"] {
+  margin-left: 10px;
 }
 
-.activity-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin: 0;
-  color: #333;
-}
-
-.activity-info {
-  margin-top: auto;
-  display: flex;
-  justify-content: space-between;
-  color: #666;
-  font-size: 14px;
-}
-
-.info-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.info-item i {
-  font-size: 16px;
-}
-
-/* 悬停效果 */
-.activity-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-/* 待审核状态样式 */
-.activity-card.pending {
-  opacity: 0.8;
-}
-
-/* 状态标签样式 */
-.activity-status {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  color: white;
-}
-
-.status-pending {
-  background-color: #e6a23c;
-}
-
-.status-approved {
-  background-color: #67c23a;
-}
-
-.status-rejected {
-  background-color: #f56c6c;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 60px 0;
-}
-
-.fab-create-activity {
-  position: fixed;
-  right: 40px;
-  bottom: 40px;
-  width: 60px;
-  height: 60px;
-  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.2);
-  z-index: 1000;
-}
-
-/* 活动详情样式 */
-.activity-detail {
-  padding: 20px 0;
-  background: #87CEEB;
-}
-
-.detail-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #e4e7ed;
-  background: #87CEEB;
-}
-
-.detail-header h2 {
-  margin: 0;
-  color: #303133;
-  background: #87CEEB;
-}
-
-.detail-status {
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: bold;
-  background: #87CEEB;
-}
-
-.detail-description {
-  font-size: 16px;
-  line-height: 1.6;
-  color: #606266;
-  margin-bottom: 20px;
-  background: #87CEEB;
-}
-
-.detail-info {
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  background: #87CEEB;
-}
-
-.info-row {
-  display: flex;
-  margin-bottom: 12px;
-  background: #87CEEB;
-}
-
-.info-row:last-child {
-  margin-bottom: 0;
-  background: #87CEEB;
-}
-
-.info-row .label {
-  font-weight: bold;
-  color: #303133;
-  width: 100px;
-  flex-shrink: 0;
-  background: #87CEEB;
-}
-
-.detail-actions {
-  margin-top: 20px;
-  text-align: center;
-  background: #87CEEB;
-}
-
-.detail-actions .el-button {
-  margin: 0 10px;
-  background: #87CEEB;
-}
-
-/* 编辑按钮样式 */
-.edit-button {
-  background-color: #409eff;
-  border-color: #409eff;
-  color: white;
-}
-
-.edit-button:hover {
-  background-color: #66b1ff;
-  border-color: #66b1ff;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .activities-container {
-    padding: 15px;
-  }
-  
-  .page-header h1 {
-    font-size: 2rem;
-  }
-  
-  .activity-card {
-    margin-bottom: 15px;
-  }
-  
-  .activity-footer {
-    flex-direction: column;
-  }
-  
-  .fab-create-activity {
-    right: 20px;
-    bottom: 20px;
-    width: 50px;
-    height: 50px;
-  }
-}
-
-.custom-button {
-  color: #FFFFFF; 
-  background-color: #409EFF; 
-}
-
-.activity-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  background: #f8f8f8;
-}
-
-.activity-img--dialog {
-  width: 320px;
-  height: 180px;
-  max-width: 90%;
-}
-
-.avatar-uploader {
-  display: inline-block;
-}
-
-.avatar-uploader-icon {
-  font-size: 28px;
-  color: #ffffff;
-  width: 100px;
-  height: 100px;
-  line-height: 100px;
-  text-align: center;
-  border: 1px dashed #ffffff;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.activity-content--bg {
-  position: relative;
-  overflow: hidden;
-  min-height: 160px;
-  padding: 10px 10px 6px 10px;
-  border-radius: 12px;
-}
-.activity-img-bg {
-  position: absolute;
-  left: 0; top: 0; width: 100%; height: 95%;
-  object-fit: cover;
-  z-index: 1;
-  filter: brightness(1);
-}
-.activity-content-inner {
-  position: relative;
-  z-index: 2;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0);
-  border-radius: 12px;
-  padding: 8px;
-}
-
-.activity-participants-badge {
-  position: absolute;
-  bottom: 16px;
-  left: 16px;
-  background: rgba(64,158,255,0.92);
-  color: #fff;
-  padding: 4px 12px;
-  border-radius: 16px;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  z-index: 10;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  gap: 4px;
-}
-
-.avatar-uploader.activity-upload-highlight {
-  border: 2px dashed #409EFF;
-  border-radius: 8px;
-  width: 104px;
-  height: 104px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f4faff;
-  margin-bottom: 8px;
-  transition: border-color 0.2s;
-}
-.avatar-uploader.activity-upload-highlight:hover {
-  border-color: #66b1ff;
-  background: #e6f7ff;
-}
-
-.detail-actions .el-button.edit-activity-btn {
-  background: #ffcc00 !important;
-  color: #222 !important;
-  border-color: #ffcc00 !important;
-}
-.detail-actions .el-button.join-activity-btn {
-  background: #409EFF !important;
-  color: #fff !important;
-  border-color: #409EFF !important;
-}
-.detail-actions .el-button.leave-activity-btn {
-  background: #f56c6c !important;
-  color: #fff !important;
-  border-color: #f56c6c !important;
-}
-
-/* 活动对话框美化样式 */
 .activity-dialog .el-dialog {
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.10);
   overflow: hidden;
 }
-
 .activity-dialog .el-dialog__header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
   color: white;
-  padding: 24px 30px 20px;
+  padding: 28px 36px 18px;
   margin: 0;
 }
-
 .activity-dialog .el-dialog__title {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
   color: white;
 }
-
 .activity-dialog .el-dialog__body {
-  padding: 30px;
-  background: #fafbfc;
+  padding: 36px;
+  background: #fff;
 }
-
 .activity-dialog .el-dialog__footer {
-  padding: 20px 30px;
-  background: white;
-  border-top: 1px solid #e4e7ed;
+  padding: 22px 36px;
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
 }
 
-.dialog-header {
-  margin-bottom: 24px;
-  text-align: center;
-}
-
-.dialog-header h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
-  margin-bottom: 8px;
-}
-
-.dialog-header p {
-  font-size: 14px;
-  color: #909399;
-  margin: 0;
-}
-
-.activity-form {
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-}
-
-.form-item-highlight .el-form-item__label {
-  font-weight: 600;
-  color: #303133;
-}
-
-.form-item-highlight .el-form-item__label::before {
-  content: '*';
-  color: #f56c6c;
-  margin-right: 4px;
-}
-
-.custom-input .el-input__wrapper {
-  border-radius: 8px;
-  border: 2px solid #e4e7ed;
-  transition: all 0.3s ease;
-  box-shadow: none;
-}
-
-.custom-input .el-input__wrapper:hover {
-  border-color: #409eff;
-}
-
-.custom-input .el-input__wrapper.is-focus {
-  border-color: #409eff;
-  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
-}
-
-.custom-input-number .el-input-number__decrease,
-.custom-input-number .el-input-number__increase {
-  border-radius: 6px;
-  background: #f5f7fa;
-  border: 1px solid #e4e7ed;
-}
-
-.custom-date-picker .el-input__wrapper {
-  border-radius: 8px;
-  border: 2px solid #e4e7ed;
-  transition: all 0.3s ease;
-  box-shadow: none;
-}
-
-.custom-date-picker .el-input__wrapper:hover {
-  border-color: #409eff;
-}
-
-.custom-date-picker .el-input__wrapper.is-focus {
-  border-color: #409eff;
-  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
-}
-
-.custom-select .el-input__wrapper {
-  border-radius: 8px;
-  border: 2px solid #e4e7ed;
-  transition: all 0.3s ease;
-  box-shadow: none;
-}
-
-.custom-select .el-input__wrapper:hover {
-  border-color: #409eff;
-}
-
-.custom-select .el-input__wrapper.is-focus {
-  border-color: #409eff;
-  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
-}
-
-.custom-alert {
-  border-radius: 8px;
-  border: none;
-  background: #fdf6ec;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
+/* 按钮极简主色点缀 */
 .cancel-btn {
-  border-radius: 8px;
-  padding: 12px 24px;
+  border-radius: 10px;
+  padding: 12px 28px;
   font-weight: 500;
   border: 2px solid #e4e7ed;
   background: white;
   color: #606266;
   transition: all 0.3s ease;
 }
-
 .cancel-btn:hover {
-  border-color: #c0c4cc;
-  background: #f5f7fa;
-  color: #303133;
+  border-color: #a18cd1;
+  background: #f7f8fa;
+  color: #a18cd1;
 }
-
 .submit-btn {
-  border-radius: 8px;
-  padding: 12px 24px;
+  border-radius: 10px;
+  padding: 12px 28px;
   font-weight: 500;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
   border: none;
   color: white;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(161,140,209,0.13);
 }
-
 .submit-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(161,140,209,0.18);
+  background: linear-gradient(135deg, #fbc2eb 0%, #a18cd1 100%);
 }
-
 .submit-btn:disabled {
   background: #c0c4cc;
   transform: none;
   box-shadow: none;
 }
 
-.uploaded-image {
-  width: 240px;
-  height: 120px;
-  border-radius: 12px;
-  border: 3px solid #409eff;
-  object-fit: cover;
-  display: block;
-  margin: 0 auto;
-  transition: all 0.3s ease;
+/* icon主色统一 */
+.el-icon-location, .el-icon-user, .el-icon-time, .el-icon-upload, .el-icon-plus, .el-icon-check {
+  color: #a18cd1 !important;
+  font-size: 18px !important;
 }
 
-.uploaded-image:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 25px rgba(64, 158, 255, 0.2);
-}
-
-.upload-placeholder {
-  width: 160px;
-  height: 40px;
-  border: 1px solid #d9ecff;
-  border-radius: 8px;
-  background: #f4faff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: 0 auto;
-  cursor: pointer;
-  color: #409eff;
-  font-size: 16px;
-  font-weight: 500;
-  transition: border-color 0.2s, background 0.2s;
-}
-.upload-placeholder:hover {
-  border-color: #409eff;
-  background: #eaf3ff;
-}
-.upload-placeholder i {
-  font-size: 20px;
-}
-
-/* 富文本编辑器美化 */
-.ql-editor {
-  min-height: 200px !important;
-  max-height: 200px !important;
-  overflow-y: auto !important;
-  border-radius: 8px;
-  border: 2px solid #e4e7ed;
-  transition: all 0.3s ease;
-}
-
-.ql-editor:focus {
-  border-color: #409eff;
-  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
-}
-
-.ql-toolbar {
-  border-radius: 8px 8px 0 0;
-  border: 2px solid #e4e7ed;
-  border-bottom: 1px solid #e4e7ed;
-  background: #fafbfc;
-}
-
-.ql-container {
-  border-radius: 0 0 8px 8px;
-  border: 2px solid #e4e7ed;
-  border-top: 1px solid #e4e7ed;
-}
-
-/* 响应式设计 */
+/* 响应式优化 */
 @media (max-width: 768px) {
   .activity-dialog .el-dialog {
-    width: 95% !important;
-    margin: 20px auto;
+    width: 98% !important;
+    margin: 12px auto;
   }
-  
   .activity-dialog .el-dialog__body {
-    padding: 20px;
-  }
-  
-  .activity-form {
     padding: 16px;
   }
-  
+  .activity-form {
+    padding: 10px;
+  }
   .dialog-footer {
     flex-direction: column;
+    gap: 10px;
   }
-  
   .cancel-btn,
   .submit-btn {
     width: 100%;
   }
-}
-
-/* 覆盖 el-upload 的边框和背景 */
-.avatar-uploader.activity-upload-highlight .el-upload,
-.avatar-uploader.activity-upload-highlight .el-upload-dragger {
-  border: none !important;
-  background: none !important;
-  box-shadow: none !important;
-  outline: none !important;
+  .search-box {
+    width: 98vw;
+    min-width: 0;
+    padding: 0 6px;
+  }
+  .activity-card {
+    padding: 16px 8px 12px 8px;
+    margin-bottom: 18px;
+    border-radius: 14px;
+  }
 }
 </style>
