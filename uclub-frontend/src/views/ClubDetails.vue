@@ -202,6 +202,7 @@ watch(
 
 onMounted(() => {
   if (route.params.id) fetchClub(route.params.id)
+  window.scrollTo({ top: 0, behavior: 'auto' })
 })
 
 // 申请加入社团
