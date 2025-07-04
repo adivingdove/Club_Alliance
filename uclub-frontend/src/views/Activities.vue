@@ -191,7 +191,7 @@
               <QuillEditor
                 v-model="activityForm.description"
                 placeholder="请输入活动描述"
-                :height="300"
+                :height="200"
               />
             </el-form-item>
           </el-col>
@@ -257,7 +257,7 @@
         
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="所属社团" prop="clubId" v-if="userClubs.length > 0" class="form-item-highlight">
+            <el-form-item label="所属社团" prop="clubId" v-if="clubList.length > 0" class="form-item-highlight">
               <el-select 
                 v-model="activityForm.clubId" 
                 placeholder="请选择所属社团"
@@ -266,7 +266,7 @@
                 style="width: 100%"
               >
                 <el-option 
-                  v-for="club in userClubs.filter(c => ['干事', '副社长', '社长'].includes(c.myRole))" 
+                  v-for="club in (clubList.value || []).filter(c => ['干事', '副社长', '社长'].includes(c.myRole))" 
                   :key="club.id" 
                   :label="club.name" 
                   :value="club.id" 
@@ -287,7 +287,7 @@
         <div v-if="activityForm.imageUrl" style="margin-top: 10px; text-align: center;">
           <img :src="getImageUrl(activityForm.imageUrl)" alt="活动图片" class="uploaded-image" />
         </div>
-        <el-form-item v-if="userClubs.length === 0 && isLoggedIn">
+        <el-form-item v-if="clubList.length === 0 && isLoggedIn">
           <el-alert
             title="您还没有创建任何社团"
             description="请先创建社团，然后才能发布活动"
@@ -305,7 +305,7 @@
           <el-button 
             type="primary" 
             @click="submitActivity"
-            :disabled="userClubs.length === 0"
+            :disabled="clubList.length === 0"
             class="submit-btn"
           >
             <i class="el-icon-plus"></i>
@@ -438,7 +438,7 @@
               <QuillEditor
                 v-model="editForm.description"
                 placeholder="请输入活动描述"
-                :height="300"
+                :height="200"
               />
             </el-form-item>
           </el-col>
@@ -526,18 +526,10 @@
         </div>
       </template>
     </el-dialog>
-  </div>
+  
 </template>
 
-<script>
-    export default{
-        methods:{
-            handle (){           
-                this.$router.push('/ActivitiesManagerView');
-            }
-        }
-    }
-</script>
+
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
@@ -562,6 +554,7 @@ import {
 } from '@/api/activityApi'
 import request from '@/utils/request'
 import QuillEditor from '@/components/QuillEditor.vue'
+import { useRouter } from 'vue-router'
 
 
 
@@ -576,7 +569,7 @@ const selectedActivity = ref(null)
 const currentEditActivityId = ref(null)
 const activityFormRef = ref()
 const editFormRef = ref()
-const userClubs = ref([])
+const clubList = ref([])
 const allClubs = ref([])
 const activityDescRef = ref(null)
 const editDescRef = ref(null)
@@ -637,11 +630,9 @@ const filteredActivities = computed(() => {
   // 如果是"即将开始"标签页，额外过滤开始时间在当前时间之后的活动
   if (activeTab.value === 'upcoming') {
     const now = new Date()
-    console.log('当前时间:', now.toISOString())
     
     filtered = filtered.filter(activity => {
       if (!activity.startTime) {
-        console.log('活动缺少开始时间:', activity.title)
         return false
       }
       
@@ -668,22 +659,17 @@ const filteredActivities = computed(() => {
         
         // 检查解析是否成功
         if (isNaN(startTime.getTime())) {
-          console.error('无法解析活动时间:', activity.startTime)
           return false
         }
         
       } catch (error) {
-        console.error('解析活动时间失败:', activity.startTime, error)
         return false
       }
       
       const isUpcoming = startTime > now
-      console.log(`活动 "${activity.title}" 开始时间:`, startTime.toISOString(), '是否在未来:', isUpcoming)
       
       return isUpcoming
     })
-    
-    console.log('即将开始的活动数量:', filtered.length)
   }
 
   return filtered
@@ -692,44 +678,33 @@ const filteredActivities = computed(() => {
 // 获取活动列表
 const fetchActivities = async () => {
   try {
-    console.log('开始获取活动列表，当前标签页:', activeTab.value)
     let response
     
     switch (activeTab.value) {
       case 'upcoming':
-        console.log('获取所有活动，然后在前端过滤即将开始的活动')
         response = await getAllActivities()
         break
       case 'pending':
         if (isAdmin.value) {
-          console.log('获取待审核活动')
           response = await getPendingActivities()
         } else {
-          console.log('非管理员用户，返回空列表')
           response = { data: { code: 0, data: [] } }
         }
         break
       default:
-        console.log('获取所有活动')
         response = await getAllActivities()
     }
     
-    console.log('API响应:', response)
-    
     if (response && response.data && response.data.code === 0) {
       activities.value = response.data.data || []
-      console.log('成功获取活动列表，数量:', activities.value.length)
       
       // 检查用户参与状态
       await checkUserParticipation()
     } else {
-      console.error('API返回错误:', response)
       activities.value = []
       ElMessage.error('获取活动列表失败')
     }
   } catch (error) {
-    console.error('获取活动列表失败:', error)
-    console.error('错误详情:', error.response || error.message)
     activities.value = []
     ElMessage.error('获取活动列表失败，请检查网络连接')
   }
@@ -738,18 +713,16 @@ const fetchActivities = async () => {
 // 获取用户社团列表
 const fetchUserClubs = async () => {
   if (!isLoggedIn.value) return
-  
   try {
-    console.log('获取用户社团，用户ID:', userInfo.value.id)
     const response = await request.get(`/api/clubs/creator/${userInfo.value.id}`)
-    console.log('用户社团响应:', response)
     if (response.data.code === 0) {
-      userClubs.value = response.data.data || []
-      console.log('获取到用户社团数量:', userClubs.value.length)
+      clubList.value = (response.data.data || []).map(c => ({
+        ...c,
+        myRole: c.role || c.rol
+      }))
     }
   } catch (error) {
-    console.error('获取用户社团失败:', error)
-    userClubs.value = []
+    clubList.value = []
   }
 }
 
@@ -771,8 +744,6 @@ const viewActivityDetail = (activity) => {
 
 // 编辑活动
 const editActivity = (activity) => {
-  console.log('编辑活动:', activity)
-  
   // 保存当前编辑的活动ID
   currentEditActivityId.value = activity.id
   
@@ -808,7 +779,6 @@ const deleteActivityHandler = async (activity) => {
     }
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('删除活动失败:', error)
       ElMessage.error('删除活动失败')
     }
   }
@@ -828,7 +798,6 @@ const submitActivity = async () => {
     
     // 检查用户信息
     if (!userInfo.value?.id) {
-      console.error('用户信息不完整:', userInfo.value)
       ElMessage.error('用户信息不完整，请重新登录')
       return
     }
@@ -881,8 +850,6 @@ const submitActivity = async () => {
       fetchActivities()
     }
   } catch (error) {
-    console.error('创建活动失败:', error)
-    console.error('错误详情:', error.response?.data || error.message)
     ElMessage.error('创建活动失败，请检查表单数据')
   }
 }
@@ -890,9 +857,7 @@ const submitActivity = async () => {
 // 审核活动
 const approveActivity = async (activityId) => {
   try {
-    console.log('开始审核活动，活动ID:', activityId, '状态: 通过')
     const response = await updateActivityApplyStatus(activityId, '通过')
-    console.log('审核API响应:', response)
     
     if (response.data.code === 0) {
       ElMessage.success('审核通过')
@@ -901,13 +866,11 @@ const approveActivity = async (activityId) => {
       const activityIndex = activities.value.findIndex(a => a.id === activityId)
       if (activityIndex !== -1) {
         activities.value[activityIndex].applyStatus = '通过'
-        console.log('本地活动状态已更新:', activities.value[activityIndex])
       }
       
       // 如果当前选中的活动是被审核的活动，也更新其状态
       if (selectedActivity.value && selectedActivity.value.id === activityId) {
         selectedActivity.value.applyStatus = '通过'
-        console.log('选中活动状态已更新:', selectedActivity.value)
       }
       
       showDetailDialog.value = false
@@ -918,17 +881,13 @@ const approveActivity = async (activityId) => {
       ElMessage.error(response.data.message || '审核失败')
     }
   } catch (error) {
-    console.error('审核失败:', error)
-    console.error('错误详情:', error.response?.data || error.message)
     ElMessage.error('审核失败，请重试')
   }
 }
 
 const rejectActivity = async (activityId) => {
   try {
-    console.log('开始审核活动，活动ID:', activityId, '状态: 拒绝')
     const response = await updateActivityApplyStatus(activityId, '拒绝')
-    console.log('审核API响应:', response)
     
     if (response.data.code === 0) {
       ElMessage.success('已拒绝')
@@ -937,13 +896,11 @@ const rejectActivity = async (activityId) => {
       const activityIndex = activities.value.findIndex(a => a.id === activityId)
       if (activityIndex !== -1) {
         activities.value[activityIndex].applyStatus = '拒绝'
-        console.log('本地活动状态已更新:', activities.value[activityIndex])
       }
       
       // 如果当前选中的活动是被审核的活动，也更新其状态
       if (selectedActivity.value && selectedActivity.value.id === activityId) {
         selectedActivity.value.applyStatus = '拒绝'
-        console.log('选中活动状态已更新:', selectedActivity.value)
       }
       
       showDetailDialog.value = false
@@ -954,8 +911,6 @@ const rejectActivity = async (activityId) => {
       ElMessage.error(response.data.message || '审核失败')
     }
   } catch (error) {
-    console.error('审核失败:', error)
-    console.error('错误详情:', error.response?.data || error.message)
     ElMessage.error('审核失败，请重试')
   }
 }
@@ -1015,13 +970,8 @@ watch(isLoggedIn, (newVal) => {
 
 // 组件挂载
 onMounted(async () => {
-  console.log('组件挂载，检查用户状态...')
-  console.log('登录状态:', isLoggedIn.value)
-  console.log('用户信息:', userInfo.value)
-  
   // 获取活动数据
   await fetchActivities()
-  console.log('活动数据加载完成，活动数量:', activities.value.length)
   
   if (isLoggedIn.value) {
     await fetchUserClubs()
@@ -1032,8 +982,6 @@ onMounted(async () => {
 const submitEdit = async () => {
   editForm.value.description = window.$(editDescRef.value).summernote('code')
   try {
-    await editFormRef.value.validate()
-    
     // 检查是否有当前编辑的活动ID
     if (!currentEditActivityId.value) {
       ElMessage.error('编辑活动ID不存在，请重新选择要编辑的活动')
@@ -1053,7 +1001,6 @@ const submitEdit = async () => {
       ElMessage.error(response.data.message || '编辑活动失败')
     }
   } catch (error) {
-    console.error('编辑活动失败:', error)
     ElMessage.error('编辑活动失败，请检查表单数据')
   }
 }
@@ -1087,7 +1034,6 @@ const joinActivityHandler = async (activity) => {
       ElMessage.error(response.data.message || '加入活动失败')
     }
   } catch (error) {
-    console.error('加入活动失败:', error)
     ElMessage.error('加入活动失败')
   }
 }
@@ -1106,12 +1052,11 @@ const leaveActivityHandler = async (activity) => {
       ElMessage.success('成功退出活动')
       activity.isParticipating = false
       activity.currentParticipants = Math.max(0, (activity.currentParticipants || 0) - 1)
-    } else {
+    } else {f
       ElMessage.error(response.data.message || '退出活动失败')
     }
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('退出活动失败:', error)
       ElMessage.error('退出活动失败')
     }
   }
@@ -1175,7 +1120,7 @@ function disabledEndDate(date) {
 // 修改 getClubNameById 方法
 const getClubNameById = (clubId) => {
   // 1. 从 userClubs 查找
-  const club = userClubs.value.find(c => c.id === clubId)
+  const club = clubList.value.find(c => c.id === clubId)
   if (club) return club.name
   // 2. 从 activities 查找
   const activity = activities.value.find(a => a.clubId === clubId && a.clubName)
@@ -1260,6 +1205,11 @@ const handleFileChange = async (e) => {
     ElMessage.error('图片上传失败')
   }
 }
+
+const router = useRouter()
+const handle = () => {
+  router.push('/ActivitiesManagerView')
+}
 </script>
 
 <style scoped>
@@ -1301,7 +1251,7 @@ const handleFileChange = async (e) => {
 
 .activities-container {
   padding: 20px;
- //background: #87CEEB;
+  background: #87CEEB;
 
 }
 
@@ -1325,8 +1275,10 @@ const handleFileChange = async (e) => {
 }
 
 .search-box {
-  width: 271px;
-  margin-bottom: 20px;
+  width: 600px;
+  margin: 24px auto 20px auto;
+  display: flex;
+  justify-content: center;
 }
 
 .filter-tabs {
@@ -1406,9 +1358,10 @@ const handleFileChange = async (e) => {
   line-height: 1.5;
   margin-bottom: 12px;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 8;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  min-height: 80px;
 }
 
 .activity-info {
@@ -1886,7 +1839,9 @@ const handleFileChange = async (e) => {
 
 /* 富文本编辑器美化 */
 .ql-editor {
-  min-height: 200px;
+  min-height: 200px !important;
+  max-height: 200px !important;
+  overflow-y: auto !important;
   border-radius: 8px;
   border: 2px solid #e4e7ed;
   transition: all 0.3s ease;

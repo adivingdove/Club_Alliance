@@ -211,10 +211,8 @@ const fetchClubs = async () => {
     if (res.data.code === 0) {
       clubs.value = (res.data.data || []).map(club => {
         let imgUrl = club.logoUrl || '/logo.png'
-        console.log('原始logoUrl:', club.logoUrl)
         if (imgUrl && imgUrl.startsWith('/uploads/')) {
           imgUrl = 'http://localhost:8080' + imgUrl
-          console.log('处理后的imgUrl:', imgUrl)
         }
         return {
           ...club,
@@ -242,18 +240,14 @@ const uploadHeaders = computed(() => {
 })
 const uploadAction = 'http://localhost:8080/api/upload' // 你需要有后端上传接口
 const handleUploadSuccess = (response) => {
-  console.log('上传成功响应:', response)
   if (response.code === 0 && response.url) {
     createForm.value.logoUrl = response.url
-    console.log('设置logoUrl:', response.url)
     ElMessage.success('图片上传成功')
   } else {
-    console.error('上传响应格式错误:', response)
     ElMessage.error('图片上传失败')
   }
 }
 const handleUploadError = (error) => {
-  console.error('上传错误详情:', error)
   if (error.status === 403) {
     ElMessage.error('上传失败：请先登录')
   } else {
