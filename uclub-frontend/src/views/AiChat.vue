@@ -294,6 +294,7 @@ export default {
   position: relative;
   min-height: 100vh;
   background: #fafbfc;
+  padding-bottom: 96px; /* 留出输入栏高度 */
 }
 .ai-messages-scroll {
   width: 100%;
@@ -389,17 +390,19 @@ export default {
   color: #222;
 }
 .ai-input-bar {
-  width: 100%;
+  width: 1000px;
   max-width: 1000px;
-  margin: 0 auto;
+  margin: 0 40px 0 auto;
   padding: 24px 0 24px 0;
   background: #fff;
   display: flex;
   justify-content: center;
   box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
-  z-index: 10;
-  position: sticky;
+  z-index: 100;
+  position: fixed;
+  right: 0;
   bottom: 0;
+  left: auto;
 }
 .ai-input-bar input {
   width: 60%;
