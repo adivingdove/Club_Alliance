@@ -1,8 +1,19 @@
 <template>
-  <div>
-    <div style="color:red;font-weight:bold;">ClubChat loaded, clubId: {{ clubId }}</div>
-    <div class="club-chat-wrapper">
-      <h3>社团聊天室</h3>
+  <div class="club-chat-flex">
+    <aside class="online-users">
+      <div class="online-title">在线成员</div>
+      <div class="online-divider"></div>
+      <div v-if="onlineUsers.length === 0" class="online-empty">暂无成员在线</div>
+      <div v-for="user in onlineUsers" :key="user.id" class="online-user">
+        <el-avatar :src="formatAvatar(user.avatar)" :size="36" shape="circle" />
+        <span class="online-nickname">{{ user.nickname }}</span>
+      </div>
+    </aside>
+    <section class="club-chat-wrapper">
+      <div class="chat-header">
+        <el-icon style="margin-right:8px;"><i class="el-icon-message" /></el-icon>
+        <span class="chat-room-title">社团聊天室</span>
+      </div>
       <div class="chat-log">
         <div
           v-for="(msg, idx) in messages"
@@ -13,7 +24,7 @@
         >
           <div class="chat-bubble">
             <div v-if="msg.role !== '系统'" class="user-info">
-              <el-avatar :src="formatAvatar(msg.avatar)" :size="30" />
+              <el-avatar :src="formatAvatar(msg.avatar)" :size="30" shape="circle" />
               <span class="nickname" :class="msg.role">
                 {{ msg.sender }}
                 <span v-if="msg.role !== '成员'" class="badge">{{ roleMap[msg.role] }}</span>
@@ -25,22 +36,14 @@
         </div>
       </div>
       <div class="chat-inputs">
-        <el-input ref="inputRef" v-model="message" @keyup.enter="sendMessage" placeholder="说点什么..." />
-        <el-button type="primary" @click="sendMessage">发送</el-button>
-        <el-button @click="showEmoji = !showEmoji">😊</el-button>
+        <el-input ref="inputRef" v-model="message" @keyup.enter="sendMessage" placeholder="说点什么..." class="chat-input-box" />
+        <el-button type="primary" @click="sendMessage" class="chat-send-btn">发送</el-button>
+        <el-button @click="showEmoji = !showEmoji" class="chat-emoji-btn">😊</el-button>
       </div>
       <div v-if="showEmoji" class="emoji-picker-wrapper">
         <emoji-picker @emoji-click="addEmoji" />
       </div>
-      <div class="online-users">
-        <h4>在线成员</h4>
-        <div v-if="onlineUsers.length === 0">暂无成员在线</div>
-        <div v-for="user in onlineUsers" :key="user.id" class="online-user">
-          <el-avatar :src="formatAvatar(user.avatar)" :size="24" />
-          <span>{{ user.nickname }}</span>
-        </div>
-      </div>
-    </div>
+    </section>
   </div>
 </template>
 
@@ -167,40 +170,130 @@ watch(() => props.clubId, (newId, oldId) => {
 </script>
 
 <style scoped>
-.club-chat-wrapper {
+.club-chat-flex {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0;
+  background: #f7f8fa;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  min-height: 900px;
+}
+.online-users {
+  min-width: 200px;
+  max-width: 240px;
   background: #fff;
-  border-radius: 12px;
+  border-radius: 16px 0 0 16px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  padding: 24px;
-  margin: 24px 0;
+  padding: 48px 18px 48px 18px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.online-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #409EFF;
+  margin-bottom: 8px;
+}
+.online-divider {
+  width: 100%;
+  height: 1px;
+  background: #f0f0f0;
+  margin-bottom: 12px;
+}
+.online-empty {
+  color: #bbb;
+  font-size: 14px;
+  margin: 16px 0;
+}
+.online-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+  padding: 6px 8px;
+  border-radius: 12px;
+  transition: background 0.2s;
+  cursor: pointer;
+  border: 2px solid #222;
+  box-sizing: border-box;
+}
+.online-user:hover {
+  background: #f5f7fa;
+}
+.online-nickname {
+  font-size: 15px;
+  color: #333;
+  font-weight: 500;
+}
+.club-chat-wrapper {
+  flex: 1;
+  background: #fff;
+  border-radius: 0 16px 16px 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  padding: 64px 64px 40px 64px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.chat-header {
+  display: flex;
+  align-items: center;
+  font-size: 22px;
+  font-weight: bold;
+  color: #222;
+  margin-bottom: 18px;
+}
+.chat-room-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #409EFF;
 }
 .chat-log {
-  min-height: 220px;
-  max-height: 320px;
+  min-height: 600px;
+  max-height: 760px;
   overflow-y: auto;
   margin-bottom: 16px;
+  padding-right: 8px;
 }
 .chat-message {
-  margin-bottom: 10px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: row;
 }
 .system-message .chat-bubble {
   background: #f0f0f0;
   color: #888;
   text-align: center;
+  border-radius: 12px;
+  box-shadow: none;
 }
 .my-message .chat-bubble {
-  background: #e6f7ff;
+  background: linear-gradient(90deg, #aee2ff 0%, #e0f7fa 100%);
   text-align: right;
+  border-radius: 16px 16px 4px 16px;
+  box-shadow: 0 2px 8px rgba(64,158,255,0.08);
+  margin-left: auto;
 }
 .other-message .chat-bubble {
-  background: #f9f9f9;
+  background: linear-gradient(90deg, #f8e1ff 0%, #f7f8fa 100%);
+  border-radius: 16px 16px 16px 4px;
+  box-shadow: 0 2px 8px rgba(255,192,203,0.08);
+  margin-right: auto;
 }
 .chat-bubble {
   display: inline-block;
-  padding: 10px 16px;
-  border-radius: 8px;
+  padding: 12px 18px;
+  border-radius: 16px;
   max-width: 80%;
   word-break: break-all;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  background: #f7f8fa;
+  position: relative;
 }
 .user-info {
   display: flex;
@@ -210,6 +303,7 @@ watch(() => props.clubId, (newId, oldId) => {
 .nickname {
   font-weight: bold;
   margin-left: 8px;
+  font-size: 15px;
 }
 .badge {
   margin-left: 4px;
@@ -220,23 +314,66 @@ watch(() => props.clubId, (newId, oldId) => {
   font-size: 0.8em;
   color: #aaa;
   margin-top: 2px;
+  text-align: right;
 }
 .chat-inputs {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 8px;
+  background: #f7f8fa;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(64,158,255,0.04);
+  padding: 10px 14px;
+}
+.chat-input-box {
+  flex: 1;
+  border-radius: 8px;
+  font-size: 15px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  box-shadow: none;
+}
+.chat-send-btn {
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 15px;
+  background: linear-gradient(90deg, #409EFF 0%, #79bbff 100%);
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(64,158,255,0.08);
+  transition: background 0.2s;
+}
+.chat-send-btn:hover {
+  background: linear-gradient(90deg, #66b1ff 0%, #409EFF 100%);
+}
+.chat-emoji-btn {
+  border-radius: 8px;
+  font-size: 18px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  color: #faad14;
+  box-shadow: none;
 }
 .emoji-picker-wrapper {
   margin-bottom: 8px;
 }
-.online-users {
-  margin-top: 16px;
-}
-.online-user {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+@media (max-width: 900px) {
+  .club-chat-flex {
+    flex-direction: column;
+  }
+  .online-users {
+    max-width: 100%;
+    min-width: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-radius: 16px 16px 0 0;
+    margin: 0 0 12px 0;
+    padding: 16px 8px;
+  }
+  .club-chat-wrapper {
+    border-radius: 0 0 16px 16px;
+    padding: 18px 8px 12px 8px;
+  }
 }
 </style> 
