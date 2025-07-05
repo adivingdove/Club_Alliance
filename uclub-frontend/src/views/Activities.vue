@@ -110,7 +110,6 @@
     >
       <div class="dialog-header">
         <h3>📝 活动信息</h3>
-        <p>请填写活动的基本信息，带 * 的为必填项</p>
       </div>
       
       <el-form 
@@ -305,26 +304,22 @@
           <div class="detail-info-row"><i class="el-icon-user"></i> <span class="detail-label">参与人数：</span>{{ selectedActivity.currentParticipants || 0 }}/{{ selectedActivity.maxParticipants ? selectedActivity.maxParticipants : '∞' }}人</div>
           <div class="detail-info-row"><i class="el-icon-time"></i> <span class="detail-label">创建时间：</span>{{ formatDateTime(selectedActivity.createdAt) }}</div>
         </div>
-        <div class="detail-actions" v-if="canEditActivity(selectedActivity)">
-          <el-button type="primary" @click="editActivity(selectedActivity)">编辑活动</el-button>
+        <div class="detail-actions" v-if="selectedActivity && userInfo.value && selectedActivity.creatorId === userInfo.value.id">
+          <el-button type="primary" size="large" @click="showParticipantDialog = true" style="margin-bottom: 12px; width: 100%; font-size: 18px;">查看成员列表</el-button>
         </div>
-        <div class="detail-actions" v-if="isLoggedIn && selectedActivity.applyStatus === '通过' && !canEditActivity(selectedActivity)">
-          <el-button 
-            :type="selectedActivity.isParticipating ? 'danger' : 'success'"
-            @click="selectedActivity.isParticipating ? leaveActivityHandler(selectedActivity) : joinActivityHandler(selectedActivity)"
-            :disabled="!canJoinActivity(selectedActivity)"
-          >
-            {{ selectedActivity.isParticipating ? '退出活动' : '加入活动' }}
-          </el-button>
-        </div>
-        <div v-if="isLoggedIn && canEditActivity(selectedActivity)" class="detail-actions">
-          <el-alert
-            title="您是活动创建者"
-            description="您可以编辑和管理这个活动"
-            type="info"
-            show-icon
-            :closable="false"
-          />
+        <div class="detail-actions" v-if="isLoggedIn && selectedActivity.applyStatus === '通过'">
+          <div style="display: flex; gap: 16px;">
+            <el-button v-if="canEditActivity(selectedActivity)" type="primary" size="large" style="flex:1;" @click="editActivity(selectedActivity)">编辑活动</el-button>
+            <el-button 
+              :type="selectedActivity.isParticipating ? 'danger' : 'success'"
+              size="large"
+              style="flex:1;"
+              @click="selectedActivity.isParticipating ? leaveActivityHandler(selectedActivity) : joinActivityHandler(selectedActivity)"
+              :disabled="!canJoinActivity(selectedActivity)"
+            >
+              {{ selectedActivity.isParticipating ? '退出活动' : '加入活动' }}
+            </el-button>
+          </div>
         </div>
         <div v-if="isLoggedIn && selectedActivity.applyStatus !== '通过'" class="detail-actions">
           <el-alert
@@ -336,6 +331,16 @@
           />
         </div>
       </div>
+    </el-dialog>
+
+    <!-- 成员列表弹窗 -->
+    <el-dialog v-model="showParticipantDialog" title="参与成员列表" width="500px" @open="loadParticipantList">
+      <el-table :data="participantList" size="small" style="width:100%;margin-top:8px;">
+        <el-table-column prop="userId" label="用户ID" width="100" />
+        <el-table-column prop="joinTime" label="加入时间" width="180" />
+        <el-table-column prop="status" label="状态" width="80" />
+      </el-table>
+      <div v-if="participantList.length === 0" style="color:#aaa;font-size:13px;margin:8px 0;">暂无成员</div>
     </el-dialog>
 
     <!-- 编辑活动对话框 -->
@@ -517,6 +522,8 @@ const editDescRef = ref(null)
 const fileInput = ref(null)
 const tabLoading = ref(false)
 const createLoading = ref(false)
+const participantList = ref([])
+const showParticipantDialog = ref(false)
 
 // 活动表单
 const activityForm = ref({
@@ -978,8 +985,12 @@ const cancelEdit = () => {
 
 // 检查是否可以加入活动
 const canJoinActivity = (activity) => {
-  if (!activity.maxParticipants) return true // 人数不限
-  return (activity.currentParticipants || 0) < activity.maxParticipants
+  // 允许创建者加入活动
+  if (!activity) return false;
+  if (!isLoggedIn.value) return false;
+  // 只判断人数，不再排除创建者
+  if (!activity.maxParticipants) return true;
+  return (activity.currentParticipants || 0) < activity.maxParticipants;
 }
 
 // 加入活动
@@ -989,7 +1000,12 @@ const joinActivityHandler = async (activity) => {
       ElMessage.error('请先登录')
       return
     }
-    
+    // 判断是否为社团成员
+    const isClubMember = clubList.value.some(c => c.id === activity.clubId)
+    if (!isClubMember) {
+      ElMessage.error('请先加入对应社团')
+      return
+    }
     const response = await joinActivity(activity.id, userInfo.value.id)
     if (response.data.code === 0) {
       ElMessage.success('成功加入活动')
@@ -1210,6 +1226,17 @@ function safeHtml(html) {
   // 只允许基础标签，去除 script/style 等危险内容
   return html.replace(/<(\/)?(script|style|iframe|object|embed|form|input|button|link|meta)[^>]*>/gi, '')
              .replace(/on\w+\s*=\s*(['"]).*?\1/gi, '');
+}
+
+const loadParticipantList = async () => {
+  if (selectedActivity.value) {
+    const res = await getActivityParticipants(selectedActivity.value.id)
+    if (res.data && res.data.code === 0) {
+      participantList.value = res.data.data || []
+    } else {
+      participantList.value = []
+    }
+  }
 }
 </script>
 
@@ -1464,10 +1491,14 @@ function safeHtml(html) {
   margin-bottom: 16px;
 }
 .detail-img {
-  max-width: 100%;
-  max-height: 220px;
+  width: 200px;
+  height: 150px;
+  max-width: 500px;
+  max-height: 360px;
+  object-fit: cover;
   border-radius: 8px;
   border: 1px solid #eee;
+  display: inline-block;
 }
 .detail-section {
   margin-bottom: 16px;
@@ -1480,6 +1511,13 @@ function safeHtml(html) {
   color: #333;
   margin: 8px 0 0 0;
   word-break: break-all;
+}
+.detail-desc ::v-deep img {
+  max-width: 400px;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 6px;
+  display: inline-block;
 }
 .detail-info-row {
   margin-bottom: 6px;
@@ -1772,5 +1810,16 @@ function safeHtml(html) {
     margin-bottom: 18px;
     border-radius: 14px;
   }
+}
+
+.uploaded-image {
+  width: 200px;
+  height: 150px;
+  max-width: 500px;
+  max-height: 360px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  display: inline-block;
 }
 </style>

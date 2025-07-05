@@ -7,6 +7,7 @@ import com.example.uclub_backend.repository.ClubRepository;
 import com.example.uclub_backend.repository.UserRepository;
 import com.example.uclub_backend.repository.ClubMemberRepository;
 import com.example.uclub_backend.entity.ClubMember;
+import com.example.uclub_backend.repository.ActivityParticipantRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,9 @@ public class ClubActivityService {
     
     @Autowired
     private ClubMemberRepository clubMemberRepository;
+    
+    @Autowired
+    private ActivityParticipantRepository activityParticipantRepository;
     
     public List<ClubActivity> getAllActivities() {
         return clubActivityRepository.findAll();
@@ -142,6 +146,9 @@ public class ClubActivityService {
         if (!clubActivityRepository.existsById(id)) {
             throw new RuntimeException("活动不存在");
         }
+        // 先删除所有参与人记录
+        activityParticipantRepository.deleteByActivityId(id);
+        // 再删除活动本身
         clubActivityRepository.deleteById(id);
     }
     

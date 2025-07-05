@@ -35,4 +35,7 @@ public interface ActivityParticipantRepository extends JpaRepository<ActivityPar
     
     // 查找所有指定活动、用户、且状态为已加入的参与记录
     List<ActivityParticipant> findAllByActivityIdAndUserIdAndStatus(Integer activityId, Integer userId, ActivityParticipant.ParticipantStatus status);
+    
+    // 根据活动ID删除所有参与者
+    void deleteByActivityId(Integer activityId);
 } 
