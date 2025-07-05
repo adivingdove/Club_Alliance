@@ -1193,7 +1193,7 @@ function safeHtml(html) {
 }
 .detail-img {
   max-width: 320px;
-  width: 100%;
+  width: auto;
   height: auto;
   max-height: 220px;
   border-radius: 8px;
