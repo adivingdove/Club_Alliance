@@ -732,6 +732,7 @@ body, .main-container {
   display: flex;
   flex-direction: column;
   background: #fff;
+  overflow-x: hidden;
 }
 .search-bar-wrapper {
   width: 100%;
@@ -749,6 +750,7 @@ body, .main-container {
   background: #fff;
   padding-left: 0;
   padding-right: 0;
+  overflow-x: hidden;
 }
 .banner-carousel {
   margin: 32px 0 24px 0;
@@ -828,6 +830,7 @@ body, .main-container {
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
+  overflow-x: hidden;
 }
 @media (max-width: 900px) {
   .banner,

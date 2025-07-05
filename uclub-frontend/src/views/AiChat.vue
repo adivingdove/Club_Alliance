@@ -236,20 +236,20 @@ export default {
   text-shadow: none;
 }
 .ai-sidebar .new-chat-btn {
-  background: linear-gradient(90deg, #42a5f5 0%, #1976d2 100%);
-  color: #222;
+  background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
+  color: #fff;
   border: none;
   border-radius: 8px;
   padding: 4px 16px;
   font-size: 15px;
   font-weight: bold;
-  box-shadow: 0 2px 8px rgba(25,118,210,0.10);
+  box-shadow: 0 2px 8px rgba(161,140,209,0.10);
   transition: background 0.2s, box-shadow 0.2s;
   cursor: pointer;
 }
 .ai-sidebar .new-chat-btn:hover {
-  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
-  box-shadow: 0 4px 16px rgba(25,118,210,0.18);
+  background: linear-gradient(90deg, #fbc2eb 0%, #a18cd1 100%);
+  box-shadow: 0 4px 16px rgba(161,140,209,0.18);
 }
 .ai-sidebar .chat-list {
   list-style: none;
@@ -290,8 +290,8 @@ export default {
   background: rgba(25, 118, 210, 0.13);
 }
 .ai-sidebar .delete-chat-btn {
-  background: #263238;
-  color: #90caf9;
+  background: #a18cd1;
+  color: #fff;
   border: none;
   margin-left: 8px;
   font-size: 15px;
@@ -306,8 +306,8 @@ export default {
   vertical-align: middle;
 }
 .ai-sidebar .delete-chat-btn:hover {
-  background: #1976d2;
-  color: #fff;
+  background: #fbc2eb;
+  color: #a18cd1;
 }
 .ai-main {
   flex: 1 1 auto;
@@ -407,12 +407,14 @@ export default {
   color: #222;
 }
 .ai-message-row.user .bubble {
-  background: #1976d2;
-  color: #fff;
+  background: #f3eafd;
+  color: #333;
+  box-shadow: none;
 }
 .ai-message-row.ai .bubble {
-  background: #fff;
-  color: #222;
+  background: #f3eafd;
+  color: #333;
+  box-shadow: none;
 }
 .ai-input-bar {
   width: 1000px;
@@ -440,24 +442,24 @@ export default {
 }
 .ai-input-bar button {
   padding: 12px 32px;
-  background: #1976d2;
+  background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
   color: #fff;
   border: none;
-  border-radius: 6px;
+  border-radius: 12px;
   font-size: 18px;
   cursor: pointer;
   transition: background 0.2s;
 }
 .ai-input-bar button:hover {
-  background: #1565c0;
+  background: linear-gradient(90deg, #fbc2eb 0%, #a18cd1 100%);
 }
 .dot-flashing {
   position: relative;
   width: 10px;
   height: 10px;
   border-radius: 5px;
-  background-color: #1976d2;
-  color: #1976d2;
+  background-color: #a18cd1;
+  color: #a18cd1;
   animation: dotFlashing 1s infinite linear alternate;
   display: inline-block;
 }

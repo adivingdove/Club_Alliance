@@ -1113,38 +1113,70 @@ onMounted(() => {
   background: linear-gradient(135deg, #f4faff 0%, #e3f0ff 100%);
   border-radius: 18px;
   box-shadow: 0 8px 32px 0 rgba(64,158,255,0.13);
+  padding: 32px 28px 18px 28px;
+}
+
+.announce-dialog >>> .el-dialog__header {
+  background: transparent;
+  border-radius: 18px 18px 0 0;
+  padding: 24px 28px 0 28px;
+}
+
+.announce-dialog >>> .el-dialog__title {
+  font-size: 26px;
+  font-weight: bold;
+  color: #409EFF;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .announce-input {
-  border-radius: 8px;
+  border-radius: 10px;
   background: #f8fbff;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(64,158,255,0.06);
+  padding: 8px 12px;
 }
 
 .announce-title-input {
   font-weight: bold;
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .announce-content-input {
   min-height: 120px;
+  font-size: 16px;
 }
 
 .announce-submit-btn {
-  background: linear-gradient(90deg, #409EFF 0%, #66b1ff 100%);
+  background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
   border: none;
   color: #fff;
   font-weight: bold;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(64,158,255,0.13);
-  transition: background 0.2s;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(161,140,209,0.13);
+  transition: background 0.2s, transform 0.18s;
+  padding: 8px 28px;
+  font-size: 18px;
 }
 
 .announce-submit-btn:hover {
-  background: linear-gradient(90deg, #66b1ff 0%, #409EFF 100%);
+  background: linear-gradient(90deg, #fbc2eb 0%, #a18cd1 100%);
+  transform: translateY(-2px) scale(1.04);
 }
 
 .announce-cancel-btn {
-  border-radius: 8px;
+  border-radius: 10px;
+  font-size: 16px;
+  padding: 8px 22px;
+  color: #a18cd1;
+  border: 1.5px solid #a18cd1;
+  background: #fff;
+}
+
+.announce-cancel-btn:hover {
+  background: #f3eafd;
+  color: #7c5eb6;
 }
 </style>
