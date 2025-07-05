@@ -1200,6 +1200,29 @@ function safeHtml(html) {
 </script>
 
 <style scoped>
+.top-wave {
+  pointer-events: none;
+}
+
+.activities-container {
+  padding: 48px 7vw 32px 7vw;
+  background: #f7f8fa;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 1200px) {
+  .activities-container {
+    padding: 32px 3vw 24px 3vw;
+  }
+}
+@media (max-width: 768px) {
+  .activities-container {
+    padding: 16px 2vw 12px 2vw;
+  }
+}
+
 .banner {
   position: relative;
   margin: 32px 0 24px 0;
@@ -1258,14 +1281,61 @@ function safeHtml(html) {
 }
 
 .search-box {
-  width: 600px;
+  width: 520px;
   margin: 24px auto 20px auto;
   display: flex;
   justify-content: center;
+  background: #f3f4f7;
+  border-radius: 12px;
+  box-shadow: none;
+  border: 1.5px solid #f0f0f0;
+  padding: 0 18px;
+}
+.search-box .el-input__wrapper {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+.search-box .el-input__inner {
+  background: transparent;
+  color: #444;
+}
+.search-box .el-input__suffix {
+  color: #bbb;
 }
 
 .filter-tabs {
   border-bottom: 1px solid #e4e7ed;
+}
+
+.filter-tabs .el-tabs__item {
+  font-size: 17px;
+  font-weight: 600;
+  color: #888;
+  padding: 0 32px 12px 32px;
+  background: transparent;
+  border: none;
+  transition: color 0.2s;
+}
+.filter-tabs .el-tabs__item.is-active {
+  color: #a18cd1;
+  font-weight: 700;
+  position: relative;
+}
+.filter-tabs .el-tabs__item.is-active::after {
+  content: '';
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -6px;
+  width: 60%;
+}
+.filter-tabs .el-tabs__active-bar {
+  display: none;
 }
 
 .activities-list {
@@ -1556,276 +1626,102 @@ function safeHtml(html) {
 
 /* 活动对话框美化样式 */
 .activity-dialog .el-dialog {
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.10);
   overflow: hidden;
 }
-
 .activity-dialog .el-dialog__header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
   color: white;
-  padding: 24px 30px 20px;
+  padding: 28px 36px 18px;
   margin: 0;
 }
-
 .activity-dialog .el-dialog__title {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
   color: white;
 }
-
 .activity-dialog .el-dialog__body {
-  padding: 30px;
-  background: #fafbfc;
+  padding: 36px;
+  background: #fff;
 }
-
 .activity-dialog .el-dialog__footer {
-  padding: 20px 30px;
-  background: white;
-  border-top: 1px solid #e4e7ed;
+  padding: 22px 36px;
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
 }
 
-.dialog-header {
-  margin-bottom: 24px;
-  text-align: center;
-}
-
-.dialog-header h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
-  margin-bottom: 8px;
-}
-
-.dialog-header p {
-  font-size: 14px;
-  color: #909399;
-  margin: 0;
-}
-
-.activity-form {
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-}
-
-.form-item-highlight .el-form-item__label {
-  font-weight: 600;
-  color: #303133;
-}
-
-.form-item-highlight .el-form-item__label::before {
-  content: '*';
-  color: #f56c6c;
-  margin-right: 4px;
-}
-
-.custom-input .el-input__wrapper {
-  border-radius: 8px;
-  border: 2px solid #e4e7ed;
-  transition: all 0.3s ease;
-  box-shadow: none;
-}
-
-.custom-input .el-input__wrapper:hover {
-  border-color: #409eff;
-}
-
-.custom-input .el-input__wrapper.is-focus {
-  border-color: #409eff;
-  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
-}
-
-.custom-input-number .el-input-number__decrease,
-.custom-input-number .el-input-number__increase {
-  border-radius: 6px;
-  background: #f5f7fa;
-  border: 1px solid #e4e7ed;
-}
-
-.custom-date-picker .el-input__wrapper {
-  border-radius: 8px;
-  border: 2px solid #e4e7ed;
-  transition: all 0.3s ease;
-  box-shadow: none;
-}
-
-.custom-date-picker .el-input__wrapper:hover {
-  border-color: #409eff;
-}
-
-.custom-date-picker .el-input__wrapper.is-focus {
-  border-color: #409eff;
-  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
-}
-
-.custom-select .el-input__wrapper {
-  border-radius: 8px;
-  border: 2px solid #e4e7ed;
-  transition: all 0.3s ease;
-  box-shadow: none;
-}
-
-.custom-select .el-input__wrapper:hover {
-  border-color: #409eff;
-}
-
-.custom-select .el-input__wrapper.is-focus {
-  border-color: #409eff;
-  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
-}
-
-.custom-alert {
-  border-radius: 8px;
-  border: none;
-  background: #fdf6ec;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
+/* 按钮极简主色点缀 */
 .cancel-btn {
-  border-radius: 8px;
-  padding: 12px 24px;
+  border-radius: 10px;
+  padding: 12px 28px;
   font-weight: 500;
   border: 2px solid #e4e7ed;
   background: white;
   color: #606266;
   transition: all 0.3s ease;
 }
-
 .cancel-btn:hover {
-  border-color: #c0c4cc;
-  background: #f5f7fa;
-  color: #303133;
+  border-color: #a18cd1;
+  background: #f7f8fa;
+  color: #a18cd1;
 }
-
 .submit-btn {
-  border-radius: 8px;
-  padding: 12px 24px;
+  border-radius: 10px;
+  padding: 12px 28px;
   font-weight: 500;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
   border: none;
   color: white;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(161,140,209,0.13);
 }
-
 .submit-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(161,140,209,0.18);
+  background: linear-gradient(135deg, #fbc2eb 0%, #a18cd1 100%);
 }
-
 .submit-btn:disabled {
   background: #c0c4cc;
   transform: none;
   box-shadow: none;
 }
 
-.uploaded-image {
-  width: 240px;
-  height: 120px;
-  border-radius: 12px;
-  border: 3px solid #409eff;
-  object-fit: cover;
-  display: block;
-  margin: 0 auto;
-  transition: all 0.3s ease;
+/* icon主色统一 */
+.el-icon-location, .el-icon-user, .el-icon-time, .el-icon-upload, .el-icon-plus, .el-icon-check {
+  color: #a18cd1 !important;
+  font-size: 18px !important;
 }
 
-.uploaded-image:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 25px rgba(64, 158, 255, 0.2);
-}
-
-.upload-placeholder {
-  width: 160px;
-  height: 40px;
-  border: 1px solid #d9ecff;
-  border-radius: 8px;
-  background: #f4faff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: 0 auto;
-  cursor: pointer;
-  color: #409eff;
-  font-size: 16px;
-  font-weight: 500;
-  transition: border-color 0.2s, background 0.2s;
-}
-.upload-placeholder:hover {
-  border-color: #409eff;
-  background: #eaf3ff;
-}
-.upload-placeholder i {
-  font-size: 20px;
-}
-
-/* 富文本编辑器美化 */
-.ql-editor {
-  min-height: 200px !important;
-  max-height: 200px !important;
-  overflow-y: auto !important;
-  border-radius: 8px;
-  border: 2px solid #e4e7ed;
-  transition: all 0.3s ease;
-}
-
-.ql-editor:focus {
-  border-color: #409eff;
-  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
-}
-
-.ql-toolbar {
-  border-radius: 8px 8px 0 0;
-  border: 2px solid #e4e7ed;
-  border-bottom: 1px solid #e4e7ed;
-  background: #fafbfc;
-}
-
-.ql-container {
-  border-radius: 0 0 8px 8px;
-  border: 2px solid #e4e7ed;
-  border-top: 1px solid #e4e7ed;
-}
-
-/* 响应式设计 */
+/* 响应式优化 */
 @media (max-width: 768px) {
   .activity-dialog .el-dialog {
-    width: 95% !important;
-    margin: 20px auto;
+    width: 98% !important;
+    margin: 12px auto;
   }
-  
   .activity-dialog .el-dialog__body {
-    padding: 20px;
-  }
-  
-  .activity-form {
     padding: 16px;
   }
-  
+  .activity-form {
+    padding: 10px;
+  }
   .dialog-footer {
     flex-direction: column;
+    gap: 10px;
   }
-  
   .cancel-btn,
   .submit-btn {
     width: 100%;
   }
-}
-
-/* 覆盖 el-upload 的边框和背景 */
-.avatar-uploader.activity-upload-highlight .el-upload,
-.avatar-uploader.activity-upload-highlight .el-upload-dragger {
-  border: none !important;
-  background: none !important;
-  box-shadow: none !important;
-  outline: none !important;
+  .search-box {
+    width: 98vw;
+    min-width: 0;
+    padding: 0 6px;
+  }
+  .activity-card {
+    padding: 16px 8px 12px 8px;
+    margin-bottom: 18px;
+    border-radius: 14px;
+  }
 }
 </style>

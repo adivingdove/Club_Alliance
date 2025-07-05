@@ -27,7 +27,7 @@
     </el-form>
 
     <el-table :data="userList" style="width: 100%">
-      <el-table-column prop="email" label="邮箱" width="180"></el-table-column>
+      <el-table-column prop="email" label="邮箱" width="240"></el-table-column>
       <el-table-column prop="nickname" label="昵称" width="180"></el-table-column>
       <el-table-column prop="role" label="角色" width="120"></el-table-column>
       <el-table-column prop="status" label="状态" width="120"></el-table-column>

@@ -617,11 +617,15 @@ const handleClickOutside = (e) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 30px;
-  background-color: #1e293b; /* 深蓝色背景 */
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  padding: 16px 40px;
+  background: linear-gradient(120deg, #a18cd1 0%, #fbc2eb 100%);
+  box-shadow: 0 8px 32px 0 rgba(161,140,209,0.10);
+  border-radius: 0 0 32px 32px;
+  backdrop-filter: blur(8px);
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   overflow: visible;
+  position: relative;
+  z-index: 10;
 }
 
 .nav-left {
@@ -633,43 +637,21 @@ const handleClickOutside = (e) => {
 }
 
 .nav-link {
-  color: #cbd5e1; /* 浅灰色 */
-  font-weight: 500;
-  font-size: 16px;
-  position: relative;
-  text-decoration: none;
-  padding: 4px 0;
-  transition: color 0.3s ease;
-}
-
-.nav-link::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -4px;
-  width: 0%;
-  height: 2px;
-  background-color: #60a5fa; /* 蓝色下划线 */
-  transition: width 0.3s ease;
-  border-radius: 2px;
-}
-
-.nav-link:hover {
-  color: #60a5fa;
-}
-
-.nav-link:hover::after {
-  width: 100%;
-}
-
-.active-link {
-  color: #3b82f6;
+  color: #fff;
   font-weight: 600;
+  font-size: 18px;
+  letter-spacing: 1px;
+  padding: 6px 18px;
+  border-radius: 18px;
+  transition: background 0.2s, color 0.2s;
+  text-decoration: none;
+  position: relative;
 }
 
-.active-link::after {
-  width: 100%;
-  background-color: #3b82f6;
+.nav-link:hover, .active-link {
+  background: linear-gradient(90deg, #6a82fb 0%, #fc5c7d 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(161,140,209,0.10);
 }
 
 .nav-right {
@@ -728,62 +710,45 @@ const handleClickOutside = (e) => {
 }
 
 .login-button {
-  width: 40px;             /* 原为 56px */
+  width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgba(255,255,255,0.7);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);   /* 轻微减弱阴影 */
+  box-shadow: 0 4px 10px rgba(161,140,209,0.10);
   transition: all 0.3s ease;
 }
 
 .login-button:hover {
-  transform: scale(1.05);   /* 缩小缩放幅度 */
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+  background: linear-gradient(90deg, #6a82fb 0%, #fc5c7d 100%);
+  box-shadow: 0 6px 14px rgba(251,194,235,0.18);
 }
 
 .login-button .el-icon {
-  color: white;
-  font-size: 20px;         /* 原为 28px */
+  color: #a18cd1;
+  font-size: 20px;
 }
 
-
-.admin-btn {
+.admin-btn, .login-btn {
   margin-left: 20px;
-  background-color: transparent;
-  border: 2px solid #60a5fa;
-  color: #60a5fa;
-  padding: 6px 16px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.admin-btn:hover {
-  background-color: #60a5fa;
-  color: white;
-}
-
-/* 新增登录按钮样式 */
-.login-btn {
-  margin-left: 20px;
-  background-color: #2563eb;
+  background: rgba(255,255,255,0.7);
+  color: #a18cd1;
   border: none;
-  color: white;
-  padding: 6px 16px;
-  border-radius: 6px;
-  font-weight: 600;
+  border-radius: 18px;
+  padding: 8px 22px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(161,140,209,0.10);
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background 0.2s, color 0.2s;
 }
 
-.login-btn:hover {
-  background-color: #409EFF;
-  color: white;
+.admin-btn:hover, .login-btn:hover {
+  background: linear-gradient(90deg, #6a82fb 0%, #fc5c7d 100%);
+  color: #fff;
 }
 
 /* 弹窗遮罩 */

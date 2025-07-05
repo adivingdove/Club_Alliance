@@ -16,7 +16,11 @@
           </div>
 
           <el-table :data="clubList" style="width: 100%" border>
-            <el-table-column prop="name" label="社团名称" />
+            <el-table-column prop="name" label="社团名称" >
+              <template #default="{ row }">
+                <span class="club-link" @click="goToClubDetail(row.id)">{{ row.name }}</span>
+              </template>
+            </el-table-column>
             <el-table-column label="发布公告" width="120">
               <template #default="{ row }">
                 <el-button size="small" type="success" @click="openAnnouncementDialog(row)">发布公告</el-button>
@@ -130,7 +134,6 @@
                 style="width: 300px;"
               />
               <el-button type="primary" @click="fetchActivities">搜索</el-button>
-              <el-button type="success" @click="showCreateActivityDialog = true">发布活动</el-button>
             </div>
 
             <el-table :data="activityList" style="width: 100%" border>
@@ -190,8 +193,20 @@
       </div>
     </el-dialog>
 
-    <el-dialog v-model="showMemberDialog" title="成员管理" width="600px">
-      <el-table :data="memberList" style="width: 100%">
+    <el-dialog v-model="showMemberDialog" width="600px">
+      <template #title>
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+          <span>成员管理</span>
+          <el-input
+            v-model="memberSearchKeyword"
+            placeholder="搜索成员姓名..."
+            clearable
+            size="small"
+            style="width: 220px; margin-left: 16px;"
+          />
+        </div>
+      </template>
+      <el-table :data="filteredMemberList" style="width: 100%">
         <el-table-column prop="name" label="姓名" />
         <el-table-column prop="role" label="角色">
           <template #default="{ row }">
@@ -226,95 +241,6 @@
           </template>
         </el-table-column>
       </el-table>
-    </el-dialog>
-
-    <!-- 创建活动对话框 -->
-    <el-dialog 
-      v-model="showCreateActivityDialog" 
-      title="创建活动" 
-      width="600px"
-      :close-on-click-modal="false"
-    >
-      <el-form 
-        :model="activityForm" 
-        :rules="activityRules" 
-        ref="activityFormRef" 
-        label-width="100px"
-      >
-        <el-form-item label="所属社团" prop="clubId">
-          <el-select v-model="activityForm.clubId" placeholder="请选择所属社团">
-            <el-option
-              v-for="club in managementClubs"
-              :key="club.id"
-              :label="club.name"
-              :value="club.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="活动标题" prop="title">
-          <el-input v-model="activityForm.title" placeholder="请输入活动标题" />
-        </el-form-item>
-        <el-form-item label="活动描述" prop="description">
-          <el-input 
-            v-model="activityForm.description" 
-            type="textarea" 
-            :rows="4"
-            placeholder="请输入活动描述"
-          />
-        </el-form-item>
-        <el-form-item label="活动地点" prop="location">
-          <el-input v-model="activityForm.location" placeholder="请输入活动地点" />
-        </el-form-item>
-        <el-form-item label="开始时间" prop="startTime">
-          <el-date-picker
-            v-model="activityForm.startTime"
-            type="datetime"
-            placeholder="选择开始时间"
-            format="YYYY-MM-DD HH:mm"
-            value-format="YYYY-MM-DDTHH:mm:ss"
-            :disabled-date="disabledStartDate"
-          />
-        </el-form-item>
-        <el-form-item label="结束时间" prop="endTime">
-          <el-date-picker
-            v-model="activityForm.endTime"
-            type="datetime"
-            placeholder="选择结束时间"
-            format="YYYY-MM-DD HH:mm"
-            value-format="YYYY-MM-DDTHH:mm:ss"
-            :disabled-date="disabledEndDate"
-          />
-        </el-form-item>
-        <el-form-item label="最大人数" prop="maxParticipants">
-          <el-input-number 
-            v-model="activityForm.maxParticipants" 
-            :min="1" 
-            placeholder="不填表示人数不限"
-          />
-        </el-form-item>
-        <el-form-item label="活动图片" prop="imageUrl">
-          <el-upload
-            class="avatar-uploader activity-upload-highlight"
-            action="/api/upload"
-            :show-file-list="false"
-            :on-success="(res) => handleImageSuccess(res, activityForm)"
-            :before-upload="beforeImageUpload"
-          >
-            <img v-if="activityForm.imageUrl" :src="getImageUrl(activityForm.imageUrl)" style="width: 100px; height: 100px; border-radius: 8px; border: 2px solid #409EFF; object-fit: cover; display: block; margin: 0 auto;" />
-            <i v-else class="el-icon-plus avatar-uploader-icon" style="font-size: 40px; color: #409EFF; width: 100px; height: 100px; line-height: 100px; text-align: center; border: 2px dashed #409EFF; border-radius: 8px; background: #f4faff; display: flex; align-items: center; justify-content: center; margin: 0 auto;"></i>
-          </el-upload>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showCreateActivityDialog = false">取消</el-button>
-        <el-button 
-          type="primary" 
-          @click="submitActivity"
-          :disabled="clubList.length === 0"
-        >
-          创建活动
-        </el-button>
-      </template>
     </el-dialog>
 
     <!-- 活动详情对话框 -->
@@ -420,21 +346,24 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="showAnnouncementDialog" title="发布社团公告" width="500px">
+    <el-dialog v-model="showAnnouncementDialog" title="📢 发布社团公告" width="500px" class="announce-dialog">
       <el-input
         v-model="announcementTitle"
         placeholder="请输入公告标题"
-        style="margin-bottom: 12px"
+        class="announce-input announce-title-input"
       />
       <el-input
         v-model="announcementContent"
         type="textarea"
         :rows="6"
         placeholder="请输入公告内容"
+        class="announce-input announce-content-input"
       />
       <template #footer>
-        <el-button @click="showAnnouncementDialog = false">取消</el-button>
-        <el-button type="primary" @click="submitAnnouncement">发布</el-button>
+        <el-button @click="showAnnouncementDialog = false" class="announce-cancel-btn">取消</el-button>
+        <el-button type="primary" @click="submitAnnouncement" class="announce-submit-btn">
+          <i class="el-icon-message"></i> 发布
+        </el-button>
       </template>
     </el-dialog>
 
@@ -478,6 +407,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from '@/utils/axios'
 import request from '../utils/request'
+import { useRouter } from 'vue-router'
 import { 
   createActivity,
   deleteActivity,
@@ -493,6 +423,12 @@ const showDetailDialog = ref(false)
 const clubDetail = ref(null)
 const showMemberDialog = ref(false)
 const memberList = ref([])
+const memberSearchKeyword = ref('')
+const filteredMemberList = computed(() => {
+  if (!memberSearchKeyword.value.trim()) return memberList.value
+  const kw = memberSearchKeyword.value.trim().toLowerCase()
+  return memberList.value.filter(m => (m.name || '').toLowerCase().includes(kw))
+})
 let currentClubId = null
 const activeTab = ref('manage')
 
@@ -503,34 +439,12 @@ const processedApplications = ref([])
 // 活动管理相关
 const activityList = ref([])
 const activitySearchKeyword = ref('')
-const showCreateActivityDialog = ref(false)
 const showActivityDetailDialog = ref(false)
 const showEditActivityDialog = ref(false)
 const selectedActivity = ref(null)
 const currentEditActivityId = ref(null)
 const activityFormRef = ref()
 const editActivityFormRef = ref()
-
-// 活动表单
-const activityForm = ref({
-  clubId: '',
-  title: '',
-  description: '',
-  location: '',
-  startTime: '',
-  endTime: '',
-  maxParticipants: '',
-  imageUrl: ''
-})
-
-const editActivityForm = ref({
-  title: '',
-  description: '',
-  location: '',
-  startTime: '',
-  endTime: '',
-  maxParticipants: null
-})
 
 // 表单验证规则
 const activityRules = {
@@ -568,6 +482,11 @@ const getStatusTagType = (status) => {
     case '已封禁': return 'danger'
     default: return ''
   }
+}
+
+const router = useRouter()
+const goToClubDetail = (id) => {
+  router.push(`/club/${id}`)
 }
 
 const fetchClubs = async () => {
@@ -768,45 +687,6 @@ const fetchActivities = async () => {
   } catch (error) {
     console.error('获取活动列表失败:', error)
     ElMessage.error('获取活动列表失败')
-  }
-}
-
-const submitActivity = async () => {
-  try {
-    await activityFormRef.value.validate()
-    
-    const user = JSON.parse(localStorage.getItem('user') || '{}')
-    if (!user.id) {
-      ElMessage.error('请先登录')
-      return
-    }
-    
-    const activityData = {
-      ...activityForm.value,
-      creatorId: user.id
-    }
-    
-    const response = await createActivity(activityData)
-    if (response.data.code === 0) {
-      ElMessage.success('发布活动成功')
-      showCreateActivityDialog.value = false
-      activityForm.value = {
-        clubId: '',
-        title: '',
-        description: '',
-        location: '',
-        startTime: '',
-        endTime: '',
-        maxParticipants: '',
-        imageUrl: ''
-      }
-      fetchActivities()
-    } else {
-      ElMessage.error(response.data.message || '发布活动失败')
-    }
-  } catch (error) {
-    console.error('发布活动失败:', error)
-    ElMessage.error('发布活动失败，请检查表单数据')
   }
 }
 
@@ -1091,64 +971,6 @@ const disabledEndDate = (date) => {
   return date < now || date > new Date(now.setDate(now.getDate() + 30))
 }
 
-const handleImageSuccess = (res, form) => {
-  form.imageUrl = res.url
-  ElMessage.success('图片上传成功')
-}
-
-const beforeImageUpload = (file) => {
-  const token = localStorage.getItem('token')
-  if (!token) {
-    ElMessage.error('请先登录后再上传图片')
-    return false
-  }
-  const isJPG = file.type === 'image/jpeg' || file.type === 'image/png'
-  const isLt5M = file.size / 1024 / 1024 < 5
-  if (!isJPG) {
-    ElMessage.error('上传图片必须是 JPG 或 PNG 格式')
-    return false
-  }
-  if (!isLt5M) {
-    ElMessage.error('上传图片大小不能超过 5MB')
-    return false
-  }
-  return true
-}
-
-const managementClubs = ref([])
-
-// 获取用户有管理权限的社团列表
-const fetchManagementClubs = async () => {
-  try {
-    const response = await getUserManagementClubs()
-    managementClubs.value = response.data
-  } catch (error) {
-    ElMessage.error('获取社团列表失败')
-    console.error('获取社团列表失败:', error)
-  }
-}
-
-// 在对话框打开时获取社团列表
-watch(showCreateActivityDialog, (newVal) => {
-  if (newVal) {
-    fetchManagementClubs()
-  }
-})
-
-// 重置表单时也要重置社团选择
-const resetActivityForm = () => {
-  activityForm.value = {
-    clubId: '',
-    title: '',
-    description: '',
-    location: '',
-    startTime: '',
-    endTime: '',
-    maxParticipants: '',
-    imageUrl: ''
-  }
-}
-
 onMounted(() => {
   fetchClubs()
   fetchApplications()
@@ -1259,5 +1081,60 @@ onMounted(() => {
   color: #303133;
   width: 100px;
   flex-shrink: 0;
+}
+
+.club-link {
+  color: #222;
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.18s, font-weight 0.18s;
+}
+
+.club-link:hover {
+  color: #409EFF;
+  font-weight: bold;
+  background: #f4f8ff;
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
+.announce-dialog >>> .el-dialog__body {
+  background: linear-gradient(135deg, #f4faff 0%, #e3f0ff 100%);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(64,158,255,0.13);
+}
+
+.announce-input {
+  border-radius: 8px;
+  background: #f8fbff;
+  margin-bottom: 16px;
+}
+
+.announce-title-input {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.announce-content-input {
+  min-height: 120px;
+}
+
+.announce-submit-btn {
+  background: linear-gradient(90deg, #409EFF 0%, #66b1ff 100%);
+  border: none;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(64,158,255,0.13);
+  transition: background 0.2s;
+}
+
+.announce-submit-btn:hover {
+  background: linear-gradient(90deg, #66b1ff 0%, #409EFF 100%);
+}
+
+.announce-cancel-btn {
+  border-radius: 8px;
 }
 </style>

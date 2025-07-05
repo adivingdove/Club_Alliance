@@ -83,6 +83,8 @@ import { ref } from 'vue'
 import MarkdownPreview from './MarkdownPreview.vue'
 import { ElMessage } from 'element-plus'
 import Vue3MarkdownIt from 'vue3-markdown-it'
+import { useStore } from 'vuex'
+
 
 const title = ref('')
 const content = ref('')
@@ -90,7 +92,8 @@ const showHistory = ref(false)
 const historyList = ref([])
 const showDetail = ref(false)
 const detailItem = ref({})
-
+const store = useStore()
+const currentUserId = store.state.user.id
 
 function viewAnnouncement(row) {
   detailItem.value = row
@@ -119,7 +122,7 @@ async function submitAnnouncement() {
     content: content.value,
     type: '系统',
     clubId: null,
-    creatorId: 1 
+    creatorId: currentUserId
   }
 
 
