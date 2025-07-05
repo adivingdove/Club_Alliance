@@ -88,7 +88,6 @@
                 <span class="rank-badge">{{ idx+1 }}</span>
                 <div class="rank-info">
                   <div class="rank-title">{{ club.name }}</div>
-                  <div class="rank-desc">{{ club.memberCount }}人</div>
                 </div>
               </div>
             </div>
