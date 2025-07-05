@@ -281,6 +281,11 @@ import { ElMessage } from 'element-plus'
 import { useStore } from 'vuex'
 import axios from 'axios'
 import MarkdownIt from 'vue3-markdown-it'
+import HomePage1 from '@/assets/HomePage(1).png'
+import HomePage2 from '@/assets/HomePage(2).png'
+import HomePage3 from '@/assets/HomePage(3).png'
+import HomePage4 from '@/assets/HomePage(4).png'
+import HomePage5 from '@/assets/HomePage(5).png'
 
 const top5Clubs = ref([])
 const hotTopics = ref([])
@@ -556,31 +561,11 @@ const joinClub = async (club) => {
 
 // Banner 轮播图数据
 const banners = [
-  {
-    img: 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=1200&q=80',
-    title: '2025 年武汉大学社团招新季',
-    desc: '百团大战，等你来选！3月15日-3月30日，武汉大学桂操，不见不散'
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
-    title: '创新创业社团等你加入',
-    desc: '激发你的创造力，和志同道合的伙伴一起成长'
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=1200&q=80',
-    title: '丰富多彩的文体活动',
-    desc: '体育、艺术、公益，总有一款适合你'
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80',
-    title: '结识新朋友',
-    desc: '在社团中遇见志同道合的伙伴，开启大学新生活'
-  },
-  {
-    img: 'https://images.unsplash.com/photo-1465101178521-c1a9136a3fdc?auto=format&fit=crop&w=1200&q=80',
-    title: '展示自我，成就未来',
-    desc: '参与社团活动，提升自我能力，收获成长与荣誉'
-  }
+  { img: HomePage1, title: '2025 年武汉大学社团招新季', desc: '百团大战，等你来选！9月15日全天，武汉大学桂园操场，不见不散' },
+  { img: HomePage2, title: '创新创业社团等你加入', desc: '激发你的创造力，和志同道合的伙伴一起成长' },
+  { img: HomePage3, title: '丰富多彩的文体活动', desc: '体育、艺术、公益，总有一款适合你' },
+  { img: HomePage4, title: '结识新朋友', desc: '在社团中遇见志同道合的伙伴，开启大学新生活' },
+  { img: HomePage5, title: '展示自我，成就未来', desc: '参与社团活动，提升自我能力，收获成长与荣誉' }
 ]
 
 // 禁止弹窗出现时页面滚动
@@ -588,7 +573,7 @@ watch(showCreateDialog, (val) => {
   if (val) {
     document.body.style.overflow = 'hidden'
   } else {
-    document.body.style.overflow = ''
+    document.body.style.overflow = '  '
   }
 })
 
