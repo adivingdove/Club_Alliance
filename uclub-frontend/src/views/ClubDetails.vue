@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import request from '../utils/request' // 你的 axios 封装
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete } from '@element-plus/icons-vue'
+import ClubChat from '@/components/ClubChat.vue'
 
 const route = useRoute()
 const club = ref({})
@@ -762,11 +763,14 @@ const refreshAnnouncements = async () => {
         </div>
 
         <!-- 社团聊天室 -->
-        <div v-if="activeTab === 'chat'" class="tab-content">
-          <div class="chat-placeholder">
-            <el-empty description="聊天室功能正在开发中..." />
-            <p class="chat-notice">敬请期待社团成员之间的实时交流功能</p>
+        <div v-if="activeTab === 'chat'">
+          <div style="color:blue;font-weight:bold;">
+            club.value: {{ club.value }}<br>
+            club.value.id: {{ club.value && club.value.id }}<br>
+            typeof club.value: {{ typeof club.value }}<br>
+            JSON: {{ JSON.stringify(club.value) }}
           </div>
+          <ClubChat v-if="club.value && club.value.id" :clubId="club.value.id" :key="club.value.id" />
         </div>
 
         <!-- 社团管理 -->

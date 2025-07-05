@@ -6,31 +6,26 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import Quill from 'quill'
+import ImageUploader from 'quill-image-uploader'
+import 'quill/dist/quill.snow.css'
+
+Quill.register('modules/imageUploader', ImageUploader)
 
 const props = defineProps({
-  modelValue: {
-    type: String,
-    default: ''
-  },
-  placeholder: {
-    type: String,
-    default: '请输入内容...'
-  },
-  height: {
-    type: Number,
-    default: 300
-  }
+  modelValue: { type: String, default: '' },
+  placeholder: { type: String, default: '请输入内容...' },
+  height: { type: Number, default: 300 }
 })
 
 const emit = defineEmits(['update:modelValue'])
-
 const editorRef = ref(null)
 let quill = null
 
 onMounted(() => {
   nextTick(() => {
-    if (window.Quill && editorRef.value) {
-      quill = new window.Quill(editorRef.value, {
+    if (editorRef.value) {
+      quill = new Quill(editorRef.value, {
         theme: 'snow',
         placeholder: props.placeholder,
         modules: {
@@ -42,16 +37,33 @@ onMounted(() => {
             [{ 'align': [] }],
             ['link', 'image'],
             ['clean']
-          ]
+          ],
+          imageUploader: {
+            upload: file => {
+              const formData = new FormData()
+              formData.append('file', file)
+              return fetch(import.meta.env.VITE_API_BASE_URL + '/api/upload', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                  'Authorization': 'Bearer ' + localStorage.getItem('token')
+                }
+              })
+                .then(res => res.json())
+                .then(result => {
+                  if (result.code === 0) {
+                    return import.meta.env.VITE_API_BASE_URL + result.url
+                  } else {
+                    throw new Error('图片上传失败')
+                  }
+                })
+            }
+          }
         }
       })
-      
-      // 设置初始内容
       if (props.modelValue) {
         quill.root.innerHTML = props.modelValue
       }
-      
-      // 监听内容变化
       quill.on('text-change', () => {
         const html = quill.root.innerHTML
         emit('update:modelValue', html)
@@ -61,12 +73,9 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  if (quill) {
-    quill = null
-  }
+  if (quill) quill = null
 })
 
-// 监听外部值变化
 watch(() => props.modelValue, (newVal) => {
   if (quill && newVal !== quill.root.innerHTML) {
     quill.root.innerHTML = newVal || ''

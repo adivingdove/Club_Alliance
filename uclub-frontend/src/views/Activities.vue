@@ -2,7 +2,7 @@
   <div class="activities-container">
     <!-- Banner -->
     <div class="banner">
-      <img src="../assets/ABack.jpg" class="banner-img" />
+      <img src="../assets/ABack.jpg" class="banner-img" alt="活动横幅" />
       <div class="banner-content">
         <h1>2025年武汉大学社团活动开始啦</h1>
         <p>欢迎关注武汉大学社团活动，这里将分享武汉大学社团近期的活动信息！</p>
@@ -50,91 +50,32 @@
           :key="activity.id"
         >
           <el-card 
-            class="activity-card" 
-            :class="{ 'pending': activity.applyStatus === '待审核' }"
+            class="activity-card modern-card"
+            shadow="hover"
             @click="viewActivityDetail(activity)"
           >
-            <div class="activity-header">
-              <div class="activity-status" :class="getStatusClass(activity.applyStatus)">
-                {{ getStatusText(activity.applyStatus) }}
+            <div class="activity-img-wrap">
+              <img
+                :src="activity.imageUrl ? getImageUrl(activity.imageUrl) : '/src/assets/vue.svg'"
+                :alt="activity.title || '活动图片'"
+                class="activity-img-preview"
+              />
+            </div>
+            <div class="activity-card-content">
+              <div class="activity-title">{{ activity.title }}</div>
+              <div class="activity-meta">
+                <span class="meta-item"><i class="el-icon-date"></i> {{ formatDate(activity.startTime) }}</span>
+                <span class="meta-item"><i class="el-icon-location"></i> {{ activity.location || '地点待定' }}</span>
+                <span class="meta-item"><i class="el-icon-user"></i> {{ activity.currentParticipants || 0 }}/{{ activity.maxParticipants ? activity.maxParticipants : '∞' }}人</span>
               </div>
-              <div class="activity-time">
-                <i class="el-icon-time"></i>
-                {{ formatDate(activity.startTime) }}
+              <div class="activity-description-ellipsis">
+                {{ getShortDescription(activity.description) }}
               </div>
             </div>
-            
-            <div class="activity-content">
-              <h3 class="activity-title">{{ activity.title }}</h3>
-              
-              <!-- 活动图片 -->
-              <div v-if="activity.imageUrl" class="activity-image">
-                <img :src="getImageUrl(activity.imageUrl)" :alt="activity.title" />
-              </div>
-              
-              <!-- 活动描述 -->
-              <div class="activity-description" v-html="stripHtmlExceptImg(activity.description)"></div>
-              
-              <div class="activity-info">
-                <div class="info-item">
-                  <i class="el-icon-location"></i>
-                  <span>{{ activity.location || '地点待定' }}</span>
-                </div>
-                <div class="info-item">
-                  <i class="el-icon-user"></i>
-                  <span>
-                    {{ activity.currentParticipants || 0 }}/{{ activity.maxParticipants ? activity.maxParticipants : '∞' }}人
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <div class="activity-footer">
-              <el-button 
-                type="primary" 
-                size="small" 
-                @click.stop="viewActivityDetail(activity)"
-              >
-                查看详情
-              </el-button>
-              
-              <!-- 参与/退出按钮 -->
-              <el-button 
-                v-if="isLoggedIn && activity.applyStatus === '通过' && !canEditActivity(activity)"
-                :type="activity.isParticipating ? 'danger' : 'success'"
-                size="small" 
-                @click.stop="activity.isParticipating ? leaveActivityHandler(activity) : joinActivityHandler(activity)"
-                :disabled="!canJoinActivity(activity)"
-              >
-                {{ activity.isParticipating ? '退出活动' : '加入活动' }}
-              </el-button>
-              
-              <!-- 如果活动状态不是"通过"，显示状态信息 -->
-              <div v-if="isLoggedIn && activity.applyStatus !== '通过'" style="font-size: 12px; color: #999; margin-top: 5px;">
-                活动状态: {{ getStatusText(activity.applyStatus) }}
-              </div>
-              
-              <!-- 如果用户是活动创建者，显示提示 -->
-              <div v-if="isLoggedIn && canEditActivity(activity)" style="font-size: 12px; color: #409EFF; margin-top: 5px;">
-                您是活动创建者
-              </div>
-              
-              <el-button 
-                v-if="canEditActivity(activity)" 
-                type="warning" 
-                size="small" 
-                @click.stop="editActivity(activity)"
-              >
-                编辑
-              </el-button>
-              <el-button 
-                v-if="canDeleteActivity(activity)" 
-                type="danger" 
-                size="small" 
-                @click.stop="deleteActivityHandler(activity)"
-              >
-                删除
-              </el-button>
+            <div class="activity-card-footer">
+              <el-button type="primary" size="small" @click.stop="viewActivityDetail(activity)">详情</el-button>
+              <el-button v-if="canEditActivity(activity)" type="warning" size="small" @click.stop="editActivity(activity)">编辑</el-button>
+              <el-button v-if="canDeleteActivity(activity)" type="danger" size="small" @click.stop="deleteActivityHandler(activity)">删除</el-button>
             </div>
           </el-card>
         </el-col>
@@ -187,6 +128,8 @@
                 placeholder="请输入活动标题" 
                 class="custom-input"
                 size="large"
+                maxlength="50"
+                show-word-limit
               />
             </el-form-item>
           </el-col>
@@ -212,6 +155,7 @@
                 placeholder="请输入活动地点" 
                 class="custom-input"
                 size="large"
+                maxlength="50"
               />
             </el-form-item>
           </el-col>
@@ -271,6 +215,7 @@
                 class="custom-select"
                 size="large"
                 style="width: 100%"
+                :disabled="clubList.length === 0"
               >
                 <el-option 
                   v-for="club in clubList" 
@@ -315,8 +260,9 @@
           <el-button 
             type="primary" 
             @click="submitActivity"
-            :disabled="clubList.length === 0"
+            :disabled="clubList.length === 0 || !isLoggedIn || createLoading"
             class="submit-btn"
+            :loading="createLoading"
           >
             <i class="el-icon-plus"></i>
             创建活动
@@ -329,48 +275,32 @@
     <el-dialog 
       v-model="showDetailDialog" 
       title="活动详情" 
-      width="700px"
+      width="600px"
+      class="activity-detail-dialog"
     >
-      <div v-if="selectedActivity" class="activity-detail">
+      <div v-if="selectedActivity" class="activity-detail-card">
         <div class="detail-header">
-          <h2>{{ selectedActivity.title }}</h2>
-          <div class="detail-status" :class="getStatusClass(selectedActivity.applyStatus)">
+          <div class="detail-title">{{ selectedActivity.title }}</div>
+          <el-tag :type="selectedActivity.applyStatus === '通过' ? 'success' : (selectedActivity.applyStatus === '待审核' ? 'warning' : 'danger')" class="detail-status">
             {{ getStatusText(selectedActivity.applyStatus) }}
-          </div>
+          </el-tag>
         </div>
-        
-        <div class="detail-content">
-          <p class="detail-description">{{ selectedActivity.description }}</p>
-          
-          <div class="detail-info">
-            <div class="info-row">
-              <span class="label">活动时间：</span>
-              <span>{{ formatDateTime(selectedActivity.startTime) }} - {{ formatDateTime(selectedActivity.endTime) }}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">活动地点：</span>
-              <span>{{ selectedActivity.location || '地点待定' }}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">参与人数：</span>
-              <span>{{ selectedActivity.currentParticipants || 0 }}/{{ selectedActivity.maxParticipants ? selectedActivity.maxParticipants : '∞' }}人</span>
-            </div>
-            <div class="info-row">
-              <span class="label">创建时间：</span>
-              <span>{{ formatDateTime(selectedActivity.createdAt) }}</span>
-            </div>
-          </div>
+        <div v-if="selectedActivity.imageUrl" class="detail-img-wrap">
+          <img :src="getImageUrl(selectedActivity.imageUrl)" alt="活动图片" class="detail-img" />
         </div>
-        
-        <div class="detail-actions" v-if="isAdmin && selectedActivity.applyStatus === '待审核'">
-          <el-button type="success" @click="approveActivity(selectedActivity.id)">通过审核</el-button>
-          <el-button type="danger" @click="rejectActivity(selectedActivity.id)">拒绝审核</el-button>
+        <div class="detail-section">
+          <div class="detail-label">活动描述：</div>
+          <div class="detail-desc" v-html="safeHtml(selectedActivity.description)"></div>
         </div>
-        
+        <div class="detail-section">
+          <div class="detail-info-row"><i class="el-icon-date"></i> <span class="detail-label">活动时间：</span>{{ formatDateTime(selectedActivity.startTime) }} - {{ formatDateTime(selectedActivity.endTime) }}</div>
+          <div class="detail-info-row"><i class="el-icon-location"></i> <span class="detail-label">活动地点：</span>{{ selectedActivity.location || '地点待定' }}</div>
+          <div class="detail-info-row"><i class="el-icon-user"></i> <span class="detail-label">参与人数：</span>{{ selectedActivity.currentParticipants || 0 }}/{{ selectedActivity.maxParticipants ? selectedActivity.maxParticipants : '∞' }}人</div>
+          <div class="detail-info-row"><i class="el-icon-time"></i> <span class="detail-label">创建时间：</span>{{ formatDateTime(selectedActivity.createdAt) }}</div>
+        </div>
         <div class="detail-actions" v-if="canEditActivity(selectedActivity)">
           <el-button type="primary" @click="editActivity(selectedActivity)">编辑活动</el-button>
         </div>
-        
         <div class="detail-actions" v-if="isLoggedIn && selectedActivity.applyStatus === '通过' && !canEditActivity(selectedActivity)">
           <el-button 
             :type="selectedActivity.isParticipating ? 'danger' : 'success'"
@@ -380,19 +310,6 @@
             {{ selectedActivity.isParticipating ? '退出活动' : '加入活动' }}
           </el-button>
         </div>
-        
-        <!-- 如果活动状态不是"通过"，显示状态信息 -->
-        <div v-if="isLoggedIn && selectedActivity.applyStatus !== '通过'" class="detail-actions">
-          <el-alert
-            :title="`活动状态: ${getStatusText(selectedActivity.applyStatus)}`"
-            :description="selectedActivity.applyStatus === '待审核' ? '活动正在等待管理员审核，审核通过后才能加入' : '活动已被拒绝，无法加入'"
-            :type="selectedActivity.applyStatus === '待审核' ? 'warning' : 'error'"
-            show-icon
-            :closable="false"
-          />
-        </div>
-        
-        <!-- 如果用户是活动创建者，显示提示 -->
         <div v-if="isLoggedIn && canEditActivity(selectedActivity)" class="detail-actions">
           <el-alert
             title="您是活动创建者"
@@ -402,10 +319,14 @@
             :closable="false"
           />
         </div>
-        
-        <!-- 调试信息：显示详情对话框中的按钮显示条件 -->
-        <div v-if="isLoggedIn" style="font-size: 10px; color: #999; margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px;">
-          调试信息: 登录={{isLoggedIn}}, 活动状态={{selectedActivity.applyStatus}}, 可编辑={{canEditActivity(selectedActivity)}}, 可加入={{canJoinActivity(selectedActivity)}}, 参与状态={{selectedActivity.isParticipating}}
+        <div v-if="isLoggedIn && selectedActivity.applyStatus !== '通过'" class="detail-actions">
+          <el-alert
+            :title="`活动状态: ${getStatusText(selectedActivity.applyStatus)}`"
+            :description="selectedActivity.applyStatus === '待审核' ? '活动正在等待管理员审核，审核通过后才能加入' : '活动已被拒绝，无法加入'"
+            :type="selectedActivity.applyStatus === '待审核' ? 'warning' : 'error'"
+            show-icon
+            :closable="false"
+          />
         </div>
       </div>
     </el-dialog>
@@ -580,6 +501,8 @@ const allClubs = ref([])
 const activityDescRef = ref(null)
 const editDescRef = ref(null)
 const fileInput = ref(null)
+const tabLoading = ref(false)
+const createLoading = ref(false)
 
 // 活动表单
 const activityForm = ref({
@@ -785,21 +708,25 @@ const viewActivityDetail = (activity) => {
 
 // 编辑活动
 const editActivity = (activity) => {
-  // 保存当前编辑的活动ID
   currentEditActivityId.value = activity.id
-  
-  // 填充编辑表单
+  // 保证 description 为字符串
+  let desc = activity.description
+  if (typeof desc !== 'string') {
+    try {
+      desc = JSON.stringify(desc)
+    } catch {
+      desc = ''
+    }
+  }
   editForm.value = {
     title: activity.title,
-    description: activity.description,
+    description: desc,
     location: activity.location,
     startTime: activity.startTime,
     endTime: activity.endTime,
     maxParticipants: activity.maxParticipants,
     clubId: activity.clubId
   }
-  
-  // 关闭详情对话框，打开编辑对话框
   showDetailDialog.value = false
   showEditDialog.value = true
 }
@@ -827,54 +754,26 @@ const deleteActivityHandler = async (activity) => {
 
 // 提交创建活动
 const submitActivity = async () => {
-  activityForm.value.description = window.$(activityDescRef.value).summernote('code')
+  activityForm.value.description = typeof activityForm.value.description === 'string' ? activityForm.value.description : ''
   try {
     await activityFormRef.value.validate()
-    
-    // 检查用户是否登录
     if (!isLoggedIn.value) {
       ElMessage.error('请先登录')
       return
     }
-    
-    // 检查用户信息
     if (!userInfo.value?.id) {
       ElMessage.error('用户信息不完整，请重新登录')
       return
     }
-    
-    // 检查表单数据
-    console.log('表单数据:', activityForm.value)
-    console.log('用户信息:', userInfo.value)
-    console.log('用户ID:', userInfo.value.id)
-    console.log('用户角色:', userInfo.value.role)
-    
-    // 添加创建者ID
+    if (!activityForm.value.clubId) {
+      ElMessage.error('请选择所属社团')
+      return
+    }
+    createLoading.value = true
     const activityData = {
       ...activityForm.value,
       creatorId: userInfo.value.id
     }
-    
-    console.log('提交的活动数据:', activityData)
-    
-    // 验证必需字段
-    if (!activityData.title || !activityData.title.trim()) {
-      ElMessage.error('活动标题不能为空')
-      return
-    }
-    if (!activityData.clubId) {
-      ElMessage.error('请选择所属社团')
-      return
-    }
-    if (!activityData.startTime) {
-      ElMessage.error('请选择开始时间')
-      return
-    }
-    if (!activityData.endTime) {
-      ElMessage.error('请选择结束时间')
-      return
-    }
-    
     const response = await createActivity(activityData)
     if (response.data.code === 0) {
       ElMessage.success('创建活动成功')
@@ -886,12 +785,17 @@ const submitActivity = async () => {
         startTime: '',
         endTime: '',
         maxParticipants: null,
-        clubId: null
+        clubId: null,
+        imageUrl: ''
       }
       fetchActivities()
+    } else {
+      ElMessage.error(response.data.message || '创建活动失败')
     }
   } catch (error) {
     ElMessage.error('创建活动失败，请检查表单数据')
+  } finally {
+    createLoading.value = false
   }
 }
 
@@ -1021,23 +925,29 @@ onMounted(async () => {
 
 // 提交编辑
 const submitEdit = async () => {
-  editForm.value.description = window.$(editDescRef.value).summernote('code')
+  // 保证 description 为字符串
+  let desc = window.$(editDescRef.value).summernote('code')
+  if (typeof desc !== 'string') {
+    try {
+      desc = JSON.stringify(desc)
+    } catch {
+      desc = ''
+    }
+  }
+  editForm.value.description = desc
   try {
-    // 检查是否有当前编辑的活动ID
     if (!currentEditActivityId.value) {
       ElMessage.error('编辑活动ID不存在，请重新选择要编辑的活动')
       return
     }
-    
     console.log('提交编辑数据:', editForm.value)
     console.log('编辑活动ID:', currentEditActivityId.value)
-    
     const response = await updateActivity(currentEditActivityId.value, editForm.value)
     if (response.data.code === 0) {
       ElMessage.success('编辑活动成功')
       showEditDialog.value = false
-      currentEditActivityId.value = null // 清空编辑ID
-      fetchActivities() // 刷新活动列表
+      currentEditActivityId.value = null
+      fetchActivities()
     } else {
       ElMessage.error(response.data.message || '编辑活动失败')
     }
@@ -1142,15 +1052,23 @@ const beforeImageUpload = (file) => {
   return isImage && isLt2M
 }
 
-// 在<script setup>中添加图片URL拼接方法
+// 修改 getImageUrl 方法，确保 VITE_API_BASE_URL 读取正确，图片地址拼接为 http(s)://后端地址/uploads/xxx。并在方法内加一行 console.log 打印最终图片URL，便于调试。
 const getImageUrl = (imageUrl) => {
-  if (!imageUrl) return '';
-  // 如果是完整的URL，直接返回
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+  if (!imageUrl) return '/src/assets/vue.svg';
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    console.log('图片URL:', imageUrl);
     return imageUrl;
   }
-  // 否则拼接后端基础URL
-  return `${import.meta.env.VITE_API_BASE_URL}${imageUrl}`;
+  if (imageUrl.startsWith('/uploads/')) {
+    const url = `${baseUrl}${imageUrl}`;
+    console.log('图片URL:', url);
+    return url;
+  }
+  // 兼容没有斜杠的情况
+  const url = `${baseUrl}/uploads/${imageUrl}`;
+  console.log('图片URL:', url);
+  return url;
 };
 
 function disabledStartDate(date) {
@@ -1256,47 +1174,29 @@ const handle = () => {
   router.push('/ActivitiesManagerView')
 }
 
-// 添加在 script 部分的其他函数旁边
-const stripHtmlExceptImg = (html) => {
-  if (!html) return '';
-  
-  // 如果是纯文本（不包含HTML标签），直接返回
-  if (!html.includes('<') && !html.includes('>')) {
-    return html;
+// 活动卡片描述展示时去除 HTML 标签，仅显示纯文本
+function getShortDescription(desc) {
+  if (typeof desc === 'string') {
+    // 去除 HTML 标签
+    const text = desc.replace(/<[^>]+>/g, '');
+    return text.length > 80 ? text.slice(0, 80) + '...' : text;
   }
-
+  if (desc == null) return '';
   try {
-    // 创建一个临时的 div 来解析 HTML
-    const temp = document.createElement('div');
-    temp.innerHTML = html;
-
-    // 递归处理节点
-    const processNode = (node) => {
-      if (node.nodeType === 3) { // 文本节点
-        return node.textContent;
-      }
-      if (node.nodeName === 'IMG') { // 保留图片标签
-        return node.outerHTML;
-      }
-      if (node.nodeType === 1) { // 元素节点
-        return Array.from(node.childNodes)
-          .map(child => processNode(child))
-          .join('');
-      }
-      return '';
-    };
-
-    // 处理所有子节点
-    const result = Array.from(temp.childNodes)
-      .map(node => processNode(node))
-      .join('');
-
-    return result;
-  } catch (e) {
-    console.error('处理HTML时出错:', e);
-    return html.replace(/<[^>]*>/g, ''); // 降级处理：移除所有HTML标签
+    const str = JSON.stringify(desc);
+    return str.length > 80 ? str.slice(0, 80) + '...' : str;
+  } catch {
+    return String(desc);
   }
-};
+}
+
+// 安全渲染富文本描述（去除危险标签，仅保留基础格式）
+function safeHtml(html) {
+  if (!html) return '';
+  // 只允许基础标签，去除 script/style 等危险内容
+  return html.replace(/<(\/)?(script|style|iframe|object|embed|form|input|button|link|meta)[^>]*>/gi, '')
+             .replace(/on\w+\s*=\s*(['"]).*?\1/gi, '');
+}
 </script>
 
 <style scoped>
@@ -1335,7 +1235,7 @@ const stripHtmlExceptImg = (html) => {
 
 .activities-container {
   padding: 20px;
-  background: #87CEEB;
+  background: #fff;
 }
 
 .page-header {
@@ -1372,111 +1272,67 @@ const stripHtmlExceptImg = (html) => {
   min-height: 400px;
 }
 
-.activity-card {
-  height: 100%;
-  transition: transform 0.3s;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-}
-
-.activity-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.activity-image {
-  width: 100%;
-  height: 200px;
+.activity-card.modern-card {
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  transition: box-shadow 0.2s;
+  margin-bottom: 32px;
   overflow: hidden;
-  border-radius: 8px;
-  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 340px;
 }
-
-.activity-image img {
+.activity-img-wrap {
+  width: 100%;
+  height: 160px;
+  background: #f4f4f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.activity-img-preview {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 0;
 }
-
-.activity-description {
-  color: #666;
-  font-size: 14px;
-  line-height: 1.6;
-  margin: 10px 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+.activity-card-content {
+  padding: 16px 12px 0 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
-
-.activity-description img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 4px;
-  margin: 8px 0;
-}
-
 .activity-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
-  margin: 0;
-  color: #333;
+  margin-bottom: 8px;
+  color: #222;
+  text-align: left;
 }
-
-.activity-info {
-  margin-top: auto;
+.activity-meta {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 8px;
   display: flex;
-  justify-content: space-between;
-  color: #666;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.activity-description-ellipsis {
   font-size: 14px;
+  color: #444;
+  margin-bottom: 8px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 100%;
 }
-
-.info-item {
+.activity-card-footer {
   display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.info-item i {
-  font-size: 16px;
-}
-
-/* 悬停效果 */
-.activity-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-/* 待审核状态样式 */
-.activity-card.pending {
-  opacity: 0.8;
-}
-
-/* 状态标签样式 */
-.activity-status {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  color: white;
-}
-
-.status-pending {
-  background-color: #e6a23c;
-}
-
-.status-approved {
-  background-color: #67c23a;
-}
-
-.status-rejected {
-  background-color: #f56c6c;
+  gap: 8px;
+  padding: 0 12px 12px 12px;
+  justify-content: flex-end;
 }
 
 .empty-state {
@@ -1495,78 +1351,60 @@ const stripHtmlExceptImg = (html) => {
 }
 
 /* 活动详情样式 */
-.activity-detail {
-  padding: 20px 0;
-  background: #87CEEB;
+.activity-detail-dialog >>> .el-dialog__body {
+  background: #fff;
+  padding: 0;
 }
-
+.activity-detail-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  padding: 24px 24px 12px 24px;
+}
 .detail-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #e4e7ed;
-  background: #87CEEB;
-}
-
-.detail-header h2 {
-  margin: 0;
-  color: #303133;
-  background: #87CEEB;
-}
-
-.detail-status {
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: bold;
-  background: #87CEEB;
-}
-
-.detail-description {
-  font-size: 16px;
-  line-height: 1.6;
-  color: #606266;
-  margin-bottom: 20px;
-  background: #87CEEB;
-}
-
-.detail-info {
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  background: #87CEEB;
-}
-
-.info-row {
-  display: flex;
+  justify-content: space-between;
   margin-bottom: 12px;
-  background: #87CEEB;
 }
-
-.info-row:last-child {
-  margin-bottom: 0;
-  background: #87CEEB;
-}
-
-.info-row .label {
+.detail-title {
+  font-size: 1.6rem;
   font-weight: bold;
-  color: #303133;
-  width: 100px;
-  flex-shrink: 0;
-  background: #87CEEB;
 }
-
-.detail-actions {
-  margin-top: 20px;
+.detail-status {
+  font-size: 1rem;
+}
+.detail-img-wrap {
+  width: 100%;
   text-align: center;
-  background: #87CEEB;
+  margin-bottom: 16px;
 }
-
-.detail-actions .el-button {
-  margin: 0 10px;
-  background: #87CEEB;
+.detail-img {
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+.detail-section {
+  margin-bottom: 16px;
+}
+.detail-label {
+  font-weight: bold;
+  margin-right: 6px;
+}
+.detail-desc {
+  color: #333;
+  margin: 8px 0 0 0;
+  word-break: break-all;
+}
+.detail-info-row {
+  margin-bottom: 6px;
+  color: #555;
+  font-size: 1rem;
+}
+.detail-actions {
+  margin-top: 18px;
+  text-align: right;
 }
 
 /* 编辑按钮样式 */
