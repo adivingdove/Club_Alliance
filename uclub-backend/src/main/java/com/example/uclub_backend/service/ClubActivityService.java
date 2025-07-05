@@ -5,6 +5,8 @@ import com.example.uclub_backend.mapper.ClubActivityMapper;
 import com.example.uclub_backend.repository.ClubActivityRepository;
 import com.example.uclub_backend.repository.ClubRepository;
 import com.example.uclub_backend.repository.UserRepository;
+import com.example.uclub_backend.repository.ClubMemberRepository;
+import com.example.uclub_backend.entity.ClubMember;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,9 @@ public class ClubActivityService {
 
     @Autowired
     private ClubActivityMapper clubActivityMapper;
+    
+    @Autowired
+    private ClubMemberRepository clubMemberRepository;
     
     public List<ClubActivity> getAllActivities() {
         return clubActivityRepository.findAll();
@@ -84,6 +89,22 @@ public class ClubActivityService {
         // 检查创建者是否存在
         if (!userRepository.existsById(activity.getCreatorId())) {
             throw new RuntimeException("创建者不存在");
+        }
+        
+        // 权限校验：只有社长、副社长、干事可创建活动
+        ClubMember.MemberRole[] allowedRoles = {ClubMember.MemberRole.社长, ClubMember.MemberRole.副社长, ClubMember.MemberRole.干事};
+        ClubMember clubMember = clubMemberRepository.findByClubIdAndUserId(activity.getClubId(), activity.getCreatorId())
+                .filter(cm -> cm.getJoinStatus() == ClubMember.JoinStatus.已通过)
+                .orElseThrow(() -> new RuntimeException("您不是该社团成员，无法创建活动"));
+        boolean hasPermission = false;
+        for (ClubMember.MemberRole role : allowedRoles) {
+            if (clubMember.getRole() == role) {
+                hasPermission = true;
+                break;
+            }
+        }
+        if (!hasPermission) {
+            throw new RuntimeException("只有社长、副社长、干事可以创建活动");
         }
         
         // 检查时间逻辑
