@@ -113,6 +113,76 @@ const checkApplicationStatus = async (clubId) => {
   }
 }
 
+// 复制 /activities 页面的辅助方法
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('zh-CN')
+}
+function getShortDescription(desc) {
+  if (typeof desc === 'string') {
+    const text = desc.replace(/<[^>]+>/g, '')
+    return text.length > 80 ? text.slice(0, 80) + '...' : text
+  }
+  if (desc == null) return ''
+  try {
+    const str = JSON.stringify(desc)
+    return str.length > 80 ? str.slice(0, 80) + '...' : str
+  } catch {
+    return String(desc)
+  }
+}
+function getImageUrl(imageUrl) {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
+  if (!imageUrl) return '/src/assets/vue.svg'
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl
+  }
+  if (imageUrl.startsWith('/uploads/')) {
+    return `${baseUrl}${imageUrl}`
+  }
+  return `${baseUrl}/uploads/${imageUrl}`
+}
+const userInfo = computed(() => {
+  try {
+    return JSON.parse(localStorage.getItem('user') || '{}')
+  } catch {
+    return {}
+  }
+})
+const isAdmin = computed(() => userInfo.value?.role === '系统管理员')
+const isLoggedIn = computed(() => !!userInfo.value?.id)
+const canEditActivity = (activity) => {
+  return isLoggedIn.value && (
+    activity.creatorId === userInfo.value?.id || isAdmin.value
+  )
+}
+const canDeleteActivity = (activity) => {
+  return isLoggedIn.value && (
+    activity.creatorId === userInfo.value?.id || isAdmin.value
+  )
+}
+const editActivity = (activity) => {
+  selectedActivity.value = activity
+  showActivityDetailDialog.value = true
+  // TODO: 实现编辑弹窗
+}
+const deleteActivityHandler = async (activity) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这个活动吗？', '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    // TODO: 调用后端删除接口
+    ElMessage.success('删除成功（请补充实际删除逻辑）')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除活动失败')
+    }
+  }
+}
+
 // 封装获取社团详情的方法
 const fetchClub = async (id) => {
   try {
@@ -148,29 +218,23 @@ const fetchClub = async (id) => {
         data.members = []
       }
       
-      // 处理活动数据，转换为前端需要的格式
+      // 处理活动数据，字段映射为 /activities 页面的格式
       if (Array.isArray(data.activities)) {
-        console.log('处理活动数据，原始活动数量:', data.activities.length)
         data.activities = data.activities
           .filter(activity => activity.status === '通过')
-          .map(activity => {
-            return {
-              id: activity.id,
-              title: activity.title,
-              imageUrl: activity.img || DEFAULT_IMG,
-              date: activity.startTime ? new Date(activity.startTime).toLocaleString('zh-CN') : '时间待定',
-              place: activity.location || '地点待定',
-              people: 0, // 暂时设为0，后续可以从后端获取实际参与人数
-              description: activity.description,
-              startTime: activity.startTime,
-              endTime: activity.endTime,
-              maxParticipants: activity.maxParticipants,
-              applyStatus: activity.status
-            }
-          })
-        console.log('处理后的活动数据:', data.activities)
+          .map(activity => ({
+            id: activity.id,
+            title: activity.title,
+            description: activity.description,
+            imageUrl: activity.img || '',
+            startTime: activity.startTime,
+            location: activity.location || '',
+            currentParticipants: activity.currentParticipants || 0,
+            maxParticipants: activity.maxParticipants,
+            creatorId: activity.creatorId,
+            applyStatus: activity.status,
+          }))
       } else {
-        console.log('活动数据不是数组或为空:', data.activities)
         data.activities = []
       }
       
@@ -414,13 +478,6 @@ const handleEditSubmit = () => {
   })
 }
 
-const getImageUrl = (url) => {
-  if (!url) return '/logo.png'
-  if (url.startsWith('http')) return url
-  if (url.startsWith('/uploads/')) return 'http://localhost:8080' + url
-  return url
-}
-
 const setMemberRole = async (member, role) => {
   try {
     const clubId = club.value.id
@@ -646,6 +703,13 @@ const refreshAnnouncements = async () => {
     console.error('刷新公告列表失败:', error)
   }
 }
+
+// 安全渲染富文本描述（去除危险标签，仅保留基础格式）
+function safeHtml(html) {
+  if (!html) return '';
+  return html.replace(/<(\/)?(script|style|iframe|object|embed|form|input|button|link|meta)[^>]*>/gi, '')
+             .replace(/on\w+\s*=\s*(['"]).*?\1/gi, '');
+}
 </script>
 
 <template>
@@ -718,33 +782,50 @@ const refreshAnnouncements = async () => {
         </div>
         
         <!-- 活动列表 -->
-        <div v-if="activeTab === 'activities'" class="tab-content">
-          <el-row :gutter="24">
-            <el-col :span="8" v-for="activity in club.activities" :key="activity.id">
-              <el-card class="activity-card" @click="openActivityDetail(activity)" style="cursor: pointer;">
-                <div class="activity-img-wrapper activity-content--bg">
-                  <div>{{ activity.imageUrl }}</div>
-                  <img v-if="activity.imageUrl" :src="getImageUrl(activity.imageUrl)" class="activity-img-bg" />
+        <div v-if="activeTab === 'activities'" class="tab-content activities-list">
+          <el-row :gutter="24" style="align-items: stretch;">
+            <el-col 
+              :xs="24" 
+              :sm="12" 
+              :md="8" 
+              :lg="6" 
+              v-for="activity in club.activities" 
+              :key="activity.id"
+              style="display: flex;"
+            >
+              <el-card 
+                class="activity-card modern-card"
+                shadow="hover"
+                @click="openActivityDetail(activity)"
+                style="flex: 1; display: flex; flex-direction: column;"
+              >
+                <div class="activity-img-wrap">
+                  <img
+                    :src="getImageUrl(activity.imageUrl)"
+                    :alt="activity.title || '活动图片'"
+                    class="activity-img-preview"
+                    @error="event => event.target.src = '/src/assets/vue.svg'"
+                  />
                 </div>
-                <div class="activity-info">
+                <div class="activity-card-content">
                   <div class="activity-title">{{ activity.title }}</div>
-                  <div class="activity-description">{{ activity.description }}</div>
                   <div class="activity-meta">
-                    <span>📅 {{ activity.date }}</span>
-                    <span>📍 {{ activity.place }}</span>
+                    <span class="meta-item"><i class="el-icon-date"></i> {{ formatDate(activity.startTime) }}</span>
+                    <span class="meta-item"><i class="el-icon-location"></i> {{ activity.location || '地点待定' }}</span>
+                    <span class="meta-item"><i class="el-icon-user"></i> {{ activity.currentParticipants || 0 }}/{{ activity.maxParticipants ? activity.maxParticipants : '∞' }}人</span>
                   </div>
-                  <div class="activity-meta">
-                    <span>👥 {{ activity.people }}{{ activity.maxParticipants ? '/' + activity.maxParticipants : '' }}人参与</span>
-                    <span class="activity-status" :class="getActivityStatusClass(activity.applyStatus)">
-                      {{ getActivityStatusText(activity.applyStatus) }}
-                    </span>
+                  <div class="activity-description-ellipsis">
+                    {{ getShortDescription(activity.description) }}
                   </div>
+                </div>
+                <div class="activity-card-footer">
+                  <el-button type="primary" size="small" @click.stop="openActivityDetail(activity)">详情</el-button>
+                  <el-button v-if="canEditActivity(activity)" type="warning" size="small" @click.stop="editActivity(activity)">编辑</el-button>
+                  <el-button v-if="canDeleteActivity(activity)" type="danger" size="small" @click.stop="deleteActivityHandler(activity)">删除</el-button>
                 </div>
               </el-card>
             </el-col>
           </el-row>
-          
-          <!-- 空状态 -->
           <div v-if="club.activities && club.activities.length === 0" class="empty-state">
             <el-empty description="暂无活动" />
           </div>
@@ -912,31 +993,25 @@ const refreshAnnouncements = async () => {
       </div>
     </el-drawer>
 
-    <el-dialog v-model="showActivityDetailDialog" title="活动详情" width="700px">
-      <div v-if="selectedActivity" class="activity-detail">
+    <el-dialog v-model="showActivityDetailDialog" title="活动详情" width="600px" class="activity-detail-dialog">
+      <div v-if="selectedActivity" class="activity-detail-card">
         <div class="detail-header">
-          <h2>{{ selectedActivity.title }}</h2>
-          <div class="detail-status">
+          <div class="detail-title">{{ selectedActivity.title }}</div>
+          <el-tag :type="selectedActivity.applyStatus === '通过' ? 'success' : (selectedActivity.applyStatus === '待审核' ? 'warning' : 'danger')" class="detail-status">
             {{ getActivityStatusText(selectedActivity.applyStatus) }}
-          </div>
+          </el-tag>
         </div>
-        <div class="detail-content">
-          <img v-if="selectedActivity.imageUrl" :src="getImageUrl(selectedActivity.imageUrl)" class="activity-img activity-img--dialog" />
-          <p class="detail-description">{{ selectedActivity.description }}</p>
-          <div class="detail-info">
-            <div class="info-row">
-              <span class="label">活动时间：</span>
-              <span>{{ selectedActivity.date }}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">活动地点：</span>
-              <span>{{ selectedActivity.place }}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">参与人数：</span>
-              <span>{{ selectedActivity.people }}/{{ selectedActivity.maxParticipants ? selectedActivity.maxParticipants : '∞' }}人</span>
-            </div>
-          </div>
+        <div v-if="selectedActivity.imageUrl" class="detail-img-wrap">
+          <img :src="getImageUrl(selectedActivity.imageUrl)" alt="活动图片" class="detail-img" />
+        </div>
+        <div class="detail-section">
+          <div class="detail-label">活动描述：</div>
+          <div class="detail-desc" v-html="safeHtml(selectedActivity.description)"></div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-info-row"><i class="el-icon-date"></i> <span class="detail-label">活动时间：</span>{{ formatDate(selectedActivity.startTime) }}</div>
+          <div class="detail-info-row"><i class="el-icon-location"></i> <span class="detail-label">活动地点：</span>{{ selectedActivity.location }}</div>
+          <div class="detail-info-row"><i class="el-icon-user"></i> <span class="detail-label">参与人数：</span>{{ selectedActivity.currentParticipants }}/{{ selectedActivity.maxParticipants ? selectedActivity.maxParticipants : '∞' }}人</div>
         </div>
       </div>
     </el-dialog>
@@ -971,27 +1046,70 @@ const refreshAnnouncements = async () => {
   margin: 0 10px;
 }
 .tab-content { padding: 0 20px 20px; }
-.activity-card { border-radius: 10px; overflow: hidden; transition: transform 0.3s ease; }
-.activity-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.activity-img-wrapper.activity-content--bg {
-  position: relative;
+.activity-card.modern-card {
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  transition: box-shadow 0.2s;
+  margin-bottom: 32px;
   overflow: hidden;
-  min-height: 120px;
-  border-radius: 12px;
-  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  min-height: 340px;
 }
-.activity-img-bg {
-  position: absolute;
-  left: 0; top: 0; width: 100%; height: 100%;
+.activity-img-wrap {
+  width: 100%;
+  height: 160px;
+  background: #f4f4f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.activity-img-preview {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  z-index: 1;
-  filter: brightness(1);
-  border-radius: 12px;
-  background: #f8f8f8;
+  border-radius: 0;
 }
-.activity-title { font-size: 16px; font-weight: bold; margin: 8px 0; color: #303133; }
-.activity-description { color: #909399; font-size: 13px; margin-bottom: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.activity-meta { color: #909399; font-size: 13px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+.activity-card-content {
+  padding: 16px 12px 0 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.activity-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #222;
+  text-align: left;
+}
+.activity-meta {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.activity-description-ellipsis {
+  font-size: 14px;
+  color: #444;
+  margin-bottom: 8px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 100%;
+  min-height: 40px;
+}
+.activity-card-footer {
+  display: flex;
+  gap: 8px;
+  padding: 0 12px 12px 12px;
+  justify-content: flex-end;
+  margin-top: auto;
+}
 .member-card { text-align: center; border-radius: 10px; }
 .member-avatar { width: 48px; height: 48px; border-radius: 50%; margin-bottom: 8px; }
 .member-name { font-weight: bold; }
@@ -1045,81 +1163,59 @@ const refreshAnnouncements = async () => {
   font-weight: bold;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
-.activity-detail {
-  padding: 20px;
+.activity-detail-dialog >>> .el-dialog__body {
+  background: #fff;
+  padding: 0;
+}
+.activity-detail-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  padding: 24px 24px 12px 24px;
 }
 .detail-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  justify-content: space-between;
+  margin-bottom: 12px;
 }
-.detail-header h2 {
-  font-size: 24px;
+.detail-title {
+  font-size: 1.6rem;
   font-weight: bold;
 }
 .detail-status {
-  font-size: 16px;
-  font-weight: bold;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background-color: #e6a23c;
-  color: #fff;
+  font-size: 1rem;
 }
-.detail-content {
+.detail-img-wrap {
+  width: 100%;
   text-align: center;
+  margin-bottom: 16px;
 }
-.activity-img {
-  max-width: 100%;
-  max-height: 300px;
-  margin-bottom: 20px;
+.detail-img {
+  max-width: 320px;
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  object-fit: contain;
+  display: inline-block;
 }
-.activity-img--dialog {
-  max-width: 100%;
-  max-height: 300px;
-  margin-bottom: 20px;
+.detail-section {
+  margin-bottom: 16px;
 }
-.detail-description {
-  color: #606266;
-  font-size: 16px;
-  margin-bottom: 20px;
-}
-.detail-info {
-  text-align: left;
-}
-.info-row {
-  margin-bottom: 10px;
-}
-.label {
-  font-size: 14px;
+.detail-label {
   font-weight: bold;
-  margin-right: 10px;
+  margin-right: 6px;
 }
-
-.announcement-item {
-  position: relative;
+.detail-desc {
+  color: #333;
+  margin: 8px 0 0 0;
+  word-break: break-all;
 }
-
-.announcement-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
-}
-
-.announcement-header h4 {
-  margin: 0;
-  flex: 1;
-  margin-right: 8px;
-}
-
-.delete-announcement-btn {
-  flex-shrink: 0;
-  margin-left: 8px;
-}
-
-.delete-announcement-btn:hover {
-  transform: scale(1.1);
-  transition: transform 0.2s ease;
+.detail-info-row {
+  margin-bottom: 6px;
+  color: #555;
+  font-size: 1rem;
 }
 </style>
