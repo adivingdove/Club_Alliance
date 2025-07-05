@@ -13,7 +13,11 @@
       </div>
       <el-table :data="adminList" border stripe class="manager-table" v-loading="loading">
         <el-table-column prop="title" label="活动名称" width="150" align="center" sortable/>
-        <el-table-column prop="description" label="活动描述" width="200" align="center"/>
+        <el-table-column label="活动描述" width="200" align="center">
+          <template v-slot="scope">
+            <div class="description-cell" v-html="getShortDescription(scope.row.description)"></div>
+          </template>
+        </el-table-column>
         <el-table-column prop="location" label="活动地点" width="200" align="center"/>
         <el-table-column prop="startTime" label="开始时间" width="180" align="center" sortable/>
         <el-table-column prop="endTime" label="结束时间" width="180" align="center" sortable/>
@@ -28,8 +32,8 @@
         </el-table-column>
         <el-table-column label="活动参与率" width="120" align="center">
           <template v-slot="scope" >
-            <div class="rate-num">
-              {{ (scope.row.currentParticipants / scope.row.maxParticipants) || 'N/A' }}
+            <div class="rate-num" :class="getRateClass(scope.row.currentParticipants, scope.row.maxParticipants)">
+              {{ getParticipationRate(scope.row.currentParticipants, scope.row.maxParticipants) }}
             </div>
           </template>
         </el-table-column>
@@ -79,6 +83,45 @@ const fetchAdmins = async () => {
     ElMessage.error('查询失败，请检查网络或接口')
   } finally {
     loading.value = false
+  }
+}
+
+// 处理活动描述显示
+const getShortDescription = (desc) => {
+  if (!desc) return '暂无描述'
+  
+  // 去除HTML标签，只保留纯文本
+  const text = desc.replace(/<[^>]+>/g, '')
+  
+  // 限制长度，避免表格单元格过宽
+  if (text.length > 50) {
+    return text.slice(0, 50) + '...'
+  }
+  
+  return text
+}
+
+// 计算参与率
+const getParticipationRate = (current, max) => {
+  if (!max || max === 0) return 'N/A'
+  if (!current) return '0%'
+  
+  const rate = (current / max * 100).toFixed(1)
+  return rate + '%'
+}
+
+// 获取参与率样式类
+const getRateClass = (current, max) => {
+  if (!max || max === 0) return ''
+  if (!current) return 'rate-low'
+  
+  const rate = (current / max * 100)
+  if (rate > 50) {
+    return 'rate-high'
+  } else if (rate > 20) {
+    return 'rate-medium'
+  } else {
+    return 'rate-low'
   }
 }
 
@@ -160,8 +203,31 @@ onMounted(() => {
   font-weight: 600;
 }
 .rate-num {
-  color: #fc5c7d;
   font-weight: 700;
+}
+
+.rate-high {
+  color: #67c23a;
+}
+
+.rate-medium {
+  color: #e6a23c;
+}
+
+.rate-low {
+  color: #fc5c7d;
+}
+
+.description-cell {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  padding: 4px 8px;
+  line-height: 1.4;
+  color: #666;
+  font-size: 14px;
 }
 .manager-pagination {
   margin-top: 24px;
