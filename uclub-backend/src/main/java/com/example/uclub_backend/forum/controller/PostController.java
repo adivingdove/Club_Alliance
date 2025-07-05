@@ -2,6 +2,7 @@ package com.example.uclub_backend.forum.controller;
 
 import com.example.uclub_backend.forum.entity.Like;
 import com.example.uclub_backend.forum.entity.Post;
+import com.example.uclub_backend.forum.entity.PostStatus;
 import com.example.uclub_backend.forum.mapper.PostMapper;
 import com.example.uclub_backend.forum.service.LikeService;
 import com.example.uclub_backend.forum.service.PostService;
@@ -134,15 +135,13 @@ public ResponseEntity<?> getHotPosts() {
 public ResponseEntity<?> getPost(@PathVariable Long id, @RequestParam(required = false) Long userId) {
     try {
         Post post = postService.getPostById(id);
-        if (post == null) {
+        if (post == null || post.getStatus() != PostStatus.active) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("code", 404, "message", "帖子不存在"));
+                    .body(Map.of("code", 404, "message", "帖子不存在或已被隐藏"));
         }
 
-        // 查询发帖人信息
         User author = userService.getUserById(post.getUserId().intValue());
 
-        // 构造 user 显示信息
         Map<String, Object> userMap = new HashMap<>();
         if (author != null) {
             userMap.put("id", author.getId());
@@ -150,7 +149,6 @@ public ResponseEntity<?> getPost(@PathVariable Long id, @RequestParam(required =
             userMap.put("avatarUrl", author.getHeadUrl()); 
         }
 
-        // 构造 post 数据
         Map<String, Object> postMap = new HashMap<>();
         postMap.put("id", post.getId());
         postMap.put("title", post.getTitle());
@@ -160,9 +158,8 @@ public ResponseEntity<?> getPost(@PathVariable Long id, @RequestParam(required =
         postMap.put("createdAt", post.getCreatedAt());
         postMap.put("likeCount", post.getLikeCount());
         postMap.put("commentCount", post.getCommentCount());
-        postMap.put("user", userMap); //  嵌入 user 对象
+        postMap.put("user", userMap);
 
-        // 构造最终响应体
         Map<String, Object> res = new HashMap<>();
         res.put("post", postMap);
 
@@ -178,6 +175,7 @@ public ResponseEntity<?> getPost(@PathVariable Long id, @RequestParam(required =
                 .body(Map.of("code", 404, "message", e.getMessage()));
     }
 }
+
 
 
 @PostMapping("/{id}/like")

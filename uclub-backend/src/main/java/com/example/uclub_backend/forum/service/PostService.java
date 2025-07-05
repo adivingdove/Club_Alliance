@@ -1,6 +1,8 @@
 package com.example.uclub_backend.forum.service;
 import com.example.uclub_backend.entity.User;
+import com.example.uclub_backend.forum.entity.CommentStatus;
 import com.example.uclub_backend.forum.entity.Post;
+import com.example.uclub_backend.forum.repository.CommentRepository;
 import com.example.uclub_backend.forum.repository.ForumClubRepository;
 import com.example.uclub_backend.forum.repository.PostRepository;
 import com.example.uclub_backend.forum.entity.PostStatus;
@@ -30,6 +32,9 @@ public class PostService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private CommentRepository commentRepository;
 
 
     public PostService(PostRepository postRepository,
@@ -169,4 +174,11 @@ Page<Post> postPage = postRepository.findByFiltersWithClubName(
             postRepository.save(post);
         }
     }
+
+     @Transactional
+    public void rebuildCommentCountForPost(Long postId) {
+        int activeCount = commentRepository.countByPostIdAndStatus(postId, CommentStatus.active);
+        postRepository.updateCommentCount(postId, activeCount);
+    }
+
 }
