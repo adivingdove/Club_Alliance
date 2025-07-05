@@ -209,9 +209,11 @@ public ResponseEntity<Map<String, Object>> toggleLike(@PathVariable Long id, @Re
         }
     }
 
-
-
-
-   
+    @PutMapping("/admin/{postId}/status")
+    public ResponseEntity<?> hidePost(@PathVariable Long postId,
+                                      @RequestParam String status) {
+        postService.updatePostStatus(postId, status);
+        return ResponseEntity.ok().build();
+    }
 
 }

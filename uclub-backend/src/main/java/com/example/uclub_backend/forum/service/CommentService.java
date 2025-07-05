@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CommentService {
@@ -98,4 +99,13 @@ public void deleteCommentsByPostId(Long postId) {
     commentRepository.deleteByPostId(postId);
 }
 
+
+    public void updateCommentStatus(Long postId, Long commentId, String status){
+        Optional<Comment> commentOptional = commentRepository.findById(commentId);
+        if(commentOptional.isPresent()){
+            Comment comment = commentOptional.get();
+            comment.setStatus(CommentStatus.valueOf(status));
+            commentRepository.save(comment);
+        }
+    }
 }

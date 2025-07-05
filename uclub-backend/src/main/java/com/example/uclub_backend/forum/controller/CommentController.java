@@ -128,6 +128,14 @@ public List<Map<String, Object>> getComments(@PathVariable Long postId, @Request
         ));
     }
 
+    @PutMapping("/admin/{commentId}/status")
+    public ResponseEntity<?> updateCommentStatus(@PathVariable Long postId,
+                                                 @PathVariable Long commentId,
+                                                 @RequestParam String status)
+    {
+        commentService.updateCommentStatus(postId,commentId,status);
+        return ResponseEntity.ok().build();
+    }
 
 
 }

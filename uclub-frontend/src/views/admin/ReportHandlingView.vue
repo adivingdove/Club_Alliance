@@ -45,7 +45,7 @@
     <div class="report-row">
       <span class="label">操作：</span>
       <el-button type="danger" size="small" @click="banUser(selectedReport.reportedUser.id)">封禁用户</el-button>
-      <el-button type="danger" size="small" @click="deleteContent(selectedReport.id)">删除内容</el-button>
+      <el-button type="danger" size="small" @click="hideContent(selectedReport.id)">隐藏内容</el-button>
     </div>
   </div>
   <div v-else>加载中...</div>
@@ -144,32 +144,32 @@ const banUser = async (userId) => {
 }
 
 
-const deleteContent = async () => {
+const hideContent = async () => {
   if (!selectedReport.value) return;
 
   const { targetType, targetId } = selectedReport.value;
   
   try {
     if (targetType === '帖子') {
-      await axios.delete(`/posts/${targetId}`, {
+      await axios.put(`/posts/admin/${targetId}/status`,null, {
         params: {
-          userId: currentUserId
+          status: 'hidden'
         }
       });
-      ElMessage.success('帖子已删除');
+      ElMessage.success('帖子已隐藏');
     } else if (targetType === '评论') {
-      await axios.delete(`/posts/${selectedReport.value.postId}/comments/${targetId}`, {
+      await axios.put(`/posts/${selectedReport.value.postId}/comments/admin/${targetId}/status`,null, {
         params: {
-          userId: currentUserId
+          status:"hidden"
         }
       });
-      ElMessage.success('评论已删除');
+      ElMessage.success('评论已隐藏');
     }
     showDetail.value = false;
     changeStatus(selectedReport.value.id, '已处理');
     fetchReports();
   } catch (error) {
-    ElMessage.error('删除内容失败，请稍后再试');
+    ElMessage.error('隐藏内容失败，请稍后再试');
   }
 }
 
