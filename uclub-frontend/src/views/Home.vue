@@ -141,6 +141,18 @@
         </el-col>
       </el-row>
     </div>
+    <!-- 系统公告侧边栏按钮 -->
+    <el-button
+      class="system-announcement-drawer-btn"
+      type="info"
+      circle
+      size="small"
+      @click="showSystemAnnouncementDrawer = true"
+      style="position: fixed; top: 120px; right: 0; z-index: 2000; width: 40px; height: 40px;"
+    >
+      📢
+    </el-button>
+    
     <!-- 悬浮建立社团按钮 -->
     <el-button
       class="fab-create-club"
@@ -151,6 +163,44 @@
     >
       <span style="font-size: 32px;">+</span>
     </el-button>
+    <!-- 系统公告弹窗 -->
+    <el-dialog
+      v-model="showSystemAnnouncementDrawer"
+      title="系统公告"
+      width="600px"
+      :close-on-click-modal="false"
+      class="system-announcement-dialog"
+      :modal-append-to-body="false"
+      :lock-scroll="false"
+      :top="'8vh'"
+    >
+      <div v-if="systemAnnouncements && systemAnnouncements.length" class="announcement-list">
+        <el-timeline>
+          <el-timeline-item
+            v-for="announcement in systemAnnouncements"
+            :key="announcement.id"
+            :timestamp="announcement.createdAt ? new Date(announcement.createdAt).toLocaleString('zh-CN') : ''"
+            placement="top"
+          >
+            <div class="announcement-item">
+              <div class="announcement-header">
+                <h4>{{ announcement.title }}</h4>
+              </div>
+              <div class="announcement-content">
+                <MarkdownIt :source="announcement.content" />
+              </div>
+            </div>
+          </el-timeline-item>
+        </el-timeline>
+      </div>
+      <div v-else>
+        <el-empty description="暂无系统公告" />
+      </div>
+      <template #footer>
+        <el-button @click="showSystemAnnouncementDrawer = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 新建社团弹窗表单 -->
     <el-dialog v-model="showCreateDialog" title="☀️ 新建社团" width="500px" :close-on-click-modal="false" class="create-club-dialog" 
       :modal-append-to-body="false"
@@ -230,9 +280,14 @@ import request from '../utils/request'
 import { ElMessage } from 'element-plus'
 import { useStore } from 'vuex'
 import axios from 'axios'
+import MarkdownIt from 'vue3-markdown-it'
 
 const top5Clubs = ref([])
 const hotTopics = ref([])
+
+// 系统公告相关
+const showSystemAnnouncementDrawer = ref(false)
+const systemAnnouncements = ref([])
 
 const activeTab = ref('all')
 const router = useRouter()
@@ -537,6 +592,15 @@ watch(showCreateDialog, (val) => {
   }
 })
 
+// 监听系统公告弹窗
+watch(showSystemAnnouncementDrawer, (val) => {
+  if (val) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+})
+
 // 热门社团和帖子数据
 
 const fetchHotClubs = async () => {
@@ -559,12 +623,29 @@ const fetchHotPosts = async () => {
   }
 }
 
+// 获取系统公告
+const fetchSystemAnnouncements = async () => {
+  try {
+    const response = await request.get('/api/admin/system-announcements')
+    if (response.data && Array.isArray(response.data)) {
+      systemAnnouncements.value = response.data
+    } else {
+      systemAnnouncements.value = []
+    }
+  } catch (error) {
+    console.error('获取系统公告失败:', error)
+    systemAnnouncements.value = []
+  }
+}
+
 const goToPost = (id: number) => {
   router.push(`/post/${id}`)
 }
+
 onMounted(() =>{
   fetchHotClubs()
   fetchHotPosts()
+  fetchSystemAnnouncements()
 })
 
 </script>
@@ -1314,6 +1395,158 @@ h4 {
 }
 .club-tabs-title .el-tabs__item:not(.is-active):hover {
   color: #66b1ff !important;
+}
+
+/* 系统公告样式 */
+.system-announcement-drawer-btn {
+  border-radius: 50% !important;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  min-width: auto;
+  height: auto;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.system-announcement-dialog >>> .el-dialog {
+  position: fixed !important;
+  top: 8vh !important;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  z-index: 2000;
+  max-width: 600px;
+}
+
+.system-announcement-dialog >>> .el-dialog__body {
+  background: linear-gradient(135deg, #f4faff 0%, #e3f0ff 100%);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(64,158,255,0.13);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.announcement-list {
+  padding: 10px 0;
+}
+
+.announcement-item {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.announcement-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.announcement-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.announcement-content {
+  color: #666;
+  line-height: 1.6;
+}
+
+.announcement-content :deep(h1),
+.announcement-content :deep(h2),
+.announcement-content :deep(h3),
+.announcement-content :deep(h4),
+.announcement-content :deep(h5),
+.announcement-content :deep(h6) {
+  margin: 12px 0 8px 0;
+  color: #333;
+  font-weight: bold;
+}
+
+.announcement-content :deep(p) {
+  margin: 8px 0;
+}
+
+.announcement-content :deep(ul),
+.announcement-content :deep(ol) {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.announcement-content :deep(li) {
+  margin: 4px 0;
+}
+
+.announcement-content :deep(blockquote) {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 4px solid #409EFF;
+  background: #f8f9fa;
+  color: #666;
+}
+
+.announcement-content :deep(code) {
+  background: #f1f3f4;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+.announcement-content :deep(pre) {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.announcement-content :deep(pre code) {
+  background: none;
+  padding: 0;
+}
+
+.announcement-content :deep(strong) {
+  font-weight: bold;
+  color: #333;
+}
+
+.announcement-content :deep(em) {
+  font-style: italic;
+}
+
+.announcement-content :deep(a) {
+  color: #409EFF;
+  text-decoration: none;
+}
+
+.announcement-content :deep(a:hover) {
+  text-decoration: underline;
+}
+
+.announcement-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+}
+
+.announcement-content :deep(th),
+.announcement-content :deep(td) {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.announcement-content :deep(th) {
+  background: #f8f9fa;
+  font-weight: bold;
 }
 
 </style>

@@ -61,6 +61,7 @@
         <el-table-column label="操作" width="100">
           <template #default="{ row }">
             <el-button type="text" size="small" @click="viewAnnouncement(row)">查看</el-button>
+            <el-button type="text" size="small" @click="deleteAnnouncement(row.id)" style="color:red">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -81,7 +82,7 @@
 <script setup>
 import { ref } from 'vue'
 import MarkdownPreview from './MarkdownPreview.vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import Vue3MarkdownIt from 'vue3-markdown-it'
 import { useStore } from 'vuex'
 
@@ -161,6 +162,33 @@ async function loadHistory() {
   }
 }
 
+async function deleteAnnouncement(id) {
+  try {
+    await ElMessageBox.confirm('确定要删除这条公告吗？', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    const res = await fetch(`http://localhost:8080/api/admin/system-announcements/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+
+    if (!res.ok) {
+      throw new Error('删除失败')
+    }
+
+    ElMessage.success('删除成功')
+    loadHistory()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.message || '删除失败')
+    }
+  }
+}
 
 function formatTime(str) {
   return new Date(str).toLocaleString()
@@ -212,5 +240,9 @@ function formatTime(str) {
 
 .toggle-buttons {
   margin-bottom: 20px;
+}
+.el-button--text {
+  margin-left: 8px;
+  font-size: 14px;
 }
 </style>

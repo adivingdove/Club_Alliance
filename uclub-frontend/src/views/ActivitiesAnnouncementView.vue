@@ -88,9 +88,16 @@
             {{ formatTime(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100">
+        <el-table-column label="操作" width="160">
           <template #default="{ row }">
-            <el-button type="text" size="small" @click="viewAnnouncement(row)">查看</el-button>
+            <div class="action-buttons">
+              <el-button type="primary" size="small" @click="viewAnnouncement(row)" style="margin-right: 8px;">
+                <i class="el-icon-view"></i> 查看
+              </el-button>
+              <el-button type="danger" size="small" @click="deleteAnnouncement(row)">
+                <i class="el-icon-delete"></i> 删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -100,7 +107,8 @@
     <el-dialog v-model="imageDialogVisible" title="插入图片" width="500px">
       <el-upload
         class="upload-demo"
-        action="http://localhost:8080/api/admin/upload"
+        action="http://localhost:8080/api/upload"
+        :headers="uploadHeaders"
         :on-success="handleUploadSuccess"
         :show-file-list="false"
       >
@@ -127,8 +135,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, onMounted, nextTick, watch, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const title = ref('')
 const content = ref('')
@@ -141,6 +149,24 @@ const fontFamily = ref('')
 const fontSize = ref('')
 const imageDialogVisible = ref(false)
 const imagePreviewUrl = ref('')
+
+// 获取当前用户信息
+const currentUser = computed(() => {
+  try {
+    return JSON.parse(localStorage.getItem('user') || '{}')
+  } catch {
+    return {}
+  }
+})
+
+// 上传请求头
+const uploadHeaders = computed(() => {
+  const token = localStorage.getItem('token')
+  return {
+    'Authorization': token ? `Bearer ${token}` : '',
+    'X-Requested-With': 'XMLHttpRequest'
+  }
+})
 
 // 字体选项
 const fontOptions = ref([
@@ -178,8 +204,18 @@ function handlePaste(e) {
 
 // 图片上传成功处理
 function handleUploadSuccess(res) {
+  // 兼容不同的返回格式
+  let imageUrl = null
+  
   if (res && res.url) {
-    let imageUrl = res.url
+    imageUrl = res.url
+  } else if (res && res.data && res.data.url) {
+    imageUrl = res.data.url
+  } else if (res && res.code === 0 && res.data) {
+    imageUrl = res.data
+  }
+  
+  if (imageUrl) {
     if (!imageUrl.startsWith('http')) {
       imageUrl = `http://localhost:8080${imageUrl}`
     }
@@ -192,6 +228,8 @@ function handleUploadSuccess(res) {
       imageDialogVisible.value = false
       editorContent.value.focus()
     }, 300)
+  } else {
+    ElMessage.error('图片上传失败')
   }
 }
 
@@ -201,6 +239,57 @@ function viewAnnouncement(row) {
   showDetail.value = true
 }
 
+// 删除公告
+async function deleteAnnouncement(row) {
+  try {
+    // 确认删除
+    const confirmed = await ElMessageBox.confirm(
+      `确定要删除公告"${row.title}"吗？`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
+    if (!confirmed) return
+    
+    // 检查用户登录状态
+    if (!currentUser.value.id) {
+      ElMessage.error('请先登录')
+      return
+    }
+    
+    const token = localStorage.getItem('token')
+    const headers = {}
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+    
+    const res = await fetch(`http://localhost:8080/api/announcements/${row.id}?userId=${currentUser.value.id}`, {
+      method: 'DELETE',
+      headers: headers
+    })
+    
+    const result = await res.json()
+    
+    if (result.code === 0) {
+      ElMessage.success('删除成功')
+      // 重新加载历史公告列表
+      await loadHistory()
+    } else {
+      ElMessage.error(result.message || '删除失败')
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除公告失败：', error)
+      ElMessage.error('删除失败，请重试')
+    }
+  }
+}
+
 // 提交公告
 async function submitAnnouncement() {
   if (!title.value.trim() || !content.value.trim()) {
@@ -208,27 +297,46 @@ async function submitAnnouncement() {
     return
   }
 
+  // 检查用户登录状态
+  if (!currentUser.value.id) {
+    ElMessage.error('请先登录')
+    return
+  }
+
   const payload = {
     title: title.value,
     content: content.value,
-    type: '系统',
+    type: 'SYSTEM', // 使用枚举值
     clubId: null,
-    creatorId: 1 // 示例，实际应从登录状态获取
+    creatorId: currentUser.value.id
   }
 
   try {
-    const res = await fetch('http://localhost:8080/api/admin/system-announcements', {
+    const token = localStorage.getItem('token')
+    const headers = {
+      'Content-Type': 'application/json'
+    }
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+    
+    const res = await fetch('http://localhost:8080/api/announcements', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: headers,
       body: JSON.stringify(payload)
     })
 
-    if (!res.ok) throw new Error('发布失败')
-
-    ElMessage.success('公告发布成功')
-    title.value = ''
-    content.value = ''
-    editorContent.value.innerHTML = ''
+    const result = await res.json()
+    
+    if (result.code === 0) {
+      ElMessage.success('公告发布成功')
+      title.value = ''
+      content.value = ''
+      editorContent.value.innerHTML = ''
+    } else {
+      ElMessage.error(result.message || '发布失败')
+    }
   } catch (error) {
     ElMessage.error(error.message || '网络错误')
   }
@@ -237,18 +345,27 @@ async function submitAnnouncement() {
 // 加载历史公告
 async function loadHistory() {
   try {
-    const raw = await fetch('http://localhost:8080/api/admin/system-announcements')
-    const result = await raw.json()
-    const data = Array.isArray(result) ? result : result.data || result.body || []
-
-    if (!Array.isArray(data)) {
-      console.error('不是数组：', data)
-      ElMessage.error('返回数据格式错误')
-      return
+    const token = localStorage.getItem('token')
+    const headers = {}
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
     }
-    historyList.value = data
-    showHistory.value = true
+    
+    const raw = await fetch('http://localhost:8080/api/announcements/system', {
+      headers: headers
+    })
+    const result = await raw.json()
+    
+    if (result.code === 0 && Array.isArray(result.data)) {
+      historyList.value = result.data
+      showHistory.value = true
+    } else {
+      console.error('返回数据格式错误：', result)
+      ElMessage.error(result.message || '返回数据格式错误')
+    }
   } catch (error) {
+    console.error('加载历史公告失败：', error)
     ElMessage.error('加载历史公告失败')
   }
 }
@@ -397,5 +514,19 @@ h2 {
 .el-table {
   border-radius: 8px;
   overflow: hidden;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-buttons .el-button {
+  flex-shrink: 0;
+}
+
+.action-buttons .el-button i {
+  margin-right: 4px;
 }
 </style>

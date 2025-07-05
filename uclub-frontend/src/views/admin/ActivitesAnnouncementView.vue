@@ -129,6 +129,7 @@
 <script setup>
 import { ref, onMounted, nextTick, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useStore } from 'vuex'
 
 const title = ref('')
 const content = ref('')
@@ -213,7 +214,7 @@ async function submitAnnouncement() {
     content: content.value,
     type: '系统',
     clubId: null,
-    creatorId: 1 // 示例，实际应从登录状态获取
+    creatorId: currentUserId
   }
 
   try {
