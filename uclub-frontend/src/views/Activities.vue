@@ -297,6 +297,7 @@
           <div class="detail-info-row"><i class="el-icon-date"></i> <span class="detail-label">活动时间：</span>{{ formatDateTime(selectedActivity.startTime) }} - {{ formatDateTime(selectedActivity.endTime) }}</div>
           <div class="detail-info-row"><i class="el-icon-location"></i> <span class="detail-label">活动地点：</span>{{ selectedActivity.location || '地点待定' }}</div>
           <div class="detail-info-row"><i class="el-icon-user"></i> <span class="detail-label">参与人数：</span>{{ selectedActivity.currentParticipants || 0 }}/{{ selectedActivity.maxParticipants ? selectedActivity.maxParticipants : '∞' }}人</div>
+          <div class="detail-info-row"><i class="el-icon-collection"></i> <span class="detail-label">所属社团：</span>{{ getClubNameById(selectedActivity.clubId) }}</div>
           <div class="detail-info-row"><i class="el-icon-time"></i> <span class="detail-label">创建时间：</span>{{ formatDateTime(selectedActivity.createdAt) }}</div>
         </div>
 
@@ -356,13 +357,14 @@
             <div class="participant-avatar">
               <el-avatar 
                 :size="50"
-                :alt="`用户${participant.userId}`"
+                :src="getImageUrl(participant.headUrl)"
+                :alt="participant.nickname || `用户${participant.userId}`"
               >
-                {{ `用户${participant.userId}`.charAt(0) }}
+                {{ (participant.nickname || `用户${participant.userId}`).charAt(0) }}
               </el-avatar>
             </div>
             <div class="participant-info">
-              <div class="participant-name">用户{{ participant.userId }}</div>
+              <div class="participant-name">{{ participant.nickname || `用户${participant.userId}` }}</div>
               <div class="participant-join-time">加入时间：{{ formatDateTime(participant.joinTime) }}</div>
             </div>
             <div class="participant-status">
@@ -532,6 +534,7 @@ import {
   getActivityParticipantCount,
   getActivitiesByParticipantId
 } from '@/api/activityApi'
+import { clubApi } from '@/utils/api'
 import request from '@/utils/request'
 import QuillEditor from '@/components/QuillEditor.vue'
 import { useRouter } from 'vue-router'
@@ -692,10 +695,22 @@ const fetchActivities = async () => {
   }
 }
 
+// 获取所有社团列表
+const fetchAllClubs = async () => {
+  try {
+    const response = await clubApi.getAllClubs()
+    if (response.data.code === 0) {
+      allClubs.value = response.data.data || []
+    }
+  } catch (error) {
+    console.error('获取所有社团失败:', error)
+    allClubs.value = []
+  }
+}
+
 // 获取用户社团列表
 const fetchUserClubs = async () => {
   if (!isLoggedIn.value) {
-    console.log('用户未登录')
     return
   }
   
@@ -987,11 +1002,12 @@ onMounted(async () => {
   // 获取活动数据
   await fetchActivities()
   
+  // 获取所有社团数据（用于显示社团名称）
+  await fetchAllClubs()
+  
   if (isLoggedIn.value) {
     await fetchUserClubs()
   }
-  
-
 })
 
 // 提交编辑
@@ -1158,15 +1174,20 @@ function disabledEndDate(date) {
 
 // 修改 getClubNameById 方法
 const getClubNameById = (clubId) => {
-  // 1. 从 userClubs 查找
-  const club = clubList.value.find(c => c.id === clubId)
-  if (club) return club.name
-  // 2. 从 activities 查找
-  const activity = activities.value.find(a => a.clubId === clubId && a.clubName)
-  if (activity) return activity.clubName
-  // 3. 从 allClubs 查找
+  if (!clubId) return '未知社团'
+  
+  // 1. 从用户社团列表查找（用户有权限的社团）
+  const userClub = clubList.value.find(c => c.id === clubId)
+  if (userClub) return userClub.name
+  
+  // 2. 从所有社团列表查找
   const allClub = allClubs.value.find(c => c.id === clubId)
   if (allClub) return allClub.name
+  
+  // 3. 从活动列表中查找（如果活动数据包含社团名称）
+  const activity = activities.value.find(a => a.clubId === clubId && a.clubName)
+  if (activity) return activity.clubName
+  
   return '未知社团'
 }
 
@@ -1775,7 +1796,7 @@ function safeHtml(html) {
 }
 
 /* icon主色统一 */
-.el-icon-location, .el-icon-user, .el-icon-time, .el-icon-upload, .el-icon-plus, .el-icon-check {
+.el-icon-location, .el-icon-user, .el-icon-time, .el-icon-upload, .el-icon-plus, .el-icon-check, .el-icon-collection {
   color: #a18cd1 !important;
   font-size: 18px !important;
 }
@@ -1950,6 +1971,8 @@ function safeHtml(html) {
   color: #333;
   margin-bottom: 4px;
 }
+
+
 
 .participant-join-time {
   font-size: 13px;
