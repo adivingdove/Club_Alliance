@@ -174,7 +174,7 @@ const fetchClub = async (id) => {
         data.activities = []
       }
       
-      club.value = data
+      club.value = data || { img: DEFAULT_IMG, activities: [], members: [] }
       console.log('社团数据设置完成:', club.value)
       console.log('最终活动数量:', club.value.activities.length)
       
@@ -766,12 +766,12 @@ const refreshAnnouncements = async () => {
         <!-- 社团聊天室 -->
         <div v-if="activeTab === 'chat'">
           <div style="color:blue;font-weight:bold;">
-            club.value: {{ club.value }}<br>
-            club.value.id: {{ club.value && club.value.id }}<br>
-            typeof club.value: {{ typeof club.value }}<br>
-            JSON: {{ JSON.stringify(club.value) }}
+            club: {{ club }}<br>
+            club.id: {{ club && club.id }}<br>
+            typeof club: {{ typeof club }}<br>
+            JSON: {{ JSON.stringify(club) }}
           </div>
-          <ClubChat v-if="club.value && club.value.id" :clubId="club.value.id" :key="club.value.id" />
+          <ClubChat v-if="club && club.id" :clubId="club.id" :key="club.id" />
         </div>
 
         <!-- 社团管理 -->

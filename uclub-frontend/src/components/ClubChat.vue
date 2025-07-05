@@ -134,7 +134,7 @@ const sendMessage = () => {
     room: roomId.value
   }
   stompClient.publish({
-    destination: `/app/chat/${roomId.value}`,
+    destination: `/app/chat.send/${roomId.value}`,
     body: JSON.stringify(msg)
   })
   message.value = ''
