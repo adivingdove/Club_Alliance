@@ -231,9 +231,16 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="活动图片" prop="imageUrl">
-              <div class="upload-placeholder" @click="triggerFileInput">
-                <i class="el-icon-upload"></i>
-                <span>上传图片</span>
+              <div class="upload-section">
+                <el-button 
+                  type="primary" 
+                  @click="triggerFileInput"
+                  class="upload-btn"
+                  size="large"
+                >
+                  <i class="el-icon-upload"></i>
+                  上传图片
+                </el-button>
                 <input ref="fileInput" type="file" style="display:none" @change="handleFileChange" />
               </div>
             </el-form-item>
@@ -434,9 +441,16 @@
         <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item label="活动图片" prop="imageUrl">
-              <div class="upload-placeholder" @click="triggerFileInput">
-                <i class="el-icon-upload"></i>
-                <span>上传图片</span>
+              <div class="upload-section">
+                <el-button 
+                  type="primary" 
+                  @click="triggerFileInput"
+                  class="upload-btn"
+                  size="large"
+                >
+                  <i class="el-icon-upload"></i>
+                  上传图片
+                </el-button>
                 <input ref="fileInput" type="file" style="display:none" @change="handleFileChange" />
               </div>
             </el-form-item>
@@ -1691,6 +1705,41 @@ function safeHtml(html) {
 .el-icon-location, .el-icon-user, .el-icon-time, .el-icon-upload, .el-icon-plus, .el-icon-check {
   color: #a18cd1 !important;
   font-size: 18px !important;
+}
+
+/* 上传按钮样式 */
+.upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.upload-btn {
+  background-color: #409EFF !important;
+  border-color: #409EFF !important;
+  color: white !important;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+}
+
+.upload-btn:hover {
+  background-color: #66b1ff !important;
+  border-color: #66b1ff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
+}
+
+.upload-btn:active {
+  background-color: #3a8ee6 !important;
+  border-color: #3a8ee6 !important;
+  transform: translateY(0);
+}
+
+.upload-btn .el-icon-upload {
+  margin-right: 6px;
+  font-size: 16px;
 }
 
 /* 响应式优化 */
