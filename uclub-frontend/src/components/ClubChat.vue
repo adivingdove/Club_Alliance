@@ -54,8 +54,6 @@ import axios from 'axios'
 
 const props = defineProps({ clubId: { type: [String, Number], required: true } })
 
-console.log('ClubChat loaded, clubId:', props.clubId)
-
 const currentUser = ref({})
 const messages = ref([])
 const message = ref('')
@@ -125,6 +123,10 @@ const connect = () => {
 
 const sendMessage = () => {
   if (!message.value.trim()) return
+  if (!stompClient || !stompClient.connected) {
+    console.error('[ClubChat] stompClient 未连接，无法发送消息')
+    return
+  }
   const msg = {
     sender: currentUser.value.nickname,
     avatar: currentUser.value.headUrl,
@@ -134,7 +136,7 @@ const sendMessage = () => {
     room: roomId.value
   }
   stompClient.publish({
-    destination: `/app/chat.send/${roomId.value}`,
+    destination: `/app/chat.send.club-${props.clubId}`,
     body: JSON.stringify(msg)
   })
   message.value = ''

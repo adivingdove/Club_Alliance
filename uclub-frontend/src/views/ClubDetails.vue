@@ -765,12 +765,6 @@ const refreshAnnouncements = async () => {
 
         <!-- 社团聊天室 -->
         <div v-if="activeTab === 'chat'">
-          <div style="color:blue;font-weight:bold;">
-            club: {{ club }}<br>
-            club.id: {{ club && club.id }}<br>
-            typeof club: {{ typeof club }}<br>
-            JSON: {{ JSON.stringify(club) }}
-          </div>
           <ClubChat v-if="club && club.id" :clubId="club.id" :key="club.id" />
         </div>
 
