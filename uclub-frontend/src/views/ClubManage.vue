@@ -446,6 +446,16 @@ const currentEditActivityId = ref(null)
 const activityFormRef = ref()
 const editActivityFormRef = ref()
 
+const editActivityForm = ref({
+  title: '',
+  description: '',
+  location: '',
+  startTime: '',
+  endTime: '',
+  maxParticipants: null
+})
+
+
 // 表单验证规则
 const activityRules = {
   clubId: [

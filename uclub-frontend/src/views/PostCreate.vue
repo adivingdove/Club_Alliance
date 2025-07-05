@@ -249,23 +249,23 @@ onMounted(() => {
 }
 
 /* 图片和视频调整相关样式 */
-.editor-container :deep(.ql-editor) {
-  img, video {
-    display: block;
-    max-width: 100%;
-    height: auto;
-  }
-
-  .image-resizer {
-    border: 1px dashed #999;
-    
-    .image-resizer-handle {
-      background: #fff;
-      border: 1px solid #999;
-      border-radius: 2px;
-    }
-  }
+.editor-container :deep(.ql-editor) img,
+.editor-container :deep(.ql-editor) video {
+  display: block;
+  max-width: 100%;
+  height: auto;
 }
+
+.editor-container :deep(.ql-editor) .image-resizer {
+  border: 1px dashed #999;
+}
+
+.editor-container :deep(.ql-editor) .image-resizer .image-resizer-handle {
+  background: #fff;
+  border: 1px solid #999;
+  border-radius: 2px;
+}
+
 
 /* 图片工具栏样式 */
 .editor-container :deep(.ql-toolbar-wrap) {

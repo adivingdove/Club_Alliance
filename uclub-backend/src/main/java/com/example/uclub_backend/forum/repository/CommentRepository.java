@@ -1,6 +1,8 @@
 package com.example.uclub_backend.forum.repository;
 
 import com.example.uclub_backend.forum.entity.Comment;
+import com.example.uclub_backend.forum.entity.CommentStatus;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -24,13 +26,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Query("UPDATE Comment c SET c.likeCount = CASE WHEN c.likeCount > 0 THEN c.likeCount - 1 ELSE 0 END WHERE c.id = :id")
     void decrementLikeCount(@Param("id") Long id);
 
-
-
-
-    default List<Comment> findTopByOrderByLikeCountDesc(int limit) {
-    return findTopByOrderByLikeCountDesc(PageRequest.of(0, limit));
-    }
-
      // 删除指定帖子的所有评论
      @Transactional
     @Modifying
@@ -41,11 +36,16 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Query("SELECT c.userId FROM Comment c WHERE c.id = :commentId")
     Integer getUserId(@Param("commentId") Integer commentId);
 
-    // 获取热评（按点赞数排序）
-    @Query("SELECT c FROM Comment c ORDER BY c.likeCount DESC")
-    List<Comment> findTopByOrderByLikeCountDesc(Pageable pageable);
 
     List<Comment> findByPostId(Long postId);
 
-    
+    @Query("SELECT c FROM Comment c WHERE c.postId = :postId AND c.status = :status")
+    List<Comment> findByPostIdAndStatus(@Param("postId") Long postId, @Param("status") CommentStatus status);
+
+    @Query("SELECT COUNT(c) FROM Comment c WHERE c.postId = :postId AND c.status = :status")
+    int countByPostIdAndStatus(@Param("postId") Long postId, @Param("status") CommentStatus status);
+
+    @Query("SELECT c FROM Comment c WHERE c.status = :status ORDER BY c.likeCount DESC")
+    List<Comment> findHotCommentsByStatus(@Param("status") CommentStatus status, Pageable pageable);
+
 }

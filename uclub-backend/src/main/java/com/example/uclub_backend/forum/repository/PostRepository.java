@@ -42,6 +42,7 @@ void decrementLikeCount(@Param("postId") Long postId);
 List<Integer> findRecentActiveClubIds(@Param("since") LocalDateTime since);
 
 
+
 // 根据用户ID查询帖子，按创建时间倒序排列
 List<Post> findByUserIdOrderByCreatedAtDesc(Long userId);
 
@@ -74,5 +75,9 @@ Page<Post> findByFiltersWithClubName(
     Pageable pageable
 );
 
+//修正评论数
+ @Modifying
+    @Query("UPDATE Post p SET p.commentCount = :count WHERE p.id = :postId")
+    void updateCommentCount(@Param("postId") Long postId, @Param("count") int count);
 
 }

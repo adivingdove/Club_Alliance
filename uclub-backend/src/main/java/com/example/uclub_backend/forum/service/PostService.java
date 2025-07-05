@@ -1,8 +1,11 @@
 package com.example.uclub_backend.forum.service;
 import com.example.uclub_backend.entity.User;
+import com.example.uclub_backend.forum.entity.CommentStatus;
 import com.example.uclub_backend.forum.entity.Post;
+import com.example.uclub_backend.forum.repository.CommentRepository;
 import com.example.uclub_backend.forum.repository.ForumClubRepository;
 import com.example.uclub_backend.forum.repository.PostRepository;
+import com.example.uclub_backend.forum.entity.PostStatus;
 
 import com.example.uclub_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class PostService {
@@ -28,6 +32,9 @@ public class PostService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private CommentRepository commentRepository;
 
 
     public PostService(PostRepository postRepository,
@@ -159,5 +166,19 @@ Page<Post> postPage = postRepository.findByFiltersWithClubName(
     return post != null ? post.getTitle() : "";
 }
 
+    public void updatePostStatus(Long postId,String status){
+        Optional<Post> postOptional = postRepository.findById(postId);
+        if(postOptional.isPresent()){
+            Post post = postOptional.get();
+            post.setStatus(PostStatus.valueOf(status));
+            postRepository.save(post);
+        }
+    }
+
+     @Transactional
+    public void rebuildCommentCountForPost(Long postId) {
+        int activeCount = commentRepository.countByPostIdAndStatus(postId, CommentStatus.active);
+        postRepository.updateCommentCount(postId, activeCount);
+    }
 
 }

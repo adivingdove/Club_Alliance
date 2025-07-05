@@ -141,7 +141,7 @@
               <QuillEditor
                 v-model="activityForm.description"
                 placeholder="请输入活动描述"
-                :height="200"
+                :height="400"
               />
             </el-form-item>
           </el-col>
@@ -376,7 +376,7 @@
               <QuillEditor
                 v-model="editForm.description"
                 placeholder="请输入活动描述"
-                :height="200"
+                :height="400"
               />
             </el-form-item>
           </el-col>

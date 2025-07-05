@@ -13,10 +13,12 @@ public interface PostMapper {
            like_count AS likeCount, comment_count AS commentCount,
            created_at AS createdAt
     FROM post
+    WHERE status = 'active'
     ORDER BY (like_count + comment_count) DESC
     LIMIT 10
 """)
 List<Post> selectHotPosts();
+
 
 // 根据用户ID查询帖子
 List<Post> selectByUserId(@org.apache.ibatis.annotations.Param("userId") Long userId,

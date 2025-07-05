@@ -189,7 +189,6 @@ public class ReportController {
         }
     }
 
-
     // 根据目标类型获取被举报人ID（可扩展）
     private Integer getReportedUserIdByTarget(TargetType type, Integer targetId) {
         if(type == null) return null; // 防止传入null导致NullPointerException
@@ -211,5 +210,6 @@ public class ReportController {
                 return null;
         }
     }
+
 }
 
