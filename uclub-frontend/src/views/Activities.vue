@@ -33,12 +33,7 @@
 
     <!-- 活动列表 -->
     <div class="activities-list">
-      <!-- 调试信息：显示当前活动列表状态 -->
-      <div v-if="isAdmin" style="font-size: 12px; color: #666; margin-bottom: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px;">
-        调试信息: 当前标签页={{activeTab}}, 活动总数={{activities.length}}, 过滤后数量={{filteredActivities.length}}
-        <br>
-        活动状态列表: {{activities.map(a => `${a.id}:${a.title}:${a.applyStatus}`).join(', ')}}
-      </div>
+
     
       <el-row :gutter="24">
         <el-col 
@@ -304,8 +299,10 @@
           <div class="detail-info-row"><i class="el-icon-user"></i> <span class="detail-label">参与人数：</span>{{ selectedActivity.currentParticipants || 0 }}/{{ selectedActivity.maxParticipants ? selectedActivity.maxParticipants : '∞' }}人</div>
           <div class="detail-info-row"><i class="el-icon-time"></i> <span class="detail-label">创建时间：</span>{{ formatDateTime(selectedActivity.createdAt) }}</div>
         </div>
-        <div class="detail-actions" v-if="selectedActivity && userInfo.value && selectedActivity.creatorId === userInfo.value.id">
-          <el-button type="primary" size="large" @click="showParticipantDialog = true" style="margin-bottom: 12px; width: 100%; font-size: 18px;">查看成员列表</el-button>
+
+        
+        <div class="detail-actions" v-if="selectedActivity && userInfo && selectedActivity.creatorId == userInfo.id">
+          <el-button type="primary" size="large" @click="handleViewParticipants" style="margin-bottom: 12px; width: 100%; font-size: 18px;">查看成员列表</el-button>
         </div>
         <div class="detail-actions" v-if="isLoggedIn && selectedActivity.applyStatus === '通过'">
           <div style="display: flex; gap: 16px;">
@@ -333,14 +330,49 @@
       </div>
     </el-dialog>
 
-    <!-- 成员列表弹窗 -->
-    <el-dialog v-model="showParticipantDialog" title="参与成员列表" width="500px" @open="loadParticipantList">
-      <el-table :data="participantList" size="small" style="width:100%;margin-top:8px;">
-        <el-table-column prop="userId" label="用户ID" width="100" />
-        <el-table-column prop="joinTime" label="加入时间" width="180" />
-        <el-table-column prop="status" label="状态" width="80" />
-      </el-table>
-      <div v-if="participantList.length === 0" style="color:#aaa;font-size:13px;margin:8px 0;">暂无成员</div>
+    <!-- 成员列表对话框 -->
+    <el-dialog 
+      v-model="showParticipantDialog" 
+      title="👥 活动成员列表"
+      width="600px"
+      class="participant-dialog"
+    >
+      <div v-if="selectedActivity" class="participant-list">
+        <div class="participant-header">
+          <h3>{{ selectedActivity.title }} - 成员列表</h3>
+          <p class="participant-count">共 {{ participantList.length }} 人参与</p>
+        </div>
+        
+        <div v-if="participantList.length === 0" class="empty-participants">
+          <el-empty description="暂无成员参与" />
+        </div>
+        
+        <div v-else class="participant-items">
+          <div 
+            v-for="participant in participantList" 
+            :key="participant.id"
+            class="participant-item"
+          >
+            <div class="participant-avatar">
+              <el-avatar 
+                :size="50"
+                :alt="`用户${participant.userId}`"
+              >
+                {{ `用户${participant.userId}`.charAt(0) }}
+              </el-avatar>
+            </div>
+            <div class="participant-info">
+              <div class="participant-name">用户{{ participant.userId }}</div>
+              <div class="participant-join-time">加入时间：{{ formatDateTime(participant.joinTime) }}</div>
+            </div>
+            <div class="participant-status">
+              <el-tag :type="participant.status === '已加入' ? 'success' : 'info'" size="small">
+                {{ participant.status }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+      </div>
     </el-dialog>
 
     <!-- 编辑活动对话框 -->
@@ -667,12 +699,9 @@ const fetchUserClubs = async () => {
     return
   }
   
-  console.log('开始获取社团列表，用户信息:', userInfo.value)
-  
   try {
     // 获取用户所有的社团（包括担任干事、副社长、社长的社团）
     const token = localStorage.getItem('token')
-    console.log('当前token:', token)
     
     const response = await request({
       url: `/api/clubs/user/${userInfo.value.id}`,
@@ -683,8 +712,6 @@ const fetchUserClubs = async () => {
       }
     })
     
-    console.log('获取社团列表响应:', response)
-    
     if (response.data.code === 0) {
       // 过滤出用户有管理权限的社团
       clubList.value = (response.data.data || [])
@@ -693,12 +720,9 @@ const fetchUserClubs = async () => {
           ...c,
           myRole: c.role
         }))
-      console.log('处理后的社团列表:', clubList.value)
     }
   } catch (error) {
     console.error('获取社团列表失败:', error)
-    console.error('错误配置:', error.config)
-    console.error('错误响应:', error.response)
     clubList.value = []
     ElMessage.error('获取社团列表失败')
   }
@@ -725,6 +749,30 @@ const handleSearch = () => {
 const viewActivityDetail = (activity) => {
   selectedActivity.value = activity
   showDetailDialog.value = true
+}
+
+// 获取活动成员列表
+const fetchActivityParticipants = async (activityId) => {
+  try {
+    const response = await getActivityParticipants(activityId)
+    if (response.data.code === 0) {
+      participantList.value = response.data.data || []
+    } else {
+      participantList.value = []
+      ElMessage.error('获取成员列表失败')
+    }
+  } catch (error) {
+    participantList.value = []
+    ElMessage.error('获取成员列表失败，请检查网络连接')
+  }
+}
+
+// 处理查看成员列表
+const handleViewParticipants = async () => {
+  if (selectedActivity.value) {
+    await fetchActivityParticipants(selectedActivity.value.id)
+    showParticipantDialog.value = true
+  }
 }
 
 // 编辑活动
@@ -942,6 +990,8 @@ onMounted(async () => {
   if (isLoggedIn.value) {
     await fetchUserClubs()
   }
+  
+
 })
 
 // 提交编辑
@@ -961,8 +1011,7 @@ const submitEdit = async () => {
       ElMessage.error('编辑活动ID不存在，请重新选择要编辑的活动')
       return
     }
-    console.log('提交编辑数据:', editForm.value)
-    console.log('编辑活动ID:', currentEditActivityId.value)
+
     const response = await updateActivity(currentEditActivityId.value, editForm.value)
     if (response.data.code === 0) {
       ElMessage.success('编辑活动成功')
@@ -1087,18 +1136,15 @@ const getImageUrl = (imageUrl) => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
   if (!imageUrl) return '/src/assets/vue.svg';
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    console.log('图片URL:', imageUrl);
-    return imageUrl;
-  }
-  if (imageUrl.startsWith('/uploads/')) {
-    const url = `${baseUrl}${imageUrl}`;
-    console.log('图片URL:', url);
-    return url;
-  }
-  // 兼容没有斜杠的情况
-  const url = `${baseUrl}/uploads/${imageUrl}`;
-  console.log('图片URL:', url);
+      return imageUrl;
+}
+if (imageUrl.startsWith('/uploads/')) {
+  const url = `${baseUrl}${imageUrl}`;
   return url;
+}
+// 兼容没有斜杠的情况
+const url = `${baseUrl}/uploads/${imageUrl}`;
+return url;
 };
 
 function disabledStartDate(date) {
@@ -1226,17 +1272,6 @@ function safeHtml(html) {
   // 只允许基础标签，去除 script/style 等危险内容
   return html.replace(/<(\/)?(script|style|iframe|object|embed|form|input|button|link|meta)[^>]*>/gi, '')
              .replace(/on\w+\s*=\s*(['"]).*?\1/gi, '');
-}
-
-const loadParticipantList = async () => {
-  if (selectedActivity.value) {
-    const res = await getActivityParticipants(selectedActivity.value.id)
-    if (res.data && res.data.code === 0) {
-      participantList.value = res.data.data || []
-    } else {
-      participantList.value = []
-    }
-  }
 }
 </script>
 
@@ -1457,7 +1492,7 @@ const loadParticipantList = async () => {
   bottom: 40px;
   width: 60px;
   height: 60px;
-  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(64,158,255,0.2);
   z-index: 1000;
 }
 
@@ -1821,5 +1856,128 @@ const loadParticipantList = async () => {
   border-radius: 8px;
   border: 1px solid #eee;
   display: inline-block;
+}
+
+/* 成员列表对话框样式 */
+.participant-dialog .el-dialog {
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.10);
+  overflow: hidden;
+}
+
+.participant-dialog .el-dialog__header {
+  background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+  color: white;
+  padding: 24px 32px 16px;
+  margin: 0;
+}
+
+.participant-dialog .el-dialog__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+}
+
+.participant-dialog .el-dialog__body {
+  padding: 24px;
+  background: #fff;
+}
+
+.participant-list {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.participant-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.participant-header h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.participant-count {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.empty-participants {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.participant-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.participant-item {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+}
+
+.participant-item:hover {
+  background: #f1f3f4;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.participant-avatar {
+  margin-right: 16px;
+}
+
+.participant-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.participant-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.participant-join-time {
+  font-size: 13px;
+  color: #666;
+}
+
+.participant-status {
+  margin-left: 16px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .participant-dialog .el-dialog {
+    width: 95% !important;
+    margin: 12px auto;
+  }
+  
+  .participant-dialog .el-dialog__body {
+    padding: 16px;
+  }
+  
+  .participant-item {
+    padding: 12px;
+  }
+  
+  .participant-avatar .el-avatar {
+    width: 40px !important;
+    height: 40px !important;
+  }
 }
 </style>
