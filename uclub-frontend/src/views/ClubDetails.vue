@@ -868,9 +868,6 @@ function safeHtml(html) {
                 <el-table-column label="操作">
                   <template #default="{ row }">
                     <el-button v-if="row.role !== '社长'" type="danger" size="small" @click="removeMember(row)">踢出社团</el-button>
-                    <el-button type="warning" size="small" @click="toggleMute(row)">
-                      {{ mutedMembers.includes(row.userId) ? '解除禁言' : '禁言' }}
-                    </el-button>
                     <el-button v-if="isPresident && row.role !== '社长'" type="primary" size="small" @click="transferPresident(row)">转让社长</el-button>
                   </template>
                 </el-table-column>
