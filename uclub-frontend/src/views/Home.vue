@@ -152,72 +152,105 @@
       <span style="font-size: 32px;">+</span>
     </el-button>
     <!-- 新建社团弹窗表单 -->
-    <el-dialog v-model="showCreateDialog" title="☀️ 新建社团" width="500px" :close-on-click-modal="false" class="create-club-dialog" 
+    <el-dialog 
+      v-model="showCreateDialog" 
+      title="☀️ 新建社团" 
+      width="600px" 
+      :close-on-click-modal="false" 
+      class="create-club-dialog"
       :modal-append-to-body="false"
       :lock-scroll="false"
-      :top="'8vh'"
+      :top="'5vh'"
     >
-      <el-form :model="createForm" :rules="createRules" ref="createFormRef" label-width="120px" class="create-club-form">
+      <template #header>
+        <div class="dialog-header">
+          <h2>🏢 新建社团</h2>
+          <p>填写社团信息，创建属于你的社团</p>
+        </div>
+      </template>
+      
+      <el-form :model="createForm" :rules="createRules" ref="createFormRef" label-width="140px" class="create-club-form">
         <el-form-item label="⭐ 社团名称" prop="name">
-          <el-input v-model="createForm.name" placeholder="请输入社团名称">
+          <el-input v-model="createForm.name" placeholder="请输入社团名称" size="large">
             <template #prefix>
               <el-icon><i class="el-icon-office-building"></i></el-icon>
             </template>
           </el-input>
         </el-form-item>
+        
         <el-form-item label="✍️ 建立理由" prop="reason">
-          <el-input v-model="createForm.reason" type="textarea" placeholder="请填写建立理由">
+          <el-input 
+            v-model="createForm.reason" 
+            type="textarea" 
+            :rows="3"
+            placeholder="请填写建立理由，说明社团的宗旨和目标"
+          >
             <template #prefix>
               <el-icon><i class="el-icon-edit"></i></el-icon>
             </template>
           </el-input>
         </el-form-item>
+        
         <el-form-item label="📚 基础活动" prop="activity">
-          <el-input v-model="createForm.activity" placeholder="如：定期讲座、兴趣小组等">
+          <el-input v-model="createForm.activity" placeholder="如：定期讲座、兴趣小组、技能培训等" size="large">
             <template #prefix>
               <el-icon><i class="el-icon-notebook"></i></el-icon>
             </template>
           </el-input>
         </el-form-item>
+        
         <el-form-item label="👤 个人信息" prop="personal">
-          <el-input v-model="createForm.personal" type="textarea" placeholder="请填写你的姓名、联系方式等">
+          <el-input 
+            v-model="createForm.personal" 
+            type="textarea" 
+            :rows="2"
+            placeholder="请填写你的姓名、联系方式、专业等信息"
+          >
             <template #prefix>
               <el-icon><i class="el-icon-user"></i></el-icon>
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item label="🖼️ 社团主页图" prop="logoUrl">
-          <el-upload
-            action="http://localhost:8080/api/upload"
-            :headers="uploadHeaders"
-            :on-success="handleUploadSuccess"
-            :on-error="handleUploadError"
-            :before-upload="beforeUpload"
-            :show-file-list="false"
-          >
-            <el-button type="primary" icon="el-icon-picture">上传图片</el-button>
-          </el-upload>
-          <!-- 图片预览 -->
-          <div v-if="createForm.logoUrl" class="club-img-preview">
-            <img 
-              :src="getImageUrl(createForm.logoUrl)" 
-              class="club-img-preview-img"
-              alt="社团图片预览"
-            />
-            <p class="club-img-preview-tip">图片预览</p>
-          </div>
-        </el-form-item>
+        
         <el-form-item label="🏷️ 社团分类" prop="type">
-          <el-select v-model="createForm.type" placeholder="请选择社团分类">
+          <el-select v-model="createForm.type" placeholder="请选择社团分类" size="large" style="width: 100%">
             <el-option v-for="item in clubTypes" :key="item.value" :label="item.emoji + ' ' + item.label" :value="item.value" />
           </el-select>
         </el-form-item>
+        
+        <el-form-item label="🖼️ 社团主页图" prop="logoUrl">
+          <div class="upload-section">
+            <el-upload
+              action="http://localhost:8080/api/upload"
+              :headers="uploadHeaders"
+              :on-success="handleUploadSuccess"
+              :on-error="handleUploadError"
+              :before-upload="beforeUpload"
+              :show-file-list="false"
+              class="upload-button"
+            >
+              <el-button type="primary" size="large" icon="el-icon-picture">上传图片</el-button>
+            </el-upload>
+            <!-- 图片预览 -->
+            <div v-if="createForm.logoUrl" class="club-img-preview">
+              <img 
+                :src="getImageUrl(createForm.logoUrl)" 
+                class="club-img-preview-img"
+                alt="社团图片预览"
+              />
+              <p class="club-img-preview-tip">图片预览</p>
+            </div>
+          </div>
+        </el-form-item>
       </el-form>
+      
       <template #footer>
-        <el-button @click="showCreateDialog = false">取消</el-button>
-        <el-button type="primary" @click="submitCreateClub" class="create-club-submit-btn">
-          <el-icon style="margin-right:4px;"><i class="el-icon-plus"></i></el-icon>提交
-        </el-button>
+        <div class="dialog-footer">
+          <el-button @click="showCreateDialog = false" size="large">取消</el-button>
+          <el-button type="primary" @click="submitCreateClub" class="create-club-submit-btn" size="large">
+            <el-icon style="margin-right:8px;"><i class="el-icon-plus"></i></el-icon>提交申请
+          </el-button>
+        </div>
       </template>
     </el-dialog>
   </el-container>
@@ -1043,73 +1076,184 @@ body, .main-container {
 .fab-create-club:hover {
   transform: scale(1.12) rotate(-8deg);
 }
+/* 弹窗样式优化 */
 .create-club-dialog >>> .el-dialog {
   position: fixed !important;
-  top: 8vh !important;
+  top: 5vh !important;
   left: 0;
   right: 0;
   margin: 0 auto;
   z-index: 2000;
-  max-width: 500px;
+  max-width: 600px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
 }
+
+.create-club-dialog >>> .el-dialog__header {
+  background: linear-gradient(135deg, #f8fbff 0%, #f0f7ff 100%);
+  padding: 24px 30px 20px 30px;
+  margin: 0;
+  border-bottom: 1px solid #e8f4ff;
+}
+
+.create-club-dialog >>> .el-dialog__title {
+  display: none;
+}
+
+.create-club-dialog >>> .el-dialog__headerbtn {
+  top: 20px;
+  right: 20px;
+  color: #666;
+  font-size: 20px;
+}
+
 .create-club-dialog >>> .el-dialog__body {
-  background: linear-gradient(135deg, #f4faff 0%, #e3f0ff 100%);
-  border-radius: 18px;
-  box-shadow: 0 8px 32px 0 rgba(64,158,255,0.13);
+  background: linear-gradient(135deg, #f8fbff 0%, #f0f7ff 100%);
+  padding: 30px;
+  margin: 0;
 }
-.create-club-form {
-  padding: 10px 0 0 0;
-}
-.create-club-form .el-form-item {
-  border-radius: 10px;
+
+.create-club-dialog >>> .el-dialog__footer {
   background: #fff;
-  margin-bottom: 18px;
-  box-shadow: 0 2px 8px rgba(64,158,255,0.06);
-  padding: 12px 16px 6px 16px;
+  padding: 20px 30px;
+  border-top: 1px solid #e8f4ff;
+  margin: 0;
 }
+
+/* 弹窗头部样式 */
+.dialog-header {
+  text-align: center;
+  color: #333;
+}
+
+.dialog-header h2 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  letter-spacing: 1px;
+  color: #333;
+}
+
+.dialog-header p {
+  font-size: 16px;
+  margin: 0;
+  color: #666;
+  font-weight: 400;
+}
+
+/* 表单样式优化 */
+.create-club-form {
+  padding: 0;
+}
+
+.create-club-form .el-form-item {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.8);
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(161, 140, 209, 0.08);
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.create-club-form .el-form-item__label {
+  font-weight: 600;
+  color: #333;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
 .create-club-form .el-input,
-.create-club-form .el-textarea {
-  border-radius: 8px;
-  background: #f8fbff;
+.create-club-form .el-textarea,
+.create-club-form .el-select {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e0e6ed;
+  transition: all 0.3s ease;
 }
+
+.create-club-form .el-input:focus-within,
+.create-club-form .el-textarea:focus-within,
+.create-club-form .el-select:focus-within {
+  border-color: #a18cd1;
+  box-shadow: 0 0 0 3px rgba(161, 140, 209, 0.1);
+}
+
 .create-club-form .el-input__inner,
 .create-club-form .el-textarea__inner {
-  background: #f8fbff;
-  border-radius: 8px;
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  padding: 12px 16px;
+  color: #333;
 }
+
 .create-club-form .el-input__prefix {
-  color: #409EFF;
+  color: #a18cd1;
+  font-size: 18px;
+  margin-right: 8px;
 }
+
 .create-club-form .el-input__icon {
-  color: #409EFF;
+  color: #a18cd1;
+}
+
+/* 上传区域样式 */
+.upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.upload-button {
+  display: inline-block;
+}
+
+/* 弹窗底部样式 */
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 0;
 }
 .create-club-submit-btn {
-  background: linear-gradient(90deg, #6a82fb 0%, #fc5c7d 100%);
+  background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
   border: none;
   color: #fff;
-  font-weight: bold;
+  font-weight: 600;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(161,140,209,0.13);
-  transition: background 0.2s;
+  box-shadow: 0 4px 16px rgba(161, 140, 209, 0.2);
+  transition: all 0.3s ease;
+  padding: 12px 24px;
+  font-size: 16px;
 }
 .create-club-submit-btn:hover {
-  background: linear-gradient(90deg, #fc5c7d 0%, #6a82fb 100%);
+  background: linear-gradient(135deg, #fbc2eb 0%, #a18cd1 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(161, 140, 209, 0.3);
 }
 .club-img-preview {
-  margin-top: 10px;
+  margin-top: 16px;
   text-align: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  border: 2px dashed #a18cd1;
 }
 .club-img-preview-img {
   max-width: 200px;
   max-height: 150px;
   border-radius: 12px;
-  border: 2px solid #409EFF;
-  box-shadow: 0 4px 16px rgba(64,158,255,0.13);
+  border: 2px solid #a18cd1;
+  box-shadow: 0 4px 16px rgba(161, 140, 209, 0.15);
+  object-fit: cover;
 }
 .club-img-preview-tip {
-  margin-top: 5px;
-  font-size: 12px;
+  margin-top: 8px;
+  font-size: 14px;
   color: #666;
+  font-weight: 500;
 }
 
 /* AI图像 */
@@ -1268,6 +1412,43 @@ h4 {
   font-size: 14px;
   font-weight: 500;
   margin-left: 8px;
+}
+
+/* 弹窗响应式样式 */
+@media (max-width: 768px) {
+  .create-club-dialog >>> .el-dialog {
+    max-width: 95vw;
+    margin: 0 10px;
+  }
+  
+  .create-club-dialog >>> .el-dialog__body {
+    padding: 20px;
+  }
+  
+  .create-club-form .el-form-item {
+    padding: 16px;
+  }
+  
+  .create-club-form .el-form-item__label {
+    font-size: 14px;
+  }
+  
+  .dialog-header h2 {
+    font-size: 24px;
+  }
+  
+  .dialog-header p {
+    font-size: 14px;
+  }
+  
+  .dialog-footer {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .dialog-footer .el-button {
+    width: 100%;
+  }
 }
 
 /* 美化中间社团部分顶部title */
