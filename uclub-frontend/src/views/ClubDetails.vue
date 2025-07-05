@@ -1180,8 +1180,11 @@ function safeHtml(html) {
   margin-bottom: 12px;
 }
 .detail-title {
-  font-size: 1.6rem;
+  font-size: 20px;
   font-weight: bold;
+  margin-bottom: 8px;
+  color: #222;
+  text-align: left;
 }
 .detail-status {
   font-size: 1rem;
@@ -1192,13 +1195,13 @@ function safeHtml(html) {
   margin-bottom: 16px;
 }
 .detail-img {
-  max-width: 320px;
-  width: auto;
-  height: auto;
-  max-height: 220px;
+  width: 200px;
+  height: 150px;
+  max-width: 500px;
+  max-height: 360px;
+  object-fit: cover;
   border-radius: 8px;
   border: 1px solid #eee;
-  object-fit: contain;
   display: inline-block;
 }
 .detail-section {
@@ -1217,5 +1220,12 @@ function safeHtml(html) {
   margin-bottom: 6px;
   color: #555;
   font-size: 1rem;
+}
+.detail-desc ::v-deep img {
+  max-width: 400px;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 6px;
+  display: inline-block;
 }
 </style>

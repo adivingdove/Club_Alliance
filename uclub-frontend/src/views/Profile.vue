@@ -806,9 +806,7 @@ const beforeAvatarUpload = (file) => {
 const customUpload = async (options) => {
   try {
     const token = localStorage.getItem('token')
-    console.log('开始自定义上传，文件:', options.file)
-    console.log('Token:', token)
-    console.log('Token长度:', token ? token.length : 0)
+
     
     if (!token) {
       ElMessage.error('未找到登录token，请重新登录')
@@ -819,10 +817,7 @@ const customUpload = async (options) => {
     const formData = new FormData()
     formData.append('file', options.file)
     
-    console.log('发送请求到:', uploadUrl.value)
-    console.log('请求头:', {
-      'Authorization': `Bearer ${token}`
-    })
+
     
     const response = await fetch(uploadUrl.value, {
       method: 'POST',
@@ -832,12 +827,11 @@ const customUpload = async (options) => {
       body: formData
     })
     
-    console.log('上传响应状态:', response.status)
-    console.log('响应头:', Object.fromEntries(response.headers.entries()))
+    
     
     if (response.ok) {
       const result = await response.json()
-      console.log('上传成功:', result)
+
       options.onSuccess(result)
     } else {
       const errorText = await response.text()
@@ -853,7 +847,7 @@ const customUpload = async (options) => {
 }
 
 const handleAvatarSuccess = (response) => {
-  console.log('头像上传响应:', response)
+  
   if (response.code === 200) {
     avatarUrl.value = response.data.url
     ElMessage.success('头像上传成功')
@@ -1040,13 +1034,9 @@ const fetchMyClubs = async () => {
 // 获取我的活动
 const fetchMyActivities = async () => {
   try {
-    console.log('开始获取我的活动')
     const response = await getMyActivities()
-    console.log('活动API响应:', response)
     if (response.data.code === 200) {
-      console.log('原始活动数据:', response.data.data)
       myActivities.value = processActivities(response.data.data || [])
-      console.log('处理后的活动数据:', myActivities.value)
     } else {
       console.error('获取活动失败:', response.data.message)
     }

@@ -3,6 +3,8 @@ package com.example.uclub_backend.controller;
 import com.example.uclub_backend.entity.Club;
 import com.example.uclub_backend.entity.ClubActivity;
 import com.example.uclub_backend.entity.ActivityParticipant;
+import com.example.uclub_backend.entity.User;
+import com.example.uclub_backend.repository.UserRepository;
 import com.example.uclub_backend.service.ClubActivityService;
 import com.example.uclub_backend.service.ActivityParticipantService;
 import com.example.uclub_backend.vo.Result;
@@ -28,6 +30,9 @@ public class ActivityController {
 
     @Autowired
     private ClubService clubService;
+    
+    @Autowired
+    private UserRepository userRepository;
     
     @GetMapping("/test")
     public Result<String> test() {
@@ -328,6 +333,19 @@ public class ActivityController {
     public Result<List<Map<String, Object>>> getActivityParticipants(@PathVariable Integer id) {
         try {
             List<ActivityParticipant> participants = activityParticipantService.getActivityParticipants(id);
+            
+            // 提取所有用户ID
+            List<Integer> userIds = participants.stream()
+                .map(ActivityParticipant::getUserId)
+                .collect(Collectors.toList());
+            
+            // 获取用户信息映射
+            Map<Integer, User> userMap = new HashMap<>();
+            for (Integer userId : userIds) {
+                Optional<User> userOpt = userRepository.findById(userId);
+                userOpt.ifPresent(user -> userMap.put(userId, user));
+            }
+            
             List<Map<String, Object>> result = participants.stream()
                 .map(participant -> {
                     Map<String, Object> map = new HashMap<>();
@@ -335,6 +353,19 @@ public class ActivityController {
                     map.put("userId", participant.getUserId());
                     map.put("joinTime", participant.getJoinTime());
                     map.put("status", participant.getStatus());
+                    
+                    // 添加用户信息
+                    User user = userMap.get(participant.getUserId());
+                    if (user != null) {
+                        map.put("nickname", user.getNickname());
+                        map.put("headUrl", user.getHeadUrl());
+                        map.put("account", user.getAccount());
+                    } else {
+                        map.put("nickname", "未知用户");
+                        map.put("headUrl", null);
+                        map.put("account", "未知");
+                    }
+                    
                     return map;
                 })
                 .collect(Collectors.toList());
