@@ -484,13 +484,17 @@ watchEffect(() => {
   border: 1.5px solid #e0c3fc;
 }
 .my-message .chat-bubble {
-  background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
-  color: #fff;
+  background: #e6f0ff; 
+  color: #333;
   text-align: right;
   border-top-right-radius: 8px;
-  border: none;
+  border: 1.5px solid #c8ddff;
 }
+
 .other-message .chat-bubble {
+  background: #f5f7fa; 
+  border: 1.5px solid #e0e0e0;
+  color: #333;
   border-top-left-radius: 8px;
 }
 
