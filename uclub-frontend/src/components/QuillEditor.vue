@@ -68,6 +68,11 @@ onMounted(() => {
         const html = quill.root.innerHTML
         emit('update:modelValue', html)
       })
+      const editor = editorRef.value.querySelector('.ql-editor')
+      if (editor) {
+        editor.style.height = '200px'
+        editor.style.overflowY = 'auto'
+      }
     }
   })
 })
@@ -85,6 +90,7 @@ watch(() => props.modelValue, (newVal) => {
 
 <style scoped>
 .ql-editor {
-  min-height: 200px;
+  height: 200px;
+  overflow-y: auto;
 }
 </style>
