@@ -217,7 +217,7 @@ async function submitAnnouncement() {
   }
 
   try {
-    const res = await fetch('http://localhost:8080/api/admin/announcements/system', {
+    const res = await fetch('http://localhost:8080/api/admin/system-announcements', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -237,7 +237,7 @@ async function submitAnnouncement() {
 // 加载历史公告
 async function loadHistory() {
   try {
-    const raw = await fetch('http://localhost:8080/api/admin/announcements/system')
+    const raw = await fetch('http://localhost:8080/api/admin/system-announcements')
     const result = await raw.json()
     const data = Array.isArray(result) ? result : result.data || result.body || []
 
