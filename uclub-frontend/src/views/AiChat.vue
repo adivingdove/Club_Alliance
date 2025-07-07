@@ -203,27 +203,16 @@ export default {
   min-height: 100vh;
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
-  justify-content: flex-start;
-  background: #fafbfc;
-  padding-bottom: 0;
+  background: #f5f7fa;
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 .ai-sidebar {
   width: 220px;
-  background: linear-gradient(120deg, #f5f7fa 0%, #c3cfe2 100%);
-  border-right: none;
+  background: linear-gradient(120deg, #e3eafc 0%, #e8f0fe 100%);
+  border-radius: 0 18px 18px 0;
   min-height: 100vh;
-  height: 100vh;
-  padding: 18px 0 0 0;
-  box-sizing: border-box;
-  position: sticky;
-  top: 0;
-  left: 0;
-  overflow-y: auto;
-  border-top-right-radius: 24px;
-  border-bottom-right-radius: 24px;
-  box-shadow: 2px 0 16px 0 rgba(25, 118, 210, 0.10), 0 0 0 1px #233044;
-  transition: background 0.4s;
+  box-shadow: 0 8px 32px 0 rgba(67, 206, 162, 0.08);
+  padding-top: 18px;
 }
 .ai-sidebar .sidebar-header {
   display: flex;
@@ -231,29 +220,28 @@ export default {
   align-items: center;
   padding: 0 18px 12px 18px;
   font-weight: bold;
-  font-size: 16px;
-  color: #222;
-  text-shadow: none;
+  font-size: 18px;
+  color: #185a9d;
 }
 .ai-sidebar .new-chat-btn {
-  background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
+  background: linear-gradient(90deg, #43cea2 0%, #185a9d 100%);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 4px 16px;
+  border-radius: 18px;
+  padding: 4px 18px;
   font-size: 15px;
-  font-weight: bold;
-  box-shadow: 0 2px 8px rgba(161,140,209,0.10);
-  transition: background 0.2s, box-shadow 0.2s;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(67, 206, 162, 0.10);
   cursor: pointer;
+  transition: background 0.2s, color 0.2s;
 }
 .ai-sidebar .new-chat-btn:hover {
-  background: linear-gradient(90deg, #fbc2eb 0%, #a18cd1 100%);
-  box-shadow: 0 4px 16px rgba(161,140,209,0.18);
+  background: linear-gradient(90deg, #185a9d 0%, #43cea2 100%);
+  color: #fff;
 }
 .ai-sidebar .chat-list {
   list-style: none;
-  padding: 0 0 0 0;
+  padding: 0;
   margin: 0;
 }
 .ai-sidebar .chat-list li {
@@ -263,7 +251,7 @@ export default {
   display: flex;
   align-items: center;
   padding: 10px 18px;
-  border-radius: 8px;
+  border-radius: 12px;
   margin: 2px 6px;
   transition: background 0.18s;
 }
@@ -273,25 +261,26 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 140px;
-  display: inline-block;
   cursor: pointer;
-  color: #222;
+  color: #185a9d;
   font-weight: 500;
-  font-size: 15px;
+  font-size: 16px;
   letter-spacing: 1px;
   transition: color 0.18s;
 }
 .ai-sidebar .chat-list li.active .chat-title {
-  color: #1976d2;
+  color: #43cea2;
   font-weight: bold;
-  text-shadow: 0 2px 8px #1976d2;
+  background: #e3eafc;
+  border-radius: 12px;
+  padding: 2px 8px;
 }
 .ai-sidebar .chat-list-row:hover {
-  background: rgba(25, 118, 210, 0.13);
+  background: rgba(67, 206, 162, 0.08);
 }
 .ai-sidebar .delete-chat-btn {
-  background: #a18cd1;
-  color: #fff;
+  background: #e8f0fe;
+  color: #185a9d;
   border: none;
   margin-left: 8px;
   font-size: 15px;
@@ -303,11 +292,10 @@ export default {
   align-items: center;
   justify-content: center;
   transition: background 0.2s, color 0.2s;
-  vertical-align: middle;
 }
 .ai-sidebar .delete-chat-btn:hover {
-  background: #fbc2eb;
-  color: #a18cd1;
+  background: #43cea2;
+  color: #fff;
 }
 .ai-main {
   flex: 1 1 auto;
@@ -315,11 +303,9 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  position: relative;
+  background: #f5f7fa;
   min-height: 100vh;
-  background: #fafbfc;
-  padding-bottom: 96px; /* 留出输入栏高度 */
+  padding-bottom: 96px;
 }
 .ai-messages-scroll {
   width: 100%;
@@ -376,30 +362,26 @@ export default {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #f3f4f6;
+  background: #e3eafc;
   margin-right: 6px;
 }
 .ai-bubble-header .nickname {
-  font-size: 20px;
-  color: #8b95a1;
+  font-size: 18px;
+  color: #185a9d;
+  font-weight: 600;
 }
 .user-bubble-header .avatar {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: #f3f4f6;
+  background: #e6f4ea;
   margin-top: 6px;
-}
-.user-bubble-header .nickname {
-  font-size: 13px;
-  color: #8b95a1;
-  margin-bottom: 2px;
 }
 .bubble {
   max-width: 800px;
   padding: 14px 20px;
   border-radius: 18px;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.7;
   word-break: break-word;
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
@@ -407,59 +389,69 @@ export default {
   color: #222;
 }
 .ai-message-row.user .bubble {
-  background: #f3eafd;
-  color: #333;
+  background: #e6f4ea;
+  color: #185a9d;
   box-shadow: none;
 }
 .ai-message-row.ai .bubble {
-  background: #f3eafd;
-  color: #333;
+  background: #e3eafc;
+  color: #222;
   box-shadow: none;
 }
 .ai-input-bar {
-  width: 1000px;
-  max-width: 1000px;
-  margin: 0 40px 0 auto;
+  width: 1050px;
+  max-width: 1050px;
+  margin: 0 0 0 350px;
   padding: 24px 0 24px 0;
   background: #fff;
   display: flex;
   justify-content: center;
   box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+  border-radius: 0 0 18px 18px;
+  border-top: 1px solid #e0e0e0;
   z-index: 100;
   position: fixed;
   right: 0;
   bottom: 0;
-  left: auto;
+  left: 0;
 }
 .ai-input-bar input {
   width: 60%;
   padding: 12px 16px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
   font-size: 18px;
   margin-right: 16px;
   outline: none;
+  font-family: inherit;
+  background: #f5f7fa;
+  color: #185a9d;
+}
+.ai-input-bar input:focus {
+  box-shadow: 0 0 6px #43cea2;
+  border-color: #43cea2;
 }
 .ai-input-bar button {
   padding: 12px 32px;
-  background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
+  background: linear-gradient(90deg, #43cea2 0%, #185a9d 100%);
   color: #fff;
   border: none;
-  border-radius: 12px;
+  border-radius: 18px;
   font-size: 18px;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
 }
 .ai-input-bar button:hover {
-  background: linear-gradient(90deg, #fbc2eb 0%, #a18cd1 100%);
+  background: linear-gradient(90deg, #185a9d 0%, #43cea2 100%);
 }
 .dot-flashing {
   position: relative;
   width: 10px;
   height: 10px;
   border-radius: 5px;
-  background-color: #a18cd1;
-  color: #a18cd1;
+  background-color: #43cea2;
+  color: #43cea2;
   animation: dotFlashing 1s infinite linear alternate;
   display: inline-block;
 }

@@ -162,9 +162,6 @@
           </el-card>
         </div>
       </el-tab-pane>
-      <el-tab-pane label="社团公告" name="announcements">
-        <ActivitiesAnnouncementView />
-      </el-tab-pane>
     </el-tabs>
 
     <!-- 详情弹窗 -->
@@ -352,11 +349,10 @@
         placeholder="请输入公告标题"
         class="announce-input announce-title-input"
       />
-      <el-input
+      <QuillEditor
         v-model="announcementContent"
-        type="textarea"
-        :rows="6"
         placeholder="请输入公告内容"
+        :height="200"
         class="announce-input announce-content-input"
       />
       <template #footer>
@@ -415,6 +411,7 @@ import {
   getActivitiesByCreatorId,
   getUserManagementClubs
 } from '@/api/activityApi'
+import QuillEditor from '@/components/QuillEditor.vue'
 
 
 const clubList = ref([])

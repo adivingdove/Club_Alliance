@@ -6,9 +6,9 @@
         router
         default-active="/admin/club-list"
         class="el-menu-vertical-demo"
-        background-color="#2d3a4b"
-        text-color="#fff"
-        active-text-color="#409eff"
+        background-color="#e3eafc"
+        text-color="#185a9d"
+        active-text-color="#43cea2"
       >
         <el-sub-menu index="1">
           <template #title>
@@ -124,17 +124,20 @@ const collapsed = ref(false)
 .admin-layout {
   display: flex;
   height: 100vh;
-  background-color: #f0f2f5;
+  background-color: #f5f7fa;
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .sidebar {
   width: 220px;
-  background-color: #2d3a4b;
-  color: white;
+  background: linear-gradient(120deg, #e3eafc 0%, #e8f0fe 100%);
+  color: #185a9d;
   position: relative;
   transition: width 0.3s;
   display: flex;
   flex-direction: column;
+  border-radius: 0 18px 18px 0;
+  box-shadow: 0 8px 32px 0 rgba(67, 206, 162, 0.08);
 }
 
 .sidebar.collapsed {
@@ -155,6 +158,24 @@ const collapsed = ref(false)
   align-items: center;
   gap: 8px;
   white-space: nowrap;
+  transition: backgrounde 0.2s;
+}
+
+/* hover效果 */
+.el-sub-menu__title:hover{
+  background: rgba(67, 206, 162, 0.08) !important;
+  color: #185a9d !important;
+}
+.el-menu-item:hover {
+  background: rgba(67, 206, 162, 0.08) !important;
+  color: #185a9d !important;
+}
+
+.el-menu-item.is-active {
+  background-color: #e3eafc !important;
+  color: #43cea2 !important;
+  border-radius: 12px;
+  font-weight: bold;
 }
 
 /* 图标固定大小 */
@@ -199,9 +220,9 @@ const collapsed = ref(false)
 
 .main-content {
   flex: 1;
-  padding: 16px;
+  padding: 24px;
   overflow-y: auto;
-  background: white;
+  background: #f5f7fa;
 }
 
 </style>

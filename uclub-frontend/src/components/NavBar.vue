@@ -206,6 +206,7 @@ const handleClickOutside = (e) => {
 </script>
 
 <style scoped>
+/* 导航栏样式 */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -213,7 +214,7 @@ const handleClickOutside = (e) => {
   padding: 16px 40px;
   background: linear-gradient(120deg, #a18cd1 0%, #fbc2eb 100%);
   box-shadow: 0 8px 32px 0 rgba(161,140,209,0.10);
-  border-radius: 0 0 32px 32px;
+  border-radius: 24px 0px 0px 24px;
   backdrop-filter: blur(8px);
   font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   overflow: visible;
@@ -297,8 +298,8 @@ const handleClickOutside = (e) => {
 .login-button-container-in-header {
   display: flex;
   align-items: center;
-  height: 60px;            /* 原来是 80px，更贴合 navbar */
-  margin-right: 16px;      /* 缩小右边距 */
+  height: 60px;            
+  margin-right: 16px;
   position: relative;
 }
 
