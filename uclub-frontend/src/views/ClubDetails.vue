@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import request from '../utils/request' // 你的 axios 封装
+import request from '../utils/request' 
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete } from '@element-plus/icons-vue'
 import ClubChat from '@/components/ClubChat.vue'
@@ -532,7 +532,7 @@ const quitClub = async () => {
   }
 }
 
-// 在<script setup>中添加：
+
 const canManageClub = computed(() => {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   if (!user.id || !club.value.members) return false
@@ -558,7 +558,9 @@ const fetchApplications = async () => {
   if (res.data.code === 0) {
     // 只保留当前社团的待审核申请
     const all = res.data.data
+    console.log("all = ",all)
     const clubPending = (all.pending || []).filter(app => app.clubId === club.value.id)
+    console.log("clubPending = ",clubPending)
     applications.value = clubPending
   } else {
     applications.value = []
@@ -709,6 +711,19 @@ function safeHtml(html) {
   if (!html) return '';
   return html.replace(/<(\/)?(script|style|iframe|object|embed|form|input|button|link|meta)[^>]*>/gi, '')
              .replace(/on\w+\s*=\s*(['"]).*?\1/gi, '');
+}
+
+function formatCustomDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0') // 月份从0开始
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+
+  return `${year}年${month}月${day}日 ${hours}:${minutes}`
 }
 </script>
 
@@ -864,7 +879,11 @@ function safeHtml(html) {
                     </el-select>
                   </template>
                 </el-table-column>
-                <el-table-column prop="joinedAt" label="加入时间" />
+                <el-table-column prop="joinedAt" label="加入时间">
+                  <template #default="{ row }">
+                    {{ formatCustomDate(row.joinedAt) }}
+                  </template>
+                </el-table-column>
                 <el-table-column label="操作">
                   <template #default="{ row }">
                     <el-button v-if="row.role !== '社长'" type="danger" size="small" @click="removeMember(row)">踢出社团</el-button>

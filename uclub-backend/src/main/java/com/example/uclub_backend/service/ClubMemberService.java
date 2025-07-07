@@ -11,6 +11,7 @@ import com.example.uclub_backend.vo.ApplicationVO;
 import com.example.uclub_backend.vo.ClubDetailVO;
 import com.example.uclub_backend.mapper.ClubMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.config.annotation.web.oauth2.login.UserInfoEndpointDsl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,9 @@ public class ClubMemberService {
 
     @Autowired
     private ClubMapper clubMapper;
+
+    @Autowired
+    private UserService userService;
 
     public List<ClubMember> getMembersByClubId(Integer clubId) {
         return clubMemberRepository.findByClubId(clubId);
@@ -344,6 +348,17 @@ public class ClubMemberService {
 
     // 转换ClubMember为ApplicationVO
     private List<ApplicationVO> convertToApplicationVO(List<ClubMember> members, List<Club> clubs) {
+        if(members.isEmpty()) return Collections.emptyList();
+
+        // 获取全部ID
+        List<Integer> userIds = members.stream()
+                .map(ClubMember::getUserId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 获取昵称
+        Map<Integer, String> nicknameMap = userService.getUserNamesByIds(userIds);
+
         Map<Integer, Club> clubMap = clubs.stream()
                 .collect(Collectors.toMap(Club::getId, club -> club));
 
@@ -365,11 +380,18 @@ public class ClubMemberService {
             }
 
             // 设置申请人姓名（从申请人信息中提取或使用默认值）
-            String applicantName = member.getApplicantInfo();
-            if (applicantName != null && applicantName.contains("/")) {
-                applicantName = applicantName.split("/")[0]; // 取姓名部分
-            } else if (applicantName == null || applicantName.isEmpty()) {
-                applicantName = "用户" + member.getUserId();
+            String applicantName = nicknameMap.getOrDefault(member.getUserId(),null);
+            if(applicantName == null && member.getApplicantInfo()!=null){
+                String info = member.getApplicantInfo();
+                if(info.contains("/")){
+                    applicantName = info.split("/")[0];
+                }else {
+                    applicantName = info;
+                }
+            }
+
+            if(applicantName == null ){
+                applicantName = "用户"+member.getUserId();
             }
             vo.setApplicantName(applicantName);
 
