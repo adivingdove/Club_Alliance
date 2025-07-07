@@ -183,7 +183,6 @@
             <div v-if="myActivities.length > 0">
               <el-table :data="pagedActivities" style="width: 100%">
                 <el-table-column prop="title" label="活动名称" width="200"></el-table-column>
-                <el-table-column prop="description" label="活动描述"></el-table-column>
                 <el-table-column prop="location" label="活动地点" width="150"></el-table-column>
                 <el-table-column prop="startTime" label="开始时间" width="180"></el-table-column>
                 <el-table-column prop="endTime" label="结束时间" width="180"></el-table-column>
@@ -197,6 +196,11 @@
                 <el-table-column prop="participantCount" label="参与人数" width="100">
                   <template #default="scope">
                     {{ scope.row.participants ? scope.row.participants.length : (scope.row.participantCount || 0) }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="120">
+                  <template #default="scope">
+                    <el-button type="primary" size="small" @click="showActivityDetail(scope.row)">查看详情</el-button>
                   </template>
                 </el-table-column>
               </el-table>
@@ -260,11 +264,22 @@
             <template #header>
               <div class="card-header">
                 <span>我的贴子</span>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                  <el-input
+                    v-model="searchKeyword"
+                    placeholder="搜索标题"
+                    size="small"
+                    clearable
+                    @keyup.enter="handleSearchPosts"
+                    style="width: 200px;"
+                  />
+                  <el-button type="primary" size="small" @click="handleSearchPosts">搜索</el-button>
+                </div>
               </div>
             </template>
             <div v-if="myPosts.length > 0">
               <div 
-                v-for="post in pagedPosts" 
+                v-for="post in myPosts" 
                 :key="post.id" 
                 class="history-item"
                 @click="goToPost(post.id)"
@@ -288,10 +303,9 @@
                 </div>
               </div>
               <el-pagination
-                v-if="myPosts.length > postsPageSize"
                 :current-page="postsPage"
                 :page-size="postsPageSize"
-                :total="myPosts.length"
+                :total="postsTotal"
                 @current-change="handlePostsPageChange"
                 layout="prev, pager, next"
                 style="text-align: center; margin-top: 20px;"
@@ -498,6 +512,28 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 活动详情弹窗 -->
+    <el-dialog v-model="showActivityDetailDialog" title="活动详情" width="500px">
+      <el-descriptions :title="activityDetail.title" :column="1" border>
+        <el-descriptions-item label="活动名称">{{ activityDetail.title }}</el-descriptions-item>
+        <el-descriptions-item label="活动地点">{{ activityDetail.location }}</el-descriptions-item>
+        <el-descriptions-item label="开始时间">{{ formatDate(activityDetail.startTime) }}</el-descriptions-item>
+        <el-descriptions-item label="结束时间">{{ formatDate(activityDetail.endTime) }}</el-descriptions-item>
+        <el-descriptions-item label="活动状态">
+          <el-tag :type="getActivityStatusType(activityDetail.activityStatus)">
+            {{ activityDetail.activityStatus }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="参与人数">{{ activityDetail.participants ? activityDetail.participants.length : (activityDetail.participantCount || 0) }}</el-descriptions-item>
+        <el-descriptions-item label="活动描述">{{ activityDetail.description || '无' }}</el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showActivityDetailDialog = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -676,12 +712,14 @@ const favoritesPageSize = ref(8)
 const postsPage = ref(1)
 const postsPageSize = ref(5)
 
-
-
 // 浏览历史相关
 const browsingHistory = ref([])
 const historyPage = ref(1)
 const historyPageSize = ref(5)
+
+// 搜索相关
+const searchKeyword = ref('')
+const postsTotal = ref(0)
 
 // 计算当前页数据
 const pagedClubs = computed(() => {
@@ -772,7 +810,8 @@ const handleMenuSelect = (index) => {
       break
 
     case 'posts':
-      fetchMyPosts()
+      postsPage.value = 1
+      fetchMyPosts(1, postsPageSize.value, searchKeyword.value)
       break
 
     case 'history':
@@ -1092,17 +1131,29 @@ const fetchFavoriteClubs = async () => {
 }
 
 // 获取我的帖子
-const fetchMyPosts = async () => {
+const fetchMyPosts = async (page = postsPage.value, pageSize = postsPageSize.value, keyword = searchKeyword.value) => {
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  if (!user.id) {
+    ElMessage.error('请先登录')
+    return
+  }
   try {
-    const response = await getMyPosts()
-    
-    if (response.data.code === 200) {
-      myPosts.value = response.data.data || []
+    const response = await request.get('/api/posts', {
+      params: {
+        userId: user.id,
+        page,
+        pageSize,
+        title: keyword
+      }
+    })
+    if (response.data && response.data.posts) {
+      myPosts.value = response.data.posts
+      postsTotal.value = response.data.total
     } else {
-      ElMessage.error('获取我的帖子失败')
+      myPosts.value = []
+      postsTotal.value = 0
     }
-  } catch (error) {
-    console.error('获取我的帖子失败:', error)
+  } catch (e) {
     ElMessage.error('获取我的帖子失败')
   }
 }
@@ -1216,7 +1267,12 @@ const handleFavoritesPageChange = (newPage) => {
 
 const handlePostsPageChange = (newPage) => {
   postsPage.value = newPage
-  fetchMyPosts()
+  fetchMyPosts(newPage, postsPageSize.value, searchKeyword.value)
+}
+
+const handleSearchPosts = () => {
+  postsPage.value = 1
+  fetchMyPosts(1, postsPageSize.value, searchKeyword.value)
 }
 
 const handleLogout = () => {
@@ -1424,6 +1480,14 @@ const quitClub = async (clubId) => {
   }
 }
 
+const showActivityDetailDialog = ref(false)
+const activityDetail = ref({})
+
+const showActivityDetail = (activity) => {
+  activityDetail.value = activity
+  showActivityDetailDialog.value = true
+}
+
 onMounted(() => {
   // 检查登录状态
   const token = localStorage.getItem('token')
@@ -1445,6 +1509,9 @@ onMounted(() => {
   
   if (isLoggedIn.value) {
     fetchRecentActivities()
+    if (activeMenu.value === 'posts') {
+      fetchMyPosts()
+    }
   }
   
   // 监听用户登录成功事件，立即更新用户信息显示

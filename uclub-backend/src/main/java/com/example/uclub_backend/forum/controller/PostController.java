@@ -53,10 +53,13 @@ public Map<String, Object> getPosts(
         @RequestParam(defaultValue = "") String timeRange,
         @RequestParam(required = false) String startTime,
         @RequestParam(defaultValue = "1") int page,
-        @RequestParam(defaultValue = "10") int pageSize) {
+        @RequestParam(defaultValue = "10") int pageSize,
+        @RequestParam(required = false) Long userId ){
 
     System.out.println("接收到获取帖子列表请求");
     System.out.println("参数: title=" + title + ", clubName=" + clubName + ", timeRange=" + timeRange + ", page=" + page + ", pageSize=" + pageSize);
+
+
 
     Map<String, String> filters = new HashMap<>();
     filters.put("title", title);
@@ -64,6 +67,9 @@ public Map<String, Object> getPosts(
     filters.put("timeRange", timeRange);
     if (startTime != null && !startTime.isBlank()) {
         filters.put("startTime", startTime);
+    }
+    if (userId != null) {
+        filters.put("userId", userId.toString());
     }
 
     System.out.println("开始查询帖子");

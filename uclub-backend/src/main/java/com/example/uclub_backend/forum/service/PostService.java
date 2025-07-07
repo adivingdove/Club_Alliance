@@ -57,7 +57,8 @@ public Page<Post> getPostPage(Map<String, String> filters, int page, int size) {
     String fuzzyTitle = title.isEmpty() ? null : "%" + title + "%";
     String fuzzyClubName = clubName.isEmpty() ? null : "%" + clubName + "%";
     Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
-
+    String userIdStr = filters.get("userId");
+    Long userId = (userIdStr != null && !userIdStr.isBlank()) ? Long.valueOf(userIdStr) : null;
     // 支持 startTime 优先（前端传 ISO 字符串）
     LocalDateTime startTime = null;
     if (startTimeStr != null && !startTimeStr.isBlank()) {
@@ -82,6 +83,7 @@ Page<Post> postPage = postRepository.findByFiltersWithClubName(
     fuzzyTitle,
     fuzzyClubName,
     startTime,
+    userId,
     pageable
 );
 
