@@ -66,7 +66,6 @@ const routes = [
       { path: 'club-admin', component: ClubAdminView },
       { path: 'user-query', component: UserQueryView },
       { path: 'system-announcement', component: SystemAnnouncementView },
-     // { path: 'activities-announcement', component: ActivitiesAnnouncementView },
       { path: 'club-creation-review', component: ClubCreationReviewView },
       { path: 'activity-review', component: ActivityReviewView },
       { path: 'report-handling', component: ReportHandlingView },

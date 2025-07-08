@@ -19,7 +19,7 @@ public class PostAdminController {
         this.postService = postService;
     }
 
-    //后台分页查询帖子列表
+    // 后台分页查询帖子列表
     @GetMapping("/posts")
     public Page<Post> getPostsForAdmin(
             @RequestParam Map<String, String> filters,
@@ -29,7 +29,7 @@ public class PostAdminController {
         return postService.getPostPage(filters, page, size);
     }
 
-    //获取单个帖子
+    // 获取单个帖子
     @GetMapping("/posts/{id}")
     public Post getPostDetail(@PathVariable Long id) {
         return postService.getPostById(id);

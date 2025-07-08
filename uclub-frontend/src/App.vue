@@ -434,43 +434,43 @@ onUnmounted(() => {
 
 <style scoped>
 /* 全局登录弹窗样式 */
-.global-login-dialog >>> .el-dialog,
-.global-forgot-password-dialog >>> .el-dialog {
+.global-login-dialog :deep(.el-dialog),
+.global-forgot-password-dialog :deep(.el-dialog) {
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
 }
 
-.global-login-dialog >>> .el-dialog__header,
-.global-forgot-password-dialog >>> .el-dialog__header {
+.global-login-dialog :deep(.el-dialog__header),
+.global-forgot-password-dialog :deep(.el-dialog__header) {
   background: white;
   padding: 20px 30px 10px 30px;
   margin: 0;
   border-bottom: 1px solid #e2e8f0;
 }
 
-.global-login-dialog >>> .el-dialog__title,
-.global-forgot-password-dialog >>> .el-dialog__title {
+.global-login-dialog :deep(.el-dialog__title),
+.global-forgot-password-dialog :deep(.el-dialog__title) {
   color: #1e293b;
   font-size: 20px;
   font-weight: 600;
 }
 
-.global-login-dialog >>> .el-dialog__headerbtn,
-.global-forgot-password-dialog >>> .el-dialog__headerbtn {
+.global-login-dialog :deep(.el-dialog__headerbtn),
+.global-forgot-password-dialog :deep(.el-dialog__headerbtn) {
   color: #64748b;
   font-size: 18px;
 }
 
-.global-login-dialog >>> .el-dialog__body,
-.global-forgot-password-dialog >>> .el-dialog__body {
+.global-login-dialog :deep(.el-dialog__body),
+.global-forgot-password-dialog :deep(.el-dialog__body) {
   background: white;
   padding: 20px 30px;
   margin: 0;
 }
 
-.global-login-dialog >>> .el-dialog__footer,
-.global-forgot-password-dialog >>> .el-dialog__footer {
+.global-login-dialog :deep(.el-dialog__footer),
+.global-forgot-password-dialog :deep(.el-dialog__footer) {
   background: #f8fafc;
   padding: 15px 30px;
   border-top: 1px solid #e2e8f0;
@@ -588,14 +588,14 @@ onUnmounted(() => {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .global-login-dialog >>> .el-dialog,
-  .global-forgot-password-dialog >>> .el-dialog {
+  .global-login-dialog :deep(.el-dialog),
+  .global-forgot-password-dialog :deep(.el-dialog) {
     width: 90vw !important;
     margin: 0 auto;
   }
   
-  .global-login-dialog >>> .el-dialog__body,
-  .global-forgot-password-dialog >>> .el-dialog__body {
+  .global-login-dialog :deep(.el-dialog__body),
+  .global-forgot-password-dialog :deep(.el-dialog__body) {
     padding: 20px;
   }
   

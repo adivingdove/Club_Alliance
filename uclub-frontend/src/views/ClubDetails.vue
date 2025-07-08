@@ -1179,7 +1179,7 @@ function formatCustomDate(dateStr) {
   font-weight: bold;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
-.activity-detail-dialog >>> .el-dialog__body {
+.activity-detail-dialog :deep(.el-dialog__body) {
   background: #fff;
   padding: 0;
 }
@@ -1237,7 +1237,7 @@ function formatCustomDate(dateStr) {
   color: #555;
   font-size: 1rem;
 }
-.detail-desc ::v-deep img {
+.detail-desc :deep(img) {
   max-width: 400px;
   max-height: 300px;
   object-fit: cover;

@@ -1113,20 +1113,20 @@ onMounted(() => {
   padding: 0 2px;
 }
 
-.announce-dialog >>> .el-dialog__body {
+.announce-dialog :deep(.el-dialog__body) {
   background: linear-gradient(135deg, #f4faff 0%, #e3f0ff 100%);
   border-radius: 18px;
   box-shadow: 0 8px 32px 0 rgba(64,158,255,0.13);
   padding: 32px 28px 18px 28px;
 }
 
-.announce-dialog >>> .el-dialog__header {
+.announce-dialog :deep(.el-dialog__header) {
   background: transparent;
   border-radius: 18px 18px 0 0;
   padding: 24px 28px 0 28px;
 }
 
-.announce-dialog >>> .el-dialog__title {
+.announce-dialog :deep(.el-dialog__title) {
   font-size: 26px;
   font-weight: bold;
   color: #409EFF;

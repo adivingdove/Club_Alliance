@@ -1134,7 +1134,7 @@ body, .main-container {
 .fab-create-club:hover {
   transform: scale(1.12) rotate(-8deg);
 }
-.create-club-dialog >>> .el-dialog {
+.create-club-dialog :deep(.el-dialog) {
   position: fixed !important;
   top: 8vh !important;
   left: 0;
@@ -1143,7 +1143,7 @@ body, .main-container {
   z-index: 2000;
   max-width: 500px;
 }
-.create-club-dialog >>> .el-dialog__body {
+.create-club-dialog :deep(.el-dialog__body) {
   background: linear-gradient(135deg, #f4faff 0%, #e3f0ff 100%);
   border-radius: 18px;
   box-shadow: 0 8px 32px 0 rgba(64,158,255,0.13);
@@ -1415,7 +1415,7 @@ h4 {
   justify-content: center;
 }
 
-.system-announcement-dialog >>> .el-dialog {
+.system-announcement-dialog :deep(.el-dialog) {
   position: fixed !important;
   top: 8vh !important;
   left: 0;
@@ -1425,7 +1425,7 @@ h4 {
   max-width: 600px;
 }
 
-.system-announcement-dialog >>> .el-dialog__body {
+.system-announcement-dialog :deep(.el-dialog__body) {
   background: linear-gradient(135deg, #f4faff 0%, #e3f0ff 100%);
   border-radius: 18px;
   box-shadow: 0 8px 32px 0 rgba(64,158,255,0.13);
@@ -1555,7 +1555,7 @@ h4 {
 }
 
 /* 弹窗底部按钮对齐 */
-.create-club-dialog >>> .el-dialog__footer {
+.create-club-dialog :deep(.el-dialog__footer) {
   display: flex;
   justify-content: flex-end;
   gap: 12px;

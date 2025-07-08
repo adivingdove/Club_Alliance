@@ -19,7 +19,6 @@ public class SystemUploadController {
         Map<String, Object> res = new HashMap<>();
 
         try {
-            // 保存路径专属 system 文件夹
             String uploadDir = System.getProperty("user.dir") + "/uploads/system";
             Files.createDirectories(Paths.get(uploadDir));
 
@@ -30,7 +29,6 @@ public class SystemUploadController {
             File dest = new File(uploadDir, filename);
             file.transferTo(dest);
 
-            // 对应静态资源映射：/uploads/system/xxx.jpg
             String imageUrl = "/uploads/system/" + filename;
 
             res.put("url", imageUrl);

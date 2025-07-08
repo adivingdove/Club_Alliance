@@ -1504,7 +1504,7 @@ function safeHtml(html) {
 }
 
 /* 活动详情样式 */
-.activity-detail-dialog >>> .el-dialog__body {
+.activity-detail-dialog :deep(.el-dialog__body) {
   background: #fff;
   padding: 0;
 }
@@ -1554,7 +1554,7 @@ function safeHtml(html) {
   margin: 8px 0 0 0;
   word-break: break-all;
 }
-.detail-desc ::v-deep img {
+.detail-desc :deep(img) {
   max-width: 400px;
   max-height: 300px;
   object-fit: cover;
