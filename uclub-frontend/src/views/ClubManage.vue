@@ -287,89 +287,60 @@
     <el-dialog 
       v-model="showEditActivityDialog" 
       title="编辑活动" 
-      width="700px"
+      width="600px"
     >
       <el-form 
         ref="editActivityFormRef" 
         :model="editActivityForm" 
         :rules="activityRules" 
-        label-width="120px"
-        class="activity-form"
+        label-width="100px"
       >
-        <el-row :gutter="20">
-          <el-col :span="24">
-            <el-form-item label="活动标题" prop="title">
-              <el-input v-model="editActivityForm.title" placeholder="请输入活动标题" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20">
-          <el-col :span="24">
-            <el-form-item label="活动描述" prop="description">
-              <QuillEditor v-model="editActivityForm.description" placeholder="请输入活动描述" :height="400" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="活动地点" prop="location">
-              <el-input v-model="editActivityForm.location" placeholder="请输入活动地点" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="最大人数" prop="maxParticipants">
-              <el-input-number v-model="editActivityForm.maxParticipants" :min="1" placeholder="不填表示人数不限" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="开始时间" prop="startTime">
-              <el-date-picker
-                v-model="editActivityForm.startTime"
-                type="datetime"
-                placeholder="选择开始时间"
-                format="YYYY-MM-DD HH:mm"
-                value-format="YYYY-MM-DDTHH:mm:ss"
-                style="width: 100%"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="结束时间" prop="endTime">
-              <el-date-picker
-                v-model="editActivityForm.endTime"
-                type="datetime"
-                placeholder="选择结束时间"
-                format="YYYY-MM-DD HH:mm"
-                value-format="YYYY-MM-DDTHH:mm:ss"
-                style="width: 100%"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20">
-          <el-col :span="24">
-            <el-form-item label="活动图片" prop="imageUrl">
-              <div class="upload-section">
-                <el-button 
-                  type="primary" 
-                  @click="triggerEditFileInput"
-                  class="upload-btn"
-                  size="large"
-                >
-                  <i class="el-icon-upload"></i>
-                  上传图片
-                </el-button>
-                <input ref="editFileInput" type="file" style="display:none" @change="handleEditFileChange" />
-              </div>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <div v-if="editActivityForm.imageUrl" style="margin-top: 10px; text-align: center;">
-          <img :src="getImageUrl(editActivityForm.imageUrl)" alt="活动图片" class="uploaded-image" />
-        </div>
+        <el-form-item label="活动标题" prop="title">
+          <el-input v-model="editActivityForm.title" placeholder="请输入活动标题" />
+        </el-form-item>
+        
+        <el-form-item label="活动描述" prop="description">
+          <el-input 
+            v-model="editActivityForm.description" 
+            type="textarea" 
+            :rows="4"
+            placeholder="请输入活动描述"
+          />
+        </el-form-item>
+        
+        <el-form-item label="活动地点" prop="location">
+          <el-input v-model="editActivityForm.location" placeholder="请输入活动地点" />
+        </el-form-item>
+        
+        <el-form-item label="开始时间" prop="startTime">
+          <el-date-picker
+            v-model="editActivityForm.startTime"
+            type="datetime"
+            placeholder="选择开始时间"
+            format="YYYY-MM-DD HH:mm"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+          />
+        </el-form-item>
+        
+        <el-form-item label="结束时间" prop="endTime">
+          <el-date-picker
+            v-model="editActivityForm.endTime"
+            type="datetime"
+            placeholder="选择结束时间"
+            format="YYYY-MM-DD HH:mm"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+          />
+        </el-form-item>
+        
+        <el-form-item label="最大人数" prop="maxParticipants">
+          <el-input-number 
+            v-model="editActivityForm.maxParticipants" 
+            :min="1" 
+            placeholder="不填表示人数不限"
+          />
+        </el-form-item>
       </el-form>
+      
       <template #footer>
         <el-button @click="showEditActivityDialog = false">取消</el-button>
         <el-button type="primary" @click="submitEditActivity">保存修改</el-button>
@@ -432,7 +403,7 @@
 
 <script setup>
 import ActivitiesAnnouncementView from '@/views/ActivitiesAnnouncementView.vue'
-import { ref, onMounted, computed, watch, nextTick } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from '@/utils/axios'
 import request from '../utils/request'
@@ -482,8 +453,7 @@ const editActivityForm = ref({
   location: '',
   startTime: '',
   endTime: '',
-  maxParticipants: null,
-  imageUrl: ''
+  maxParticipants: null
 })
 
 
@@ -736,44 +706,15 @@ const viewActivityDetail = (activity) => {
   showActivityDetailDialog.value = true
 }
 
-const editFileInput = ref(null)
-const triggerEditFileInput = () => {
-  editFileInput.value && editFileInput.value.click()
-}
-const handleEditFileChange = async (e) => {
-  const file = e.target.files[0]
-  if (!file) return
-  const formData = new FormData()
-  formData.append('file', file)
-  try {
-    const response = await request.post('/api/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
-    if (response.data.code === 0) {
-      editActivityForm.value.imageUrl = response.data.url
-      ElMessage.success('图片上传成功')
-    } else {
-      ElMessage.error('图片上传失败')
-    }
-  } catch (err) {
-    ElMessage.error('图片上传失败')
-  }
-}
-
 const editActivity = (activity) => {
   currentEditActivityId.value = activity.id
-  let desc = activity.description
-  if (typeof desc !== 'string') {
-    try { desc = JSON.stringify(desc) } catch { desc = '' }
-  }
   editActivityForm.value = {
     title: activity.title,
-    description: desc,
+    description: activity.description,
     location: activity.location,
     startTime: activity.startTime,
     endTime: activity.endTime,
-    maxParticipants: activity.maxParticipants,
-    imageUrl: activity.imageUrl || ''
+    maxParticipants: activity.maxParticipants
   }
   showEditActivityDialog.value = true
 }
@@ -1241,39 +1182,5 @@ onMounted(() => {
 .announce-cancel-btn:hover {
   background: #f3eafd;
   color: #7c5eb6;
-}
-
-/* 编辑活动对话框样式 */
-.activity-form {
-  padding: 20px;
-}
-
-.upload-section {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.upload-btn {
-  background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
-  border: none;
-  color: #fff;
-  font-weight: bold;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(161,140,209,0.13);
-  transition: background 0.2s, transform 0.18s;
-  padding: 8px 28px;
-  font-size: 18px;
-}
-
-.upload-btn:hover {
-  background: linear-gradient(90deg, #fbc2eb 0%, #a18cd1 100%);
-  transform: translateY(-2px) scale(1.04);
-}
-
-.uploaded-image {
-  max-width: 100%;
-  max-height: 300px;
-  border-radius: 8px;
-  margin-top: 10px;
 }
 </style>

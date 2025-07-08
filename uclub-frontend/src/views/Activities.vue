@@ -1293,7 +1293,7 @@ function safeHtml(html) {
 }
 
 .activities-container {
-  padding: 48px 7vw 32px 7vw;
+  padding: 48px 10vw 32px 10vw;
   background: #f7f8fa;
   min-height: 100vh;
   position: relative;
@@ -1302,7 +1302,7 @@ function safeHtml(html) {
 
 @media (max-width: 1200px) {
   .activities-container {
-    padding: 32px 3vw 24px 3vw;
+    padding: 32px 5vw 24px 5vw;
   }
 }
 @media (max-width: 768px) {
@@ -1342,11 +1342,6 @@ function safeHtml(html) {
 .banner-content p {
   font-size: 16px;
   margin-bottom: 18px;
-}
-
-.activities-container {
-  padding: 20px;
-  background: #fff;
 }
 
 .page-header {
@@ -1962,8 +1957,6 @@ function safeHtml(html) {
   color: #333;
   margin-bottom: 4px;
 }
-
-
 
 .participant-join-time {
   font-size: 13px;
