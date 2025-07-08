@@ -354,6 +354,7 @@ public class ProfileController {
                 Optional<Club> clubOpt = clubRepository.findById(membership.getClubId());
                 if (clubOpt.isPresent()) {
                     Club club = clubOpt.get();
+                    if (club.getStatus() != Club.ClubStatus.正常) continue;
                     Map<String, Object> clubInfo = new HashMap<>();
                     clubInfo.put("id", club.getId());
                     clubInfo.put("name", club.getName());
