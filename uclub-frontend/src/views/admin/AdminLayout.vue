@@ -12,7 +12,7 @@
       >
         <el-sub-menu index="1">
           <template #title>
-            <el-icon><User /></el-icon>
+            <el-icon><Menu /></el-icon>
             <span v-if="!collapsed">社团管理</span>
           </template>
           <el-menu-item index="/admin/club-list">
@@ -21,6 +21,16 @@
           </el-menu-item>
         </el-sub-menu>
 
+        <el-sub-menu index="2">
+          <template #title>
+            <el-icon><User /></el-icon>
+            <span v-if="!collapsed">管理员管理</span>
+          </template>
+          <el-menu-item index="/admin/club-admin">
+            <el-icon><User /></el-icon>
+            <span v-if="!collapsed">社团管理员管理</span>
+          </el-menu-item>
+        </el-sub-menu>
         <el-sub-menu index="3">
           <template #title>
             <el-icon><User /></el-icon>
