@@ -1012,16 +1012,6 @@ onMounted(async () => {
 
 // 提交编辑
 const submitEdit = async () => {
-  // 保证 description 为字符串
-  let desc = window.$(editDescRef.value).summernote('code')
-  if (typeof desc !== 'string') {
-    try {
-      desc = JSON.stringify(desc)
-    } catch {
-      desc = ''
-    }
-  }
-  editForm.value.description = desc
   try {
     if (!currentEditActivityId.value) {
       ElMessage.error('编辑活动ID不存在，请重新选择要编辑的活动')
@@ -1029,6 +1019,7 @@ const submitEdit = async () => {
     }
 
     const response = await updateActivity(currentEditActivityId.value, editForm.value)
+    
     if (response.data.code === 0) {
       ElMessage.success('编辑活动成功')
       showEditDialog.value = false

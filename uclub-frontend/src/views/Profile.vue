@@ -378,7 +378,11 @@
             <div v-if="recentActivities.length > 0">
               <el-table :data="pagedRecentActivities" style="width: 100%">
                 <el-table-column prop="title" label="活动名称" width="200"></el-table-column>
-                <el-table-column prop="description" label="活动描述"></el-table-column>
+                <el-table-column label="活动描述">
+                  <template #default="{ row }">
+                    <div class="rich-text-content" v-html="row.description || '无'"></div>
+                  </template>
+                </el-table-column>
                 <el-table-column prop="location" label="活动地点" width="150"></el-table-column>
                 <el-table-column prop="startTime" label="开始时间" width="180"></el-table-column>
                 <el-table-column prop="endTime" label="结束时间" width="180"></el-table-column>
@@ -1631,6 +1635,16 @@ onUnmounted(() => {
 .header-actions {
   display: flex;
   gap: 10px;
+}
+
+.rich-text-content {
+  max-height: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-all;
+  font-size: 14px;
+  color: #666;
 }
 
 .club-card {

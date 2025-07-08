@@ -8,10 +8,10 @@
         <el-tab-pane label="待审核活动" name="pending">
           <el-table :data="pendingActivities" v-loading="loading" border stripe>
             <el-table-column prop="title" label="标题" />
-            <el-table-column prop="clubName" label="所属社团" />
+            <el-table-column prop="clubName" label="所属社团" width="100"/>
             <el-table-column prop="applyStatus" label="状态" width="100" />
-            <el-table-column label="开始时间" :formatter="(row) => formatTime(row.startTime)" />
-            <el-table-column label="结束时间" :formatter="(row) => formatTime(row.endTime)" />
+            <el-table-column label="开始时间" :formatter="(row) => formatTime(row.startTime)" width="150" />
+            <el-table-column label="结束时间" :formatter="(row) => formatTime(row.endTime)" width="150" />
             <el-table-column label="操作" width="250">
               <template #default="scope">
                 <el-button type="success" size="small" @click="audit(scope.row.id, '通过')">通过</el-button>
@@ -27,9 +27,9 @@
             <el-table-column prop="title" label="标题" />
             <el-table-column prop="clubName" label="所属社团" />
             <el-table-column prop="applyStatus" label="状态" width="100" />
-            <el-table-column label="开始时间" :formatter="(row) => formatTime(row.startTime)" />
-            <el-table-column label="结束时间" :formatter="(row) => formatTime(row.endTime)" />
-            <el-table-column label="申请时间" :formatter="(row) => formatTime(row.createdAt)" />
+            <el-table-column label="开始时间" :formatter="(row) => formatTime(row.startTime)" width="150" />
+            <el-table-column label="结束时间" :formatter="(row) => formatTime(row.endTime)" width="150" />
+            <el-table-column label="申请时间" :formatter="(row) => formatTime(row.createdAt)" width="150"/>
             <el-table-column label="操作" width="200">
               <template #default="scope">
                 <el-button type="primary" size="small" @click="checkDetail(scope.row.id, '查看')">查看详情</el-button>
@@ -40,14 +40,16 @@
       </el-tabs>
     </el-card>
 
-    <el-dialog title="活动详情" v-model="showDetailDialog" width="600px" :before-close="() => (showDetailDialog = false)">
+    <el-dialog title="活动详情" v-model="showDetailDialog" width="800px" :before-close="() => (showDetailDialog = false)">
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="标题">{{ selectedActivity.title }}</el-descriptions-item>
-        <el-descriptions-item label="状态">{{ selectedActivity.applyStatus }}</el-descriptions-item>
-        <el-descriptions-item label="开始时间">{{ formatTime(selectedActivity.startTime) }}</el-descriptions-item>
-        <el-descriptions-item label="结束时间">{{ formatTime(selectedActivity.endTime) }}</el-descriptions-item>
-        <el-descriptions-item label="申请时间">{{ formatTime(selectedActivity.createdAt) }}</el-descriptions-item>
-        <el-descriptions-item label="详细描述">{{ selectedActivity.description || '无' }}</el-descriptions-item>
+        <el-descriptions-item label="标题" width="25px">{{ selectedActivity.title }}</el-descriptions-item>
+        <el-descriptions-item label="状态" width="25px">{{ selectedActivity.applyStatus }}</el-descriptions-item>
+        <el-descriptions-item label="开始时间" width="25px">{{ formatTime(selectedActivity.startTime) }}</el-descriptions-item>
+        <el-descriptions-item label="结束时间" width="25px">{{ formatTime(selectedActivity.endTime) }}</el-descriptions-item>
+        <el-descriptions-item label="申请时间" width="25px">{{ formatTime(selectedActivity.createdAt) }}</el-descriptions-item>
+        <el-descriptions-item label="详细描述">
+          <div class="rich-text-content" v-html="selectedActivity.description || '无'"></div>
+        </el-descriptions-item>
       </el-descriptions>
   <template #footer>
     <el-button @click="showDetailDialog = false">关闭</el-button>
@@ -152,5 +154,14 @@ onMounted(() => {
 }
 .header {
   margin-bottom: 20px;
+}
+
+.rich-text-content {
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: 14px;
+  color: #666;
 }
 </style>

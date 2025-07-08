@@ -9,9 +9,9 @@
           <el-table :data="pendingClubs" v-loading="loading" border stripe>
             <el-table-column prop="name" label="社团名称" />
             <el-table-column prop="creatorNickname" label="创建者昵称" />
-            <el-table-column prop="description" label="社团简介" />
-            <el-table-column label="操作" width="180">
+            <el-table-column label="操作" width="240">
               <template #default="scope">
+                <el-button type="primary" size="small" @click="viewDetail(scope.row)">查看详情</el-button>
                 <el-button type="success" size="small" @click="audit(scope.row.id, 'approve')">通过</el-button>
                 <el-button type="danger" size="small" @click="audit(scope.row.id, 'reject')">拒绝</el-button>
               </template>
@@ -23,12 +23,27 @@
           <el-table :data="historyClubs" v-loading="loading" border stripe>
             <el-table-column prop="name" label="社团名称" />
             <el-table-column prop="creatorNickname" label="创建者昵称" />
-            <el-table-column prop="description" label="社团简介" />
             <el-table-column prop="status" label="审核状态" />
             <el-table-column prop="createdAt" label="申请时间" :formatter="formatTime" />
+            <el-table-column label="操作" width="120">
+              <template #default="scope">
+                <el-button type="primary" size="small" @click="viewDetail(scope.row)">查看详情</el-button>
+              </template>
+            </el-table-column>
           </el-table>
         </el-tab-pane>
       </el-tabs>
+      <el-dialog v-model="showDetailDialog" title="社团详情" width="500px">
+        <div v-if="detailClub">
+          <p><strong>社团名称：</strong>{{ detailClub.name }}</p>
+          <p><strong>创建者昵称：</strong>{{ detailClub.creatorNickname }}</p>
+          <p><strong>社团简介：</strong>{{ detailClub.description }}</p>
+          <p><strong>创建时间：</strong>{{ formatTime(detailClub, null, detailClub.createdAt) }}</p>
+        </div>
+        <template #footer>
+          <el-button @click="showDetailDialog = false">关闭</el-button>
+        </template>
+      </el-dialog>
     </el-card>
   </div>
 </template>
@@ -44,6 +59,14 @@ const loading = ref(false)
 
 const pendingClubs = ref([])
 const historyClubs = ref([])
+
+const showDetailDialog = ref(false)
+const detailClub = ref(null)
+
+const viewDetail = (club) => {
+  detailClub.value = club
+  showDetailDialog.value = true
+}
 
 const fetchPendingClubs = async () => {
   loading.value = true
@@ -95,8 +118,6 @@ const formatTime = (row, column, cellValue) => {
 
   return dayjs(truncated).format('YYYY-MM-DD HH:mm:ss');
 }
-
-
 
 const handleTabChange = (tab) => {
   if (tab.props.name === 'pending') {

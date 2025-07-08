@@ -269,27 +269,6 @@ const handleClickOutside = (e) => {
   box-shadow: 0 0 6px #3b82f6;
 }
 
-.search-btn {
-  background-color: #3b82f6;
-  border: none;
-  padding: 7px 12px;
-  cursor: pointer;
-  border-radius: 0 4px 4px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s ease;
-  color: white;
-}
-
-.search-btn:hover {
-  background-color: #2563eb;
-}
-
-.search-btn svg {
-  fill: currentColor;
-}
-
 .login-container {
   position: relative;
   min-height: 100vh;

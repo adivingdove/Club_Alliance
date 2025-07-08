@@ -58,10 +58,12 @@
             {{ formatTime(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100">
+        <el-table-column label="操作" width="150">
           <template #default="{ row }">
-            <el-button type="text" size="small" @click="viewAnnouncement(row)">查看</el-button>
-            <el-button type="text" size="small" @click="deleteAnnouncement(row.id)" style="color:red">删除</el-button>
+            <div style="display: flex; gap: 8px;">
+              <el-button type="primary" size="small" @click="viewAnnouncement(row)">查看</el-button>
+              <el-button type="danger" size="small" @click="deleteAnnouncement(row.id)">删除</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>

@@ -913,8 +913,8 @@ function formatCustomDate(dateStr) {
     </div>
 
     <!-- 申请加入弹窗表单 -->
-    <el-dialog v-model="showApplyDialog" title="申请加入社团" width="400px" :close-on-click-modal="false">
-      <el-form :model="applyForm" :rules="applyRules" ref="applyFormRef" label-width="90px">
+    <el-dialog v-model="showApplyDialog" title="申请加入社团" width="450px" :close-on-click-modal="false">
+      <el-form :model="applyForm" :rules="applyRules" ref="applyFormRef" label-width="120px">
         <el-form-item label="申请人信息" prop="applicant">
           <el-input v-model="applyForm.applicant" placeholder="姓名/联系方式" />
         </el-form-item>
@@ -999,7 +999,7 @@ function formatCustomDate(dateStr) {
                   <el-icon><Delete /></el-icon>
                 </el-button>
               </div>
-              <div style="white-space: pre-line;">{{ a.content }}</div>
+              <div style="white-space: pre-line;" v-html="a.content"></div>
             </div>
           </el-timeline-item>
         </el-timeline>

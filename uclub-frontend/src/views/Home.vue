@@ -216,7 +216,7 @@
           </el-input>
         </el-form-item>
         <el-form-item label="✍️ 建立理由" prop="reason">
-          <el-input v-model="createForm.reason" type="textarea" placeholder="请填写建立理由">
+          <el-input v-model="createForm.reason" placeholder="请填写建立理由">
             <template #prefix>
               <el-icon><i class="el-icon-edit"></i></el-icon>
             </template>
@@ -230,7 +230,7 @@
           </el-input>
         </el-form-item>
         <el-form-item label="👤 个人信息" prop="personal">
-          <el-input v-model="createForm.personal" type="textarea" placeholder="请填写你的姓名、联系方式等">
+          <el-input v-model="createForm.personal" placeholder="请填写你的姓名、联系方式等">
             <template #prefix>
               <el-icon><i class="el-icon-user"></i></el-icon>
             </template>
@@ -264,7 +264,9 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showCreateDialog = false">取消</el-button>
+        <el-button @click="showCreateDialog = false" class="create-club-cancel-btn">
+          <el-icon style="margin-right:4px"><i class="el-icon-close"></i></el-icon>取消
+        </el-button>
         <el-button type="primary" @click="submitCreateClub" class="create-club-submit-btn">
           <el-icon style="margin-right:4px;"><i class="el-icon-plus"></i></el-icon>提交
         </el-button>
@@ -1085,10 +1087,25 @@ body, .main-container {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(161,140,209,0.13);
   transition: background 0.2s;
-  width: 100%;
+  width:auto;
   margin-top: 4px;
 }
 .join-btn:hover, .el-button:hover, .create-club-submit-btn:hover {
+  background: linear-gradient(90deg, #fc5c7d 0%, #6a82fb 100%);
+}
+
+.join-btn, .el-button, .create-club-cancel-btn{
+  background: linear-gradient(90deg, #6a82fb 0%, #fc5c7d 100%);
+  border: none;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(161,140,209,0.13);
+  transition: background 0.2s;
+  width: auto;
+  margin-top: 4px;
+}
+.join-btn:hover, .el-button:hover, .create-club-cancel-btn:hover {
   background: linear-gradient(90deg, #fc5c7d 0%, #6a82fb 100%);
 }
 .floating-ai {
@@ -1535,6 +1552,23 @@ h4 {
 .announcement-content :deep(th) {
   background: #f8f9fa;
   font-weight: bold;
+}
+
+/* 弹窗底部按钮对齐 */
+.create-club-dialog >>> .el-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-right: 24px;
+  padding-bottom: 16px;
+}
+
+/* 让按钮宽度自适应内容 */
+.create-club-cancel-btn,
+.create-club-submit-btn {
+  width: auto !important;
+  min-width: 90px;
+  margin-top: 0;
 }
 
 </style>

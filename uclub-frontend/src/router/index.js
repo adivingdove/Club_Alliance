@@ -5,13 +5,11 @@ import Home from '../views/Home.vue'
 
 import Activities from '../views/Activities.vue'
 import Profile from '../views/Profile.vue'
-import Search from '../views/Search.vue'
 
 // 新增页面
 import ClubDetails from '../views/ClubDetails.vue'
 import AiChat from '../views/AiChat.vue'
 import ClubManage from '../views/ClubManage.vue'
-import ActivitiesAnnouncementView from '../views/ActivitiesAnnouncementView.vue'
 
 
 
@@ -47,7 +45,6 @@ const routes = [
   { path: '/activities', name: 'Activities', component: Activities },
   
   { path: '/profile', name: 'Profile', component: Profile },
-  { path: '/search', name: 'Search', component: Search },
 
  // { path: '/applications', name: 'Applications', component: Applications },
   {path: '/chatroom',component: () => import('@/views/ChatRoom.vue')},

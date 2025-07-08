@@ -19,8 +19,16 @@
           </template>
         </el-table-column>
         <el-table-column prop="location" label="活动地点" width="200" align="center"/>
-        <el-table-column prop="startTime" label="开始时间" width="180" align="center" sortable/>
-        <el-table-column prop="endTime" label="结束时间" width="180" align="center" sortable/>
+        <el-table-column prop="startTime" label="开始时间" width="180" align="center" sortable>
+          <template #default="scope">
+            {{ formatDateTime(scope.row.startTime) }}  
+          </template>
+        </el-table-column>
+        <el-table-column prop="endTime" label="结束时间" width="180" align="center" sortable>
+           <template #default="scope">
+            {{ formatDateTime(scope.row.endTime) }}  
+          </template>
+        </el-table-column>
         <el-table-column prop="maxParticipants" label="参加活动人数限额" width="180" align="center" sortable/>
         <el-table-column prop="currentParticipants" label="参加活动人数" width="180" align="center" sortable/>
         <el-table-column label="剩余名额" width="120" align="center">
@@ -67,6 +75,12 @@ const adminList = ref([])
 const searchName = ref('')
 const loading = ref(false)
 const hotactivite=ref('')
+
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return date.toLocaleString('zh-CN')
+}
 
 const fetchAdmins = async () => {
   loading.value = true
