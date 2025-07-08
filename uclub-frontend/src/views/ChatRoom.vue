@@ -222,16 +222,24 @@ const subscribeToRoom = (roomId) => {
   }]
   unreadMap[roomId] = false
 }
-const switchRoom = (roomId) => {
+const switchRoom = async (roomId) => {
   messages.value.push({
     sender: '系统',
     content: `🚪 离开「${currentRoomLabel.value.replace('🟢 ', '')}」聊天室`,
     time: new Date().toISOString(),
     role: '系统'
   })
+
   currentRoom.value = roomId
   subscribeToRoom(roomId)
   fetchOnlineUsers()
+
+  // 如果当前正在显示历史消息，则加载新房间的历史
+  if (showHistory.value) {
+    await loadHistory(roomId)
+  } else {
+    historyMessages.value = []
+  }
 }
 
 // 发送消息
@@ -267,9 +275,9 @@ const addEmoji = (e) => {
   })
 }
 
-const loadHistory = async () => {
+const loadHistory = async (roomId) => {
   try {
-    const res = await axios.get(`${apiBaseUrl}/api/chat/history/${currentRoom.value}`, {
+    const res = await axios.get(`${apiBaseUrl}/api/chat/history/${roomId}`, {
       params: {
         page: 0,
         size: 30
@@ -280,13 +288,16 @@ const loadHistory = async () => {
     })
     historyMessages.value = res.data.reverse()
   } catch (err) {
-    console.error('加载历史消息失败:', err)
+    console.error(`加载房间 ${roomId} 的历史消息失败:`, err)
   }
 }
+
 const toggleHistory = async () => {
   showHistory.value = !showHistory.value
-  if (showHistory.value && historyMessages.value.length === 0) {
-    await loadHistory()
+  if (showHistory.value) {
+    await loadHistory(currentRoom.value)
+  } else {
+    historyMessages.value = []
   }
 }
 
